@@ -1,0 +1,95 @@
+/* GENERATED FILE — edit src/tokens/tokens.ts and run `pnpm tokens:css`. */
+:root {
+  --surface-page: #FFFFFF;
+  --surface-raised: #F4F6F8;
+  --surface-inverse: #0B2239;
+  --text-primary: #0B2239;
+  --text-secondary: #425466;
+  --text-on-inverse: #FFFFFF;
+  --text-on-interactive: #FFFFFF;
+  --text-on-emphasis: #0B2239;
+  --interactive: #00706F;
+  --interactive-hover: #00625F;
+  --interactive-surface: #00706F;
+  --focus: #0B2239;
+  --focus-inverse: #FFFFFF;
+  --border: #5A6B7A;
+  --border-subtle: #C7D0D8;
+  --emphasis: #F0B44D;
+  --emphasis-border: #0B2239;
+  --status-critical: #8C1D18;
+  --status-warning: #7A4E00;
+  --status-success: #166534;
+  --status-info: #00625F;
+  --graphic-brand: #00A0A0;
+  --graphic-brand-decorative: #00A6A6;
+
+  --font-size-xs: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.5rem;
+  --font-size-2xl: 2rem;
+  --font-size-3xl: 2.5rem;
+  --line-height-tight: 1.2;
+  --line-height-body: 1.6;
+  --measure: 70ch;
+  --font-family-sans: 'Inter var', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 240ms;
+  --easing-standard: cubic-bezier(0.2, 0, 0.2, 1);
+
+  --target-min: 24px;
+  --target-comfortable: 44px;
+}
+
+/*
+ * BRD-003 / ACC-005: reduced motion is honoured with an equivalent non-motion
+ * state, not by leaving an animation half-applied. Durations collapse to
+ * effectively zero; nothing that conveyed information via motion is lost,
+ * because no component depends on motion to convey it (ENG-004).
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 1ms;
+    --duration-base: 1ms;
+    --duration-slow: 1ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * ACC-002: a single visible focus indicator for every focusable element. Defined
+ * once here so no component can ship without one, and thick enough to remain
+ * visible at 400% zoom (ACC-004).
+ */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Windows High Contrast Mode: system colours must win (ACC-004). */
+@media (forced-colors: active) {
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline-color: Highlight;
+  }
+}

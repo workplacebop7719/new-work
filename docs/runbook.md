@@ -1,0 +1,70 @@
+# Runbook
+
+- **Status:** v0 (CC-01) — local and CI operations only. Production runbooks are a CC-09 deliverable (SEC-010) and must be tested by someone who did not write them.
+
+## Local setup
+
+```bash
+pnpm install                 # deterministic, from the committed lockfile
+cp .env.example .env.local   # then edit DATABASE_URL if your Postgres differs
+pnpm db:migrate
+pnpm db:seed
+pnpm dev                     # http://localhost:3000 → redirects to /en
+```
+
+You need PostgreSQL 16+ reachable at `DATABASE_URL`. The application connects as
+`northstar_app`, a role the first migration creates. That role **must** be
+`NOBYPASSRLS`: a superuser silently defeats every row-level security policy in
+the schema, so a superuser connection would make the isolation tests pass while
+proving nothing.
+
+## Commands (PRD §27 contract)
+
+| Command | What it does |
+|---|---|
+| `pnpm install` | Deterministic install from `pnpm-lock.yaml`. |
+| `pnpm dev` | Full local experience with fake integrations (`@northstar/integrations` fakes). |
+| `pnpm lint` | ESLint across the workspace **plus** the §27 repository guards. |
+| `pnpm typecheck` | `tsc --noEmit` in every package. |
+| `pnpm test` | Unit and integration tests. Needs a database for the isolation suite. |
+| `pnpm test:e2e` | Playwright journeys: desktop, mobile, and a no-JavaScript project. |
+| `pnpm test:a11y` | The `@a11y`-tagged subset. Coverage only — see the accessibility test plan. |
+| `pnpm test:authz` | Cross-tenant and role matrix; every protected resource class. |
+| `pnpm db:migrate` | Applies pending migrations in filename order, each in its own transaction. |
+| `pnpm db:seed` | Loads the fictional Maple Grove and Riverside demo tenants. |
+| `pnpm db:reset-safe` | Drops, re-migrates and reseeds. **Refuses** unless `APP_ENV` is non-production *and* the host is local. |
+| `pnpm build` | Production build. |
+| `pnpm start` | Serves the production build. |
+
+## Demo accounts
+
+`pnpm db:seed` creates fictional data only. There are no passwords: authentication arrives in CC-03.
+
+| Role | Email |
+|---|---|
+| Client admin | `admin@maplegrove.example` |
+| Client executive | `exec@maplegrove.example` |
+| Client contributor (web lead) | `web@maplegrove.example` |
+| Contractor (auditor) | `auditor@specialists.example` |
+| Internal PM | `pm@northstar.example` |
+| Qualified reviewer | `reviewer@northstar.example` |
+| Platform admin | `platform@northstar.example` |
+| Client admin, second tenant | `admin@riverside.example` |
+
+The second tenant exists so the tenant boundary is demonstrable rather than merely asserted, which is what PRD §27 asks the demo to make visible.
+
+## Things that will confuse you once
+
+**A query returns zero rows and you expected data.** Almost always a missing tenant context. Row-level security turns a forgotten `SET LOCAL` into an empty result, not an error — that is the design (a confusing empty state is much better than a cross-tenant leak). Use `withTenant(organizationId, ...)`, or `withSystemContext(reason, ...)` for a deliberate cross-tenant read.
+
+**`db:reset-safe` refuses to run.** It requires *both* a non-production `APP_ENV` and a host that looks local. Both, deliberately: one mis-set variable should not be enough to destroy data.
+
+**The homepage shows "This guidance is being reviewed" instead of the deadline.** Correct behaviour. The seeded regulatory claim is `in_review` pending counsel sign-off (open question Q-04), and an unreviewed claim structurally cannot render its statement (CNT-005). This demonstrates the safety mechanism rather than bypassing it.
+
+**A guard fails in `pnpm lint`.** The repository guards enforce PRD §27 constraints, not style. Read the message: each names the requirement and, where an exception is legitimate, the annotation that records it (`northstar-allow-claim:`, `northstar-allow-regulatory:`, `-- global:`). Annotations are reviewed in the pull request; that is the audit trail.
+
+**Playwright can't find a browser.** Set `CHROMIUM_PATH` to an existing Chromium, or run `pnpm --filter @northstar/web exec playwright install chromium`.
+
+## CI
+
+`.github/workflows/ci.yml` runs three jobs: quality (lint, typecheck, migrate, seed, test, test:authz against a Postgres service), end-to-end (build, test:e2e, test:a11y), and supply-chain (dependency audit, secret scan). Every command exits non-zero on failure.

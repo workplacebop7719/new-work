@@ -42,6 +42,14 @@ The PRD is vendor-neutral by design (§17). Each of these is answered by a **pro
 | Q-15 | Analytics — which product analytics tool can run consent-gated, PII-aware, with Canadian data residency? | [ADR-0007](./adr/0007-analytics-and-consent.md) | B1 (CC-02) | Product + privacy |
 | Q-16 | AI provider and governance mechanics — enterprise no-training terms, region, provenance store? | [ADR-0008](./adr/0008-ai-governance.md) | B1 (CC-08) | Product + security |
 
+### A3b. Raised during the CC-01 build
+
+| # | Question | Basis | Severity | Owner | Needed by |
+|---|---|---|---|---|---|
+| Q-24 | **The PRD §14 palette does not pass WCAG 2.2 as specified.** Measured: brand teal `#00A6A6` is 2.998:1 on white (fails AA text at 4.5:1 *and* non-text at 3:1); warm gold `#F0B44D` is 1.85:1 on white, so it cannot carry a boundary against a white page. CC-01 keeps both as brand colours but restricts their use, adding `interactive` `#00706F` (5.92:1) for links/buttons/focus and `graphic-brand` `#00A0A0` (3.21:1) for meaningful graphics, with an ink border required on gold surfaces. Does the design lead accept these derived tokens, or should the brand palette itself change? | §14 vs §15 ACC-004 | **B1** (CC-02) | Design lead + accessibility lead | CC-02 |
+| Q-25 | Storybook was cut from CC-01 (accessibility contracts are tested directly per component instead). Confirm it lands in CC-02, or that component documentation takes another form. | §27 repo shape | B3 | Design lead | CC-02 |
+| Q-26 | Abandoned-qualifier retention is set to 30 days by assumption A-15; the PRD says only "short". Privacy lead to confirm before CC-02 ships the qualifier. | CNV-001 | B1 (CC-02) | Privacy lead | CC-02 |
+
 ### A4. Requirements that appear to conflict or need a tie-breaker
 
 | # | Tension | PRD basis | Proposed resolution | Severity |

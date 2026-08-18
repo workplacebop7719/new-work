@@ -1,6 +1,6 @@
 # ADR-0004 — Evidence file pipeline
 
-- **Status:** Proposed
+- **Status:** Accepted (CC-01)
 - **Date:** 2026-08-18
 - **Deciders:** Engineering lead, security/privacy lead
 - **Blocks:** CC-04

@@ -1,6 +1,6 @@
 # ADR-0007 — Analytics, consent and measurement
 
-- **Status:** Proposed
+- **Status:** Accepted (CC-01)
 - **Date:** 2026-08-18
 - **Deciders:** Product lead (accountable), privacy lead, engineering lead
 - **Blocks:** CC-02

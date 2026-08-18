@@ -1,0 +1,104 @@
+/* Page-level styles. Component styles live in @northstar/ui. */
+@import '@northstar/ui/components.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-body);
+}
+
+/* Focus is visible on the main landmark when reached via the skip link. */
+main:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+}
+
+.ns-header,
+.ns-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.ns-footer {
+  border-block: 1px solid var(--border-subtle) none;
+  border-block-start: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.ns-footer p,
+.ns-page {
+  max-inline-size: var(--measure);
+}
+
+.ns-header__brand {
+  margin: 0;
+  font-weight: 700;
+}
+
+.ns-header a {
+  color: var(--interactive);
+  min-block-size: var(--target-comfortable);
+  display: inline-flex;
+  align-items: center;
+}
+
+.ns-page {
+  padding: var(--space-8) var(--space-6);
+}
+
+.ns-page h1 {
+  font-size: var(--font-size-3xl);
+  line-height: var(--line-height-tight);
+  margin-block-start: 0;
+}
+
+.ns-lede {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+}
+
+.ns-claim {
+  border: 1px solid var(--border-subtle);
+  padding: var(--space-4);
+  margin-block-start: var(--space-8);
+}
+
+/* A held claim is visually distinct AND says so in words (ENG-004). */
+.ns-claim--hold {
+  border-inline-start: 6px solid var(--status-warning);
+}
+
+.ns-claim__provenance {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.ns-translation-gap {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  padding: var(--space-3);
+  margin-block-end: var(--space-4);
+}
+
+.ns-translation-gap h3 {
+  margin-block-start: 0;
+  font-size: var(--font-size-base);
+}

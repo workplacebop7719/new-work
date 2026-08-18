@@ -1,0 +1,203 @@
+/*
+ * Component styles. All values come from tokens.css (generated from tokens.ts),
+ * so a colour used here has already passed the contrast tests.
+ */
+
+.ns-visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Visible on focus rather than removed from the document (ACC-002). */
+.ns-skip-link {
+  position: absolute;
+  inset-block-start: -100%;
+  inset-inline-start: var(--space-2);
+  z-index: 100;
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface-page);
+  color: var(--interactive);
+  border: 2px solid var(--focus);
+}
+.ns-skip-link:focus {
+  inset-block-start: var(--space-2);
+}
+
+.ns-button {
+  min-block-size: var(--target-comfortable);
+  min-inline-size: var(--target-comfortable);
+  padding: var(--space-2) var(--space-4);
+  font: inherit;
+  font-size: var(--font-size-base);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: background-color var(--duration-base) var(--easing-standard);
+}
+.ns-button--primary {
+  background: var(--interactive-surface);
+  color: var(--text-on-interactive);
+}
+.ns-button--primary:hover {
+  background: var(--interactive-hover);
+}
+.ns-button--secondary {
+  background: var(--surface-page);
+  color: var(--interactive);
+  border-color: var(--interactive);
+}
+.ns-button--quiet {
+  background: transparent;
+  color: var(--interactive);
+  text-decoration: underline;
+}
+.ns-button[aria-busy='true'] {
+  cursor: progress;
+}
+
+.ns-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-block-end: var(--space-4);
+  max-inline-size: var(--measure);
+}
+.ns-field__label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.ns-field__hint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+}
+.ns-field__input {
+  min-block-size: var(--target-comfortable);
+  padding: var(--space-2);
+  font: inherit;
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  background: var(--surface-page);
+  border: 2px solid var(--border);
+  border-radius: 4px;
+}
+/* Invalid state carries a thicker border AND the error text; never colour alone. */
+.ns-field__input[aria-invalid='true'] {
+  border-color: var(--status-critical);
+  border-inline-start-width: 6px;
+}
+.ns-field__error {
+  margin: 0;
+  color: var(--status-critical);
+  font-weight: 600;
+}
+
+.ns-radio-group {
+  border: 1px solid var(--border-subtle);
+  padding: var(--space-4);
+  margin-block-end: var(--space-4);
+  max-inline-size: var(--measure);
+}
+.ns-radio-group__legend {
+  font-weight: 600;
+  padding-inline: var(--space-2);
+}
+.ns-radio {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2);
+  align-items: baseline;
+  padding-block: var(--space-2);
+}
+.ns-radio input {
+  inline-size: 20px;
+  block-size: 20px;
+}
+.ns-radio__description {
+  grid-column: 2;
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.ns-progress__label {
+  margin: 0 0 var(--space-1);
+  color: var(--text-primary);
+}
+.ns-progress__track {
+  block-size: 8px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.ns-progress__fill {
+  block-size: 100%;
+  background: var(--graphic-brand);
+  transition: inline-size var(--duration-base) var(--easing-standard);
+}
+
+.ns-disclosure {
+  border-block-end: 1px solid var(--border-subtle);
+}
+.ns-disclosure__summary {
+  min-block-size: var(--target-comfortable);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.ns-disclosure__content {
+  padding-block-end: var(--space-4);
+  max-inline-size: var(--measure);
+}
+
+.ns-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+}
+.ns-status__mark {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 1.5em;
+  block-size: 1.5em;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.75em;
+}
+.ns-status--critical { color: var(--status-critical); }
+.ns-status--warning  { color: var(--status-warning); }
+.ns-status--success  { color: var(--status-success); }
+.ns-status--info     { color: var(--status-info); }
+
+.ns-notice {
+  /* Warm gold needs the ink border: at 1.85:1 against white it cannot carry its
+     own edge (see tokens.ts). */
+  background: var(--emphasis);
+  color: var(--text-on-emphasis);
+  border: 2px solid var(--emphasis-border);
+  padding: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+}
+.ns-notice__body { max-inline-size: var(--measure); }
+.ns-notice__provenance {
+  margin: 0;
+  font-size: var(--font-size-xs);
+}
+.ns-notice a { color: inherit; }
+
+.ns-status-message {
+  color: var(--text-primary);
+}

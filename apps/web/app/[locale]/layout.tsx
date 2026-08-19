@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import { SkipLink } from '@northstar/ui';
-import { ConsentBanner } from '@/app/components/consent-banner';
-import { readConsent } from '@/lib/session';
 import '@northstar/ui/tokens.css';
 import '../globals.css';
+import { ConsentBanner } from '@/app/components/consent-banner';
+import { SiteFooter, SiteHeader } from '@/app/components/site-chrome';
+import { display, sans } from '@/lib/fonts';
 import { isLocale, t, type Locale } from '@/lib/i18n';
+import { readConsent } from '@/lib/session';
 
 export function generateStaticParams() {
   return [{ locale: 'en' }, { locale: 'fr' }];
@@ -20,14 +21,17 @@ export async function generateMetadata({
   const { locale } = await params;
   const safe: Locale = isLocale(locale) ? locale : 'en';
   return {
-    title: t(safe, 'site.name'),
-    description: t(safe, 'site.tagline'),
-    // CNT-007: no personalized page is indexed. CC-01 has no public content to
-    // index at all, so the whole app is noindex until CC-02 ships real pages.
-    robots: { index: false, follow: false },
-    alternates: {
-      languages: { en: '/en', fr: '/fr' },
+    title: {
+      default: `${t(safe, 'site.name')} — ${t(safe, 'site.tagline')}`,
+      template: `%s — ${t(safe, 'site.name')}`,
     },
+    description: t(safe, 'hero.lede'),
+    // CNT-007: personalized result pages are never indexed. The whole site stays
+    // noindex until the brand and regulatory copy clear review (Q-04, ORG-005) —
+    // publishing unreviewed regulatory content to a search index is the one
+    // mistake that is genuinely hard to take back.
+    robots: { index: false, follow: false },
+    alternates: { languages: { en: '/en', fr: '/fr' } },
   };
 }
 
@@ -41,37 +45,17 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
-  const other: Locale = locale === 'en' ? 'fr' : 'en';
   const consent = await readConsent();
 
   return (
-    // `lang` is set from the route so assistive technology announces the page in
-    // the right language (WCAG 3.1.1, ACC-006).
-    <html lang={locale}>
+    <html lang={locale} className={`${sans.variable} ${display.variable}`}>
       <body>
         <SkipLink targetId="main">{t(locale, 'nav.skipToContent')}</SkipLink>
-        <header className="ns-header">
-          <p className="ns-header__brand">
-            <Link href={`/${locale}`}>{t(locale, 'site.name')}</Link>
-          </p>
-          <nav aria-label={t(locale, 'nav.mainLabel')}>
-            <Link href={`/${locale}/check`}>{t(locale, 'nav.checkReadiness')}</Link>
-            <Link href={`/${locale}/contact`}>{t(locale, 'nav.contact')}</Link>
-          </nav>
-          <nav aria-label={t(locale, 'nav.languageLabel')}>
-            <a href={`/${other}`} lang={other} hrefLang={other}>
-              {t(locale, other === 'fr' ? 'nav.switchToFrench' : 'nav.switchToEnglish')}
-            </a>
-          </nav>
-        </header>
+        <SiteHeader locale={locale} />
         <main id="main" tabIndex={-1}>
           {children}
         </main>
-        <footer className="ns-footer">
-          <p>{t(locale, 'footer.legal')}</p>
-        </footer>
-        {/* Rendered last and not focus-trapping: a consent prompt that blocks the
-            page is an inaccessible urgency pattern (CNV-003). */}
+        <SiteFooter locale={locale} />
         {consent.decided ? null : <ConsentBanner locale={locale} returnTo={`/${locale}`} />}
       </body>
     </html>

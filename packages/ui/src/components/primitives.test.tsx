@@ -180,3 +180,18 @@ describe('SkipLink', () => {
     expect(document.activeElement).toBe(link);
   });
 });
+
+describe('NoticeBand on a held claim', () => {
+  const base = {
+    sourceUrl: 'https://www.ontario.ca/page/completing-your-accessibility-compliance-report',
+    sourceLabel: 'Ontario — Completing your accessibility compliance report',
+  };
+
+  it('omits the last-reviewed clause rather than printing a placeholder', () => {
+    render(<NoticeBand {...base}>This guidance is being reviewed.</NoticeBand>);
+    expect(screen.queryByText(/Last reviewed/)).toBeNull();
+    // The source is still offered, because that is what a reader needs while a
+    // claim is on hold.
+    expect(screen.getByRole('link', { name: base.sourceLabel })).toBeDefined();
+  });
+});

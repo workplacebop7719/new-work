@@ -287,7 +287,12 @@ export interface NoticeBandProps {
   /** Source attribution is mandatory on any regulatory statement (PUB-004). */
   readonly sourceUrl: string;
   readonly sourceLabel: string;
-  readonly lastReviewed: string;
+  /**
+   * Omitted when the claim is on hold: a held claim has no verified date to
+   * show, and printing a placeholder dash next to "Last reviewed" reads as a
+   * broken template rather than as an honest absence.
+   */
+  readonly lastReviewed?: string | undefined;
   readonly onDismiss?: () => void;
   readonly dismissLabel?: string;
 }
@@ -318,8 +323,12 @@ export function NoticeBand({
         <a href={sourceUrl} rel="noreferrer">
           {sourceLabel}
         </a>
-        {' · '}
-        <span>Last reviewed {lastReviewed}</span>
+        {lastReviewed ? (
+          <>
+            {' · '}
+            <span>Last reviewed {lastReviewed}</span>
+          </>
+        ) : null}
       </p>
       {onDismiss ? (
         <Button variant="quiet" onClick={onDismiss}>

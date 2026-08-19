@@ -66,6 +66,17 @@ describe('brand colour restrictions (documented in tokens.ts)', () => {
     );
   });
 
+  it('the subtle border is decorative only: it does not reach the 3:1 boundary bar', () => {
+    // Pinned deliberately. If a control ever relies on --border-subtle to show
+    // its edge, that is a bug, and this test is the note explaining why.
+    expect(contrastRatio(COLOR['border-subtle'], COLOR['surface-page'])).toBeLessThan(
+      WCAG_AA_NON_TEXT,
+    );
+    expect(contrastRatio(COLOR.border, COLOR['surface-page'])).toBeGreaterThanOrEqual(
+      WCAG_AA_NON_TEXT,
+    );
+  });
+
   it('warm gold is usable as a surface under ink text', () => {
     expect(contrastRatio(COLOR['text-on-emphasis'], COLOR.emphasis)).toBeGreaterThanOrEqual(WCAG_AA_TEXT);
   });

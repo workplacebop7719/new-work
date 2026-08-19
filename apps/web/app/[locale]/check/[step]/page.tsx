@@ -47,7 +47,7 @@ export default async function QualifierStep({
   const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
 
   return (
-    <div className="ns-page">
+    <div className="ns-page ns-page--form">
       <Progress current={step} total={TOTAL_STEPS} label={t(locale, 'qualifier.progressLabel')} />
 
       <form action={submitAnswer}>

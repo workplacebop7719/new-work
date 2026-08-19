@@ -8,10 +8,15 @@ import { expect, test } from '@playwright/test';
  * browser level. A page that only works with hydration fails here.
  */
 test.describe('without client-side JavaScript', () => {
-  test('renders the page heading and content', async ({ page }) => {
+  test('renders the page heading and the whole marketing proposition', async ({ page }) => {
     await page.goto('/en');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.getByText(/design tokens, accessible primitives/)).toBeVisible();
+    // Every §7 module is server-rendered: a visitor without scripting sees the
+    // complete proposition, not a shell waiting to hydrate.
+    for (const id of ['your-organization', 'services', 'method', 'trust', 'proof', 'start']) {
+      await expect(page.locator(`#${id}`), `#${id} missing without JavaScript`).toBeVisible();
+    }
+    await expect(page.getByText(/Prices are indicative/)).toBeVisible();
   });
 
   test('the language switch still works, because it is a link', async ({ page }) => {

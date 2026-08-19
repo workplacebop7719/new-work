@@ -2,7 +2,7 @@
 
 Ontario accessibility readiness: a public demand engine, a secure client workspace, a contractor delivery network and an internal operations console.
 
-**Current state: CC-01 (Foundation) and CC-02 (Public conversion) delivered, plus a hardening pass. CC-03 not started.**
+**Current state: CC-01, CC-02 and the CC-02b marketing surface delivered, plus a hardening pass. CC-03 not started.**
 Source of truth is [`docs/PRD.md`](./docs/PRD.md). Requirement ids cited throughout the code are defined in [`docs/traceability.md`](./docs/traceability.md).
 
 ## Quick start
@@ -86,7 +86,9 @@ The whole journey works with JavaScript disabled — a Playwright project comple
 
 The anonymous endpoints are rate limited, and the refusal is an ordinary page with a route to a person rather than a challenge: an abuse control must not become an accessibility barrier.
 
-There is no marketing homepage yet: that needs brand, photography and counsel-reviewed copy, none of which exist. What is built is the conversion *system*.
+The homepage carries the PRD §7 modules: a source-stamped notice band, hero, employee-size selector, the full offer ladder with exclusions stated, the four-stage method, and a trust layer.
+
+Two sections are deliberately empty rather than invented. There are no case narratives and no named leadership, because there are no engagements and no hired team yet — fabricating either on a site whose proposition is trustworthiness would destroy the only asset the business has. There is no photography either: §14 warns against tokenistic stock and AI-perfect imagery, so the art direction is typographic until real commissioned photography exists.
 
 ## Accessibility
 

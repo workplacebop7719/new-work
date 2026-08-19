@@ -1,0 +1,94 @@
+/*
+ * Editorial layout primitives — PRD §14.
+ *
+ * "Editorial grid, generous spacing, strong typographic hierarchy" and, in the
+ * avoid column, "floating glass cards everywhere, excessive gradients, dense
+ * dashboard chrome". So: full-bleed sections with a constrained measure inside,
+ * horizontal rules instead of card borders, and space doing the work that
+ * boxes usually do.
+ */
+
+.ns-section {
+  padding-block: var(--section-y);
+  padding-inline: var(--gutter);
+}
+
+.ns-section--muted { background: var(--surface-muted); }
+.ns-section--raised { background: var(--surface-raised); }
+
+.ns-section--inverse {
+  background: var(--surface-inverse);
+  color: var(--text-on-inverse);
+}
+.ns-section--inverse a { color: var(--text-on-inverse); }
+.ns-section--inverse .ns-eyebrow { color: var(--text-secondary-on-inverse); }
+.ns-section--inverse .ns-section__lede { color: var(--text-secondary-on-inverse); }
+
+.ns-container {
+  max-inline-size: var(--content-max);
+  margin-inline: auto;
+}
+
+.ns-container--narrow { max-inline-size: var(--measure); }
+
+/* A small caps-style label above a heading. Sets the editorial tone cheaply. */
+.ns-eyebrow {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.ns-section__title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-3xl);
+  line-height: var(--line-height-heading);
+  letter-spacing: var(--tracking-display);
+  max-inline-size: 24ch;
+}
+
+.ns-section__lede {
+  margin: 0 0 var(--space-8);
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  max-inline-size: var(--measure);
+}
+
+/* Prose blocks never exceed the reading measure, whatever grid they sit in. */
+.ns-prose { max-inline-size: var(--measure); }
+.ns-prose > * + * { margin-block-start: var(--space-4); }
+
+/*
+ * Grid that collapses to one column without a media query. `auto-fit` plus a
+ * min track keeps it readable at 400% zoom, where fixed breakpoints often leave
+ * two cramped columns (ACC-004).
+ */
+.ns-grid {
+  display: grid;
+  gap: var(--space-8);
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+}
+
+.ns-grid--two {
+  grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
+}
+
+/* Rules, not cards. */
+.ns-ruled > * {
+  padding-block: var(--space-6);
+  border-block-start: 1px solid var(--border-subtle);
+}
+.ns-ruled > *:first-child { border-block-start: 0; }
+
+.ns-stack-4 > * + * { margin-block-start: var(--space-4); }
+.ns-stack-6 > * + * { margin-block-start: var(--space-6); }
+
+.ns-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+  margin-block-start: var(--space-8);
+}

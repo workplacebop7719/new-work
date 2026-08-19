@@ -52,12 +52,19 @@ export const COLOR = {
   // Surfaces
   'surface-page': '#FFFFFF',
   'surface-raised': '#F4F6F8',
+  // A third, warmer tone so alternating sections read as an editorial rhythm
+  // rather than as boxes. Kept close to white so text contrast is unaffected.
+  'surface-muted': '#F8F6F2',
   'surface-inverse': '#0B2239',
+  // One step lighter than the inverse surface, for layering inside dark sections.
+  'surface-inverse-raised': '#13324F',
 
   // Text
   'text-primary': '#0B2239',
   'text-secondary': '#425466',
   'text-on-inverse': '#FFFFFF',
+  // Secondary text on the dark surface. Checked at 4.5:1 like every other pair.
+  'text-secondary-on-inverse': '#B8C7D6',
   'text-on-interactive': '#FFFFFF',
   'text-on-emphasis': '#0B2239',
 
@@ -71,13 +78,20 @@ export const COLOR = {
   focus: '#0B2239',
   'focus-inverse': '#FFFFFF',
 
-  // Borders
+  // Borders. `border` is for anything that identifies a control or carries a
+  // boundary a user must perceive, and is held to 3:1 (WCAG 1.4.11).
+  // `border-subtle` is a DECORATIVE hairline for editorial rhythm between
+  // sections. It does not reach 3:1 and must never be the only thing marking a
+  // control, an input or a state — use `border` for those.
   border: '#5A6B7A',
   'border-subtle': '#C7D0D8',
 
   // Emphasis (warm gold): background only, always with ink text and an ink border.
   emphasis: '#F0B44D',
   'emphasis-border': '#0B2239',
+  // Gold as a *rule* on the dark surface, where it has room to be an accent
+  // rather than a background. 1.85:1 on white but comfortable on ink.
+  'accent-on-inverse': '#F0B44D',
 
   // Status. Colour is never the only carrier (ENG-004); these accompany an icon
   // and a text label in every component that uses them.
@@ -102,13 +116,19 @@ export const COLOR = {
 export const TEXT_PAIRS: readonly (readonly [keyof typeof COLOR, keyof typeof COLOR])[] = [
   ['text-primary', 'surface-page'],
   ['text-primary', 'surface-raised'],
+  ['text-primary', 'surface-muted'],
   ['text-secondary', 'surface-page'],
   ['text-secondary', 'surface-raised'],
+  ['text-secondary', 'surface-muted'],
   ['text-on-inverse', 'surface-inverse'],
+  ['text-on-inverse', 'surface-inverse-raised'],
+  ['text-secondary-on-inverse', 'surface-inverse'],
+  ['text-secondary-on-inverse', 'surface-inverse-raised'],
   ['text-on-interactive', 'interactive-surface'],
   ['text-on-emphasis', 'emphasis'],
   ['interactive', 'surface-page'],
   ['interactive', 'surface-raised'],
+  ['interactive', 'surface-muted'],
   ['status-critical', 'surface-page'],
   ['status-warning', 'surface-page'],
   ['status-success', 'surface-page'],
@@ -119,38 +139,74 @@ export const TEXT_PAIRS: readonly (readonly [keyof typeof COLOR, keyof typeof CO
 export const NON_TEXT_PAIRS: readonly (readonly [keyof typeof COLOR, keyof typeof COLOR])[] = [
   ['border', 'surface-page'],
   ['border', 'surface-raised'],
+  ['border', 'surface-muted'],
   ['focus', 'surface-page'],
   ['focus-inverse', 'surface-inverse'],
   ['graphic-brand', 'surface-page'],
   ['emphasis-border', 'emphasis'],
+  ['accent-on-inverse', 'surface-inverse'],
   ['interactive', 'surface-page'],
 ];
 
-/** Type scale. 16px minimum body and a ~70ch measure (BRD-002, PRD §14). */
+/**
+ * Type scale. 16px minimum body and a ~70ch measure (BRD-002, PRD §14).
+ *
+ * The display sizes use `clamp()` so headings scale with the viewport instead of
+ * stepping at breakpoints. This matters for ACC-004: a fixed 3.5rem heading that
+ * only shrinks at a media query will overflow at 400% zoom, whereas a clamped one
+ * degrades continuously.
+ */
 export const TYPE = {
   'font-size-xs': '0.875rem', // 14px — metadata and captions only, never body copy
   'font-size-base': '1rem', // 16px minimum body
   'font-size-lg': '1.125rem',
-  'font-size-xl': '1.5rem',
-  'font-size-2xl': '2rem',
-  'font-size-3xl': '2.5rem',
-  'line-height-tight': '1.2',
+  'font-size-xl': '1.375rem',
+  'font-size-2xl': '1.75rem',
+  'font-size-3xl': 'clamp(2rem, 1.5rem + 2vw, 2.75rem)',
+  'font-size-display': 'clamp(2.5rem, 1.6rem + 3.6vw, 4rem)',
+  'line-height-tight': '1.1',
+  'line-height-heading': '1.25',
   'line-height-body': '1.6',
   'measure': '70ch',
+  'measure-narrow': '54ch',
+  /** Editorial letter-spacing: display type set tight, small caps set open. */
+  'tracking-display': '-0.02em',
+  'tracking-eyebrow': '0.08em',
+  /**
+   * `--font-sans` and `--font-display` are supplied by next/font at build time
+   * (see apps/web/lib/fonts.ts) and self-hosted. The fallbacks are real, not
+   * decorative: if the webfont fails, the page still sets in something close.
+   */
   'font-family-sans':
-    "'Inter var', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+    "var(--font-sans), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+  'font-family-display':
+    "var(--font-display), 'Newsreader', ui-serif, Georgia, 'Times New Roman', serif",
 } as const;
 
-/** Spacing scale, 4px base. */
+/**
+ * Spacing scale, 4px base, extended upward for editorial rhythm.
+ *
+ * The large steps are what make a page feel commissioned rather than assembled:
+ * PRD §14 asks for "generous space" and warns against "dense dashboard chrome".
+ * Section padding uses `clamp()` so the rhythm compresses on small screens rather
+ * than forcing a horizontal scroll.
+ */
 export const SPACE = {
   'space-1': '0.25rem',
   'space-2': '0.5rem',
   'space-3': '0.75rem',
   'space-4': '1rem',
+  'space-5': '1.25rem',
   'space-6': '1.5rem',
   'space-8': '2rem',
+  'space-10': '2.5rem',
   'space-12': '3rem',
   'space-16': '4rem',
+  'space-20': '5rem',
+  'space-24': '6rem',
+  'section-y': 'clamp(3rem, 2rem + 5vw, 6rem)',
+  'gutter': 'clamp(1.25rem, 0.75rem + 2vw, 3rem)',
+  'content-max': '72rem',
 } as const;
 
 /**

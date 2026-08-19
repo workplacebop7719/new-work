@@ -19,21 +19,26 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
       <p className="ns-lede">{t(locale, 'contact.body')}</p>
 
       <dl className="ns-contact">
-        <dt>{t(locale, 'contact.phoneLabel')}</dt>
-        <dd>
-          <a href="tel:+15555550142">+1 555 555 0142</a>
-        </dd>
-
-        <dt>{t(locale, 'contact.emailLabel')}</dt>
-        <dd>
-          <a href="mailto:hello@northstar.example">hello@northstar.example</a>
-        </dd>
-
-        <dt>{t(locale, 'contact.relayLabel')}</dt>
-        <dd>{t(locale, 'contact.relayBody')}</dd>
-
-        <dt>{t(locale, 'contact.accommodationLabel')}</dt>
-        <dd>{t(locale, 'contact.accommodationBody')}</dd>
+        <div>
+          <dt>{t(locale, 'contact.phoneLabel')}</dt>
+          <dd>
+            <a href="tel:+15555550142">+1 555 555 0142</a>
+          </dd>
+        </div>
+        <div>
+          <dt>{t(locale, 'contact.emailLabel')}</dt>
+          <dd>
+            <a href="mailto:hello@northstar.example">hello@northstar.example</a>
+          </dd>
+        </div>
+        <div>
+          <dt>{t(locale, 'contact.relayLabel')}</dt>
+          <dd>{t(locale, 'contact.relayBody')}</dd>
+        </div>
+        <div>
+          <dt>{t(locale, 'contact.accommodationLabel')}</dt>
+          <dd>{t(locale, 'contact.accommodationBody')}</dd>
+        </div>
       </dl>
 
       <p>{t(locale, 'contact.noPressure')}</p>

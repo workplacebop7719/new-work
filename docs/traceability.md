@@ -1,6 +1,6 @@
 # Requirement traceability matrix
 
-**Status:** CC-01 (Foundation) and CC-02 (Public conversion) delivered, plus a CC-02 hardening pass. CC-03 not started.
+**Status:** CC-01, CC-02 and the CC-02b marketing surface delivered, plus a hardening pass. CC-03 not started.
 **Source of truth:** [`/docs/PRD.md`](./PRD.md) (Project Northstar PRD v1.0, 2026-08-18).
 **Maintained under:** PRD §27 "Build mode" — this file is updated at the end of every CC slice.
 
@@ -114,7 +114,7 @@ These carry the same binding force as the PRD prose they come from; only the ide
 |---|---|---|---|---|
 | CNT-001 | Regulatory content object stores jurisdiction, source URL, effective date, last-verified date, reviewer, next-review date. | CC-01 | A (schema), R | Done |
 | CNT-002 | Bilingual page stores translation status, translator/reviewer, source-language version, sync state. | CC-01 | A | Done |
-| CNT-003 | Case narrative stores context, constraint, scope, method, result, evidence, permission state. | CC-02 | A, R | Not started |
+| CNT-003 | Case narrative stores context, constraint, scope, method, result, evidence, permission state. | CC-02 | A, R | Partial |
 | CNT-004 | Downloadable resources have an HTML equivalent where practical plus an accessibility QA record. | CC-02 | M, R | Not started |
 | CNT-005 | Expired/disputed regulatory content shows internal hold and cannot republish without review. | CC-01 → CC-07 | A (**negative test**), R | Done |
 | CNT-006 | SEO: canonical URLs, hreflang, accessible structured data, semantic headings, XML sitemaps, SSR critical content. | CC-02 | A | Done |
@@ -141,7 +141,7 @@ These carry the same binding force as the PRD prose they come from; only the ide
 | ACC-004 | Visual: text and non-text contrast, 200% resize, 400% zoom/reflow, Windows High Contrast. | every slice | A, M | Partial |
 | ACC-005 | Motor/touch: target size and spacing, gesture alternatives, no drag-only interaction, generous extendable timeouts. | every slice | A, M | Not started |
 | ACC-006 | Cognitive: plain language, consistent navigation, visible progress, recoverable errors, calm notifications. | every slice | R, M (panel) | Not started |
-| ACC-007 | Media: captions, transcripts, audio-description strategy, no surprise playback, accessible controls. | CC-02 | M | Partial |
+| ACC-007 | Media: captions, transcripts, audio-description strategy, no surprise playback, accessible controls. | CC-02 | M | Not started |
 | ACC-008 | Documents: tagged PDF/Office, reading order, language, headings, lists, tables, links, alt text, accessible alternatives. | CC-05 | M (PDF/UA check + AT), R | Not started |
 | ACC-009 | Authentication: accessible MFA, password-manager support, paste allowed, alternative verification, accessible recovery. | CC-03 | M | Not started |
 | ACC-010 | Paid disability-panel sessions at discovery, prototype, beta and pre-launch. | Phase 0, CC-02, CC-05, CC-09 | X (panel sessions, compensated) | Not started |
@@ -361,3 +361,54 @@ hourly windows, so a second suite run inside the same hour inherited the first
 run's consumed budget and failed in a way that looked like a product bug. Both
 the database tests and the Playwright projects now use per-run client
 identifiers.
+
+---
+
+## 8. CC-02b — public marketing surface
+
+The homepage §7 asks for, and a visual system to carry it. **283 unit/integration
+tests, 159 Playwright tests, 7 guards.**
+
+| Module (PRD §7) | State |
+|---|---|
+| Source-stamped notice band | Done — renders the regulatory claim through the content model, dismissible, no motion. Shows the hold state, because the seeded claim is unreviewed (Q-04). |
+| Hero | Done — one promise, one primary CTA, one secondary, plus three control facts that are each an enforced policy rather than a marketing claim. |
+| Employee-size selector | Done (PUB-002) — persists as a functional preference, annotates rather than hides, works without JavaScript. |
+| Offer architecture | Done — outcome, inclusions, indicative price, timing, required inputs **and exclusions** for all five offers. |
+| Method | Done — four stages as an ordered list, no motion at all. |
+| Trust layer | Done, as *policies*. See below. |
+| Case narratives | **Deliberately empty.** |
+| Editorial resources | Not built — needs real articles. |
+| Final CTA | Done, with the human path at equal weight. |
+
+### Two things not faked, on purpose
+
+§7 asks for named leadership, credential policy, sample report excerpts and
+before/after case narratives. None of those people or engagements exist yet.
+
+- The **trust layer** states the policies the PRD commits to — every conclusion
+  signed by a named reviewer, specialists verified and calibrated, evidence
+  scanned and scope-limited, a paid disability panel, and an explicit statement
+  of what the service is not. Each is enforced somewhere in this codebase, which
+  is why it can be asserted publicly.
+- The **proof section** is an honest empty state saying case narratives are not
+  published yet and offering a redacted sample on request. Inventing testimonials
+  on a site whose entire proposition is trustworthiness would have destroyed the
+  only asset the business has. An e2e test asserts the empty state is present.
+
+Likewise no photography: §14 warns against tokenistic stock and AI-perfect
+imagery, so the art direction is typographic — a display serif, a faint
+structural grid behind the hero, hairline rules instead of cards. Real
+commissioned photography replaces it.
+
+### Design system
+
+- Display serif (Newsreader) paired with a grotesque (Inter), both **self-hosted
+  at build time** via `next/font`. No font-CDN request at runtime, so `font-src`
+  stays `'self'`, the no-third-party guard stays honest, and a visitor's address
+  is never disclosed to a font host before they consent to anything.
+- Every new colour pair is contrast-tested. The token set grew from 20 asserted
+  pairs to 27.
+- One correction found by the tests: `border-subtle` was listed as a meaningful
+  boundary and fails 3:1. It is a decorative hairline; a test now pins that and
+  says so, so it can never become the only marker of a control.

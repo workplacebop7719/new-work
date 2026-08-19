@@ -51,7 +51,7 @@ export default async function ResultPage({ params }: { params: Promise<{ locale:
   const tone = result.category === 'uncertain' ? 'warning' : 'info';
 
   return (
-    <div className="ns-page">
+    <div className="ns-page ns-page--form">
       <h1>{t(locale, 'result.heading')}</h1>
 
       <StatusBadge tone={tone}>{t(locale, CATEGORY_LABEL[result.category])}</StatusBadge>

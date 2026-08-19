@@ -73,11 +73,19 @@ test.describe('keyboard operation @a11y', () => {
 test.describe('regulatory content (CNT-005, ENG-007)', () => {
   test('an unreviewed claim renders its hold state, never its statement', async ({ page }) => {
     await page.goto('/en');
+
     // The seeded claim is `in_review` pending counsel sign-off (Q-04), so the
-    // safety path is what ships.
-    await expect(page.getByRole('heading', { name: 'This guidance is being reviewed' })).toBeVisible();
+    // notice band shows the hold state rather than the statement.
+    const notice = page.locator('.ns-notice');
+    await expect(notice).toContainText('being reviewed');
     await expect(
-      page.getByRole('link', { name: /Completing your accessibility compliance report/ }),
+      notice.getByRole('link', { name: /Completing your accessibility compliance report/ }),
     ).toBeVisible();
+
+    // The guarantee under test: the claim's own wording is nowhere on the page.
+    // This is the assertion that would catch a regression in resolveClaim.
+    await expect(page.locator('body')).not.toContainText(
+      'Organizations of a certain size in Ontario are required to file',
+    );
   });
 });

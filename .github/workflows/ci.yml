@@ -17,6 +17,9 @@ env:
   APP_ENV: test
   DATABASE_URL: postgres://postgres:postgres@localhost:5432/northstar_test
   DB_APP_ROLE: northstar_app
+  # Salt for rate-limit keys (Q-27). A CI-only value: it exists so counters are
+  # not correlatable, and rotating it only resets counters.
+  RATE_LIMIT_SECRET: ci-only-not-a-production-secret
 
 jobs:
   quality:

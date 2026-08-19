@@ -2,7 +2,7 @@
 
 Ontario accessibility readiness: a public demand engine, a secure client workspace, a contractor delivery network and an internal operations console.
 
-**Current state: CC-01 (Foundation) and CC-02 (Public conversion) delivered. CC-03 not started.**
+**Current state: CC-01 (Foundation) and CC-02 (Public conversion) delivered, plus a hardening pass. CC-03 not started.**
 Source of truth is [`docs/PRD.md`](./docs/PRD.md). Requirement ids cited throughout the code are defined in [`docs/traceability.md`](./docs/traceability.md).
 
 ## Quick start
@@ -83,6 +83,8 @@ Authorization is enforced at three layers, all required: the policy layer (`pack
 - a consent banner where accepting and declining are the same control, and nothing third-party loads either way.
 
 The whole journey works with JavaScript disabled — a Playwright project completes it that way on every run.
+
+The anonymous endpoints are rate limited, and the refusal is an ordinary page with a route to a person rather than a challenge: an abuse control must not become an accessibility barrier.
 
 There is no marketing homepage yet: that needs brand, photography and counsel-reviewed copy, none of which exist. What is built is the conversion *system*.
 

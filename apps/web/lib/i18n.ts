@@ -108,6 +108,13 @@ const en = {
   'contact.accommodationBody':
     'Tell us how you would prefer to communicate and we will work that way. If you need materials in another format, ask.',
   'contact.noPressure': 'We will not add you to a mailing list because you contacted us.',
+  'rateLimit.heading': 'Too many requests from your connection',
+  'rateLimit.body':
+    'We limit how often this form can be submitted from one connection, to stop it being misused. You have reached that limit.',
+  'rateLimit.retry': 'Please try again in about {minutes} minute(s).',
+  'rateLimit.noPuzzle':
+    'We will not ask you to solve a puzzle or prove you are human. If you need to continue now, contact us and a person will help.',
+  'rateLimit.contact': 'Talk to a person now',
 } satisfies Dictionary;
 
 const fr = {
@@ -196,6 +203,13 @@ const fr = {
   'contact.accommodationBody':
     "Dites-nous comment vous préférez communiquer et nous procéderons ainsi. Si vous avez besoin de documents dans un autre format, demandez-le.",
   'contact.noPressure': "Nous ne vous ajouterons pas à une liste de diffusion parce que vous nous avez contactés.",
+  'rateLimit.heading': 'Trop de demandes provenant de votre connexion',
+  'rateLimit.body':
+    "Nous limitons la fréquence d'envoi de ce formulaire depuis une même connexion, afin d'éviter les abus. Vous avez atteint cette limite.",
+  'rateLimit.retry': 'Veuillez réessayer dans environ {minutes} minute(s).',
+  'rateLimit.noPuzzle':
+    "Nous ne vous demanderons pas de résoudre une énigme ni de prouver que vous êtes une personne. Si vous devez continuer maintenant, contactez-nous et quelqu'un vous aidera.",
+  'rateLimit.contact': 'Parler à une personne maintenant',
 } satisfies Partial<Dictionary>;
 
 const DICTIONARIES: Record<Locale, Dictionary> = { en, fr };

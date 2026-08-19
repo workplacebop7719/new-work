@@ -1,6 +1,6 @@
 # Threat model
 
-- **Status:** v1 (CC-02). PRD §16 requires this to be revised at every slice that adds a data class or an external boundary, not merely updated.
+- **Status:** v2 (CC-02 hardening). PRD §16 requires this to be revised at every slice that adds a data class or an external boundary, not merely updated.
 - **Standard:** OWASP ASVS 5.0 Level 2 (SEC-001); OWASP Top 10 for awareness and training.
 - **Owner:** security/privacy lead, who holds stop-ship authority (PRD §20).
 
@@ -74,13 +74,32 @@ The first surface that accepts input from anonymous visitors and stores it.
 | T28 | Abandoned visitor data is retained indefinitely. | Retention sweep, dry-run by default, with the window in one constant. | Same file — both dry-run and applied modes. |
 | T29 | The qualifier states a compliance conclusion. | `assertNoConclusion` over rule output; 144-permutation sweep; an end-to-end assertion over the rendered page. | `packages/domain/src/qualifier.test.ts`, `apps/web/e2e/qualifier.spec.ts`. |
 
+## Closed in the CC-02 hardening pass
+
+| # | Threat | Control | Verified by |
+|---|---|---|---|
+| T30 | An anonymous endpoint is flooded: session rows created without limit. | Fixed-window rate limiting per client address and action, failing **closed** if the counter cannot be read. | `packages/db/test/rate-limit.test.ts`; `apps/web/e2e/hardening.spec.ts` drives a real endpoint to its limit. |
+| T31 | The resume form is used to enumerate addresses or send mail to a third party. | Tightest budget of all the actions, applied before the address is validated or stored. | Same. |
+| T32 | Rate-limit records become a log of who visited from where. | The key is an HMAC of the address with a server secret **and** the current UTC date. No raw address is stored, and yesterday's counters cannot be correlated with today's — including by us. Missing secret is a hard failure, not a silent constant. | `rate-limit.test.ts`. |
+| T33 | Abuse control becomes an accessibility barrier. | The refusal is an ordinary page: heading, plain language, wait time, and a link to reach a person immediately. No challenge, no puzzle, no countdown that steals focus. Asserted in an `@a11y` test that fails if the word "captcha" appears. | `hardening.spec.ts`. |
+| T34 | Injected script executes. | Nonce-based CSP with `strict-dynamic`, `object-src 'none'`, `frame-ancestors 'none'`, `form-action 'self'`, and `connect-src 'self'` — no third-party origin is permitted anywhere. | `hardening.spec.ts` asserts the header and that using the qualifier produces no CSP violation. |
+| T35 | An open redirect via the consent form's return path. | A prefix check alone is insufficient — browsers normalise backslashes, so `/en\evil.example` can be read as a host. The path must match a locale route and contain no backslash or colon. | `apps/web/lib/return-to.test.ts`. |
+
+### A note on how the limits were chosen
+
+The first values were tuned to "how often would one person do this?" and would
+have locked out an entire client the moment two colleagues at the same office
+compared notes — the buyers here are organizations, so many legitimate visitors
+share one NAT address. The limits were re-sized against that false-positive case
+instead. They still cost a script far more time than these endpoints are worth.
+
 ## Known gaps at CC-02
 
 | Gap | Why it matters | Closes in |
 |---|---|---|
-| **No rate limiting** on the qualifier actions or the resume-email form. | An anonymous POST endpoint that writes rows is an abuse vector: session flooding, and email-address enumeration through the resume form. The retention sweep bounds the storage cost but not the abuse. **This is the most significant open item from this slice.** | CC-03, with the identity work |
-| No Content-Security-Policy beyond baseline headers. | Now that there are forms, a nonce-based CSP is worth the effort. | CC-03 |
-| No CAPTCHA-free bot mitigation decided. | Any mitigation must not become an inaccessible challenge (ACC-005); this needs a design decision, not a drop-in widget. | CC-03 |
+| `x-forwarded-for` is trusted for the client address. | Spoofable by anyone reaching the origin directly, which would let an attacker evade the limit and, worse, exhaust another visitor's budget. **Deployment constraint: the origin must only be reachable through the proxy**, and the proxy must overwrite rather than append the header. Recorded here because nothing in the repository can currently verify it. | CC-09 / infra |
+| `style-src` still allows `'unsafe-inline'`. | The framework injects inline styles. Much smaller exposure than for scripts, but not zero. | CC-09 |
+| No bot detection beyond rate limiting. | Deliberate: any further mitigation must not become an inaccessible challenge (ACC-005). Rate limiting is the accessible control; anything more needs a design decision. | Reviewed at CC-09 |
 
 ## Accepted risks in CC-01
 

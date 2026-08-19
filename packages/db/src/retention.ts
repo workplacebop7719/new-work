@@ -9,6 +9,7 @@
  *      decision is reviewable.
  */
 import { withSystemContext } from './client';
+import { pruneRateLimitCounters } from './rate-limit';
 
 /**
  * The PRD says abandoned qualifier data follows "a short retention schedule"
@@ -24,6 +25,9 @@ export const RETENTION_DAYS = {
 export interface RetentionReport {
   readonly abandonedSessions: number;
   readonly completedSessions: number;
+  /** Closed rate-limit windows. Always pruned: they hold no personal data and
+   *  keeping them serves no purpose. */
+  readonly rateLimitCountersPruned: number;
   readonly applied: boolean;
 }
 
@@ -58,6 +62,8 @@ export async function runRetention(options: { apply: boolean } = { apply: false 
       );
     }
 
-    return { abandonedSessions, completedSessions, applied: options.apply };
+    const rateLimitCountersPruned = options.apply ? await pruneRateLimitCounters() : 0;
+
+    return { abandonedSessions, completedSessions, rateLimitCountersPruned, applied: options.apply };
   });
 }

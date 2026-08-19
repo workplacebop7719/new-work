@@ -1,5 +1,16 @@
+import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { defineConfig, devices } from '@playwright/test';
+
+/**
+ * Rate-limit counters live in fixed hourly windows and persist across runs
+ * (Q-27). Without a per-run component in the client identifier, a second full
+ * suite inside the same hour would inherit the first run's consumed budget and
+ * start failing in a way that looks like a product bug. The projects also
+ * differ from each other so they cannot exhaust one another in parallel.
+ */
+const RUN = randomUUID();
+const clientAddress = (project: string) => `198.51.100.${project}-${RUN}`;
 
 /**
  * Some environments (CI images, this remote container) ship a preinstalled
@@ -24,15 +35,28 @@ export default defineConfig({
   use: {
     baseURL: process.env['E2E_BASE_URL'] ?? 'http://127.0.0.1:3000',
     trace: 'on-first-retry',
+    // Exercises the real x-forwarded-for path rather than the 'unknown' fallback.
+    extraHTTPHeaders: { 'x-forwarded-for': clientAddress('1') },
   },
   projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'], launchOptions } },
-    { name: 'mobile', use: { ...devices['Pixel 7'], launchOptions } },
+    {
+      name: 'desktop',
+      use: { ...devices['Desktop Chrome'], launchOptions, extraHTTPHeaders: { 'x-forwarded-for': clientAddress('10') } },
+    },
+    {
+      name: 'mobile',
+      use: { ...devices['Pixel 7'], launchOptions, extraHTTPHeaders: { 'x-forwarded-for': clientAddress('20') } },
+    },
     {
       // ARC-006: critical public pages must render useful primary content
       // without client-side JavaScript. Asserted, not assumed.
       name: 'no-javascript',
-      use: { ...devices['Desktop Chrome'], launchOptions, javaScriptEnabled: false },
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions,
+        javaScriptEnabled: false,
+        extraHTTPHeaders: { 'x-forwarded-for': clientAddress('30') },
+      },
       testMatch: /no-javascript\.spec\.ts|qualifier-no-js\.spec\.ts/,
     },
   ],

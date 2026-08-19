@@ -12,6 +12,7 @@ console.log(
 console.log(
   `  completed qualifier sessions older than ${RETENTION_DAYS.completedQualifierSession}d: ${report.completedSessions}`,
 );
+console.log(`  closed rate-limit windows pruned: ${report.rateLimitCountersPruned}`);
 if (!apply) console.log('\nNothing was deleted. Re-run with --apply to delete.');
 
 await closePool();

@@ -1,6 +1,6 @@
 # Runbook
 
-- **Status:** v1 (CC-02) — local and CI operations only. Production runbooks are a CC-09 deliverable (SEC-010) and must be tested by someone who did not write them.
+- **Status:** v2 (CC-02 hardening) — local and CI operations only. Production runbooks are a CC-09 deliverable (SEC-010) and must be tested by someone who did not write them.
 
 ## Local setup
 
@@ -64,6 +64,13 @@ The second tenant exists so the tenant boundary is demonstrable rather than mere
 **"This page couldn't load" on the qualifier.** Almost always a database that is behind on migrations — the qualifier persists sessions from the first answer. Run `pnpm db:migrate`. CI runs migrations before the end-to-end job for this reason.
 
 **The homepage keeps asking about analytics.** The decision lives in the `ns_consent` cookie. Clearing cookies clears the decision, which is intended: no decision is not consent.
+
+**"Too many requests from your connection" while developing.** The rate limiter
+(Q-27) counts per client address in fixed hourly windows. Locally every request
+looks like the same client, so a heavy manual session can exhaust a budget. Wait
+for the window, or clear it: `psql -c "TRUNCATE rate_limit_counters"`. Do not
+raise the limits to make a local annoyance go away — they are sized for a shared
+office address, and the values are a security decision (see the threat model).
 
 **A guard fails in `pnpm lint`.** The repository guards enforce PRD §27 constraints, not style. Read the message: each names the requirement and, where an exception is legitimate, the annotation that records it (`northstar-allow-claim:`, `northstar-allow-regulatory:`, `-- global:`). Annotations are reviewed in the pull request; that is the audit trail.
 

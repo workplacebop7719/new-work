@@ -1,6 +1,6 @@
 # Requirement traceability matrix
 
-**Status:** CC-01 (Foundation) and CC-02 (Public conversion) delivered. CC-03 not started.
+**Status:** CC-01 (Foundation) and CC-02 (Public conversion) delivered, plus a CC-02 hardening pass. CC-03 not started.
 **Source of truth:** [`/docs/PRD.md`](./PRD.md) (Project Northstar PRD v1.0, 2026-08-18).
 **Maintained under:** PRD §27 "Build mode" — this file is updated at the end of every CC slice.
 
@@ -332,3 +332,32 @@ These are PRD obligations that are organizational rather than code, tracked here
 | Checkout and booking (PUB-003) | CC-03's slice. | CC-03 |
 | Manual screen-reader pass and the prototype panel session (ACC-010) | Now overdue: CC-02 is the first slice with a real user task. **This is a CC-02 exit criterion that has not been met**, and no accessibility claim should be made until it is. | Before CC-03 |
 | Core Web Vitals field measurement (ARC-005) | Lab budgets only so far; there is no traffic to measure. | CC-09 |
+
+---
+
+## 7. CC-02 hardening pass
+
+Not a new slice — closing the gaps the CC-02 record itself declared, before
+adding more surface. **270 unit/integration tests, 129 Playwright tests, 7 guards.**
+
+| Item | Requirement | What landed |
+|---|---|---|
+| Rate limiting | Q-27, §16 Assurance | Fixed-window limiter on all four anonymous actions, failing closed. Keys are a daily-rotating HMAC of the client address, so no raw address is stored and counters cannot be correlated across days. Pruned by the retention sweep. |
+| Accessible refusal | ACC-005, ACC-006 | An ordinary page with a heading, a wait time and a link to a person. An `@a11y` test fails if the word "captcha" ever appears on it. |
+| Content-Security-Policy | SEC-001, ARC-007 | Nonce-based with `strict-dynamic`; `connect-src 'self'` means no third-party origin is reachable at all. Tested for the header *and* for the absence of violations while using the qualifier. |
+| Open-redirect fix | SEC-001 | The consent form's return path is validated as a locale route with no backslash or colon, not merely prefix-checked. |
+
+### What this pass taught us
+
+The first rate limits were wrong in a way that testing caught and code review
+would not have: they were sized for one person, and the buyers here are
+organizations whose staff share one NAT address. A limit that locks out a client
+because two colleagues compared notes is worse than no limit — it fails exactly
+the users the product is trying to serve. The limits are now sized against the
+false-positive case.
+
+The same lesson applied to the tests themselves: rate-limit counters persist in
+hourly windows, so a second suite run inside the same hour inherited the first
+run's consumed budget and failed in a way that looked like a product bug. Both
+the database tests and the Playwright projects now use per-run client
+identifiers.

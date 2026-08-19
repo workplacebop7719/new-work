@@ -16,6 +16,7 @@ import { answers as answersSchema, evaluate, type Answers } from '@northstar/dom
 import { track } from '@/lib/analytics';
 import { getClaim } from '@/lib/claims';
 import { isLocale, type Locale } from '@/lib/i18n';
+import { enforceRateLimit } from '@/lib/rate-limit';
 import { QUESTIONS, TOTAL_STEPS } from '@/lib/questions';
 import { getOrCreateSession, readResumeToken, writeConsentCookie } from '@/lib/session';
 
@@ -24,11 +25,30 @@ function safeLocale(value: FormDataEntryValue | null): Locale {
   return isLocale(raw) ? raw : 'en';
 }
 
+/**
+ * Validates a caller-supplied return path.
+ *
+ * A `startsWith('/' + locale)` check is not enough on its own: browsers
+ * normalise backslashes to slashes in some positions, so `/en\\evil.com` can be
+ * read as a host. The path must therefore look like a locale route and contain
+ * no backslash and no scheme. Anything else falls back to the locale home —
+ * silently, because a visitor tampering with this field is not someone to show
+ * an error to.
+ */
+function safeReturnTo(value: FormDataEntryValue | null, locale: Locale): string {
+  const home = `/${locale}`;
+  if (typeof value !== 'string') return home;
+  if (value.includes('\\') || value.includes(':')) return home;
+  return /^\/(en|fr)(\/|\?|$)/.test(value) ? value : home;
+}
+
 export async function submitAnswer(formData: FormData): Promise<void> {
   const locale = safeLocale(formData.get('locale'));
   const step = Number(formData.get('step') ?? 1);
   const question = QUESTIONS[step - 1];
   if (!question) redirect(`/${locale}/check`);
+
+  await enforceRateLimit('qualifier_answer', locale);
 
   const { token, session } = await getOrCreateSession(locale);
 
@@ -66,6 +86,7 @@ export async function submitAnswer(formData: FormData): Promise<void> {
 
 export async function startQualifier(formData: FormData): Promise<void> {
   const locale = safeLocale(formData.get('locale'));
+  await enforceRateLimit('qualifier_start', locale);
   await getOrCreateSession(locale);
   await track('qualifier_started', { locale });
   redirect(`/${locale}/check/1`);
@@ -78,14 +99,14 @@ export async function startQualifier(formData: FormData): Promise<void> {
  */
 export async function setConsent(formData: FormData): Promise<void> {
   const locale = safeLocale(formData.get('locale'));
+  await enforceRateLimit('consent', locale);
   const granted = formData.get('decision') === 'grant';
   await writeConsentCookie(granted);
 
   const token = await readResumeToken();
   if (token) await recordConsent(token, granted);
 
-  const returnTo = formData.get('returnTo');
-  redirect(typeof returnTo === 'string' && returnTo.startsWith(`/${locale}`) ? returnTo : `/${locale}`);
+  redirect(safeReturnTo(formData.get('returnTo'), locale));
 }
 
 /**
@@ -97,6 +118,10 @@ export async function requestResumeLink(formData: FormData): Promise<void> {
   const email = String(formData.get('email') ?? '').trim();
   const consented = formData.get('email_consent') === 'on';
   const step = Number(formData.get('step') ?? 1);
+
+  // The tightest limit of the three: this endpoint accepts an email address, so
+  // it is the one an attacker would use to enumerate or to send mail elsewhere.
+  await enforceRateLimit('resume_email', locale);
 
   if (!consented || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     redirect(`/${locale}/check/${step}?error=resume`);

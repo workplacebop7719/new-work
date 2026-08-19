@@ -2,7 +2,7 @@
   "$schema": "https://turborepo.com/schema.json",
   "ui": "stream",
   "globalEnv": ["CI", "APP_ENV", "NODE_ENV"],
-  "globalPassThroughEnv": ["DATABASE_URL", "DB_APP_ROLE", "DB_POOL_MAX", "E2E_BASE_URL", "CHROMIUM_PATH", "PLAYWRIGHT_BROWSERS_PATH"],
+  "globalPassThroughEnv": ["DATABASE_URL", "DB_APP_ROLE", "RATE_LIMIT_SECRET", "DB_POOL_MAX", "E2E_BASE_URL", "CHROMIUM_PATH", "PLAYWRIGHT_BROWSERS_PATH"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

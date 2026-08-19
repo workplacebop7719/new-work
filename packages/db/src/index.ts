@@ -10,3 +10,4 @@ export * from './config';
 export * from './client';
 export * from './qualifier-session';
 export * from './retention';
+export * from './rate-limit';

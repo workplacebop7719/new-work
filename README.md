@@ -2,7 +2,7 @@
 
 Ontario accessibility readiness: a public demand engine, a secure client workspace, a contractor delivery network and an internal operations console.
 
-**Current state: CC-01 (Foundation) delivered. CC-02 not started.**
+**Current state: CC-01 (Foundation) and CC-02 (Public conversion) delivered. CC-03 not started.**
 Source of truth is [`docs/PRD.md`](./docs/PRD.md). Requirement ids cited throughout the code are defined in [`docs/traceability.md`](./docs/traceability.md).
 
 ## Quick start
@@ -34,6 +34,7 @@ The full PRD §27 contract. Every one exits non-zero on failure.
 | `pnpm db:migrate` | Applies pending migrations, each in its own transaction. |
 | `pnpm db:seed` | Loads the fictional Maple Grove and Riverside demo tenants. |
 | `pnpm db:reset-safe` | Drop, migrate, reseed. Refuses unless `APP_ENV` is non-production **and** the host is local. |
+| `pnpm db:retention` | Retention sweep. Dry-run by default; `--apply` to delete. |
 | `pnpm build` / `pnpm start` | Production build and serve. |
 
 Demo accounts and the things that will confuse you once are in [`docs/runbook.md`](./docs/runbook.md).
@@ -65,10 +66,25 @@ The PRD's non-negotiable constraints (§27) are build failures, not review conve
 | `tenant-columns` | Every new table has `organization_id` with RLS enabled **and** forced **and** a policy — or an explicit `-- global:` declaration with a reason (DAT-002). |
 | `domain-purity` | `packages/domain` imports no framework, driver or app; `packages/auth` stays testable without a database (ARC-002, ENG-001). |
 | `tokens-drift` | The committed `tokens.css` is exactly what `tokens.ts` renders, so a hand-edit cannot escape the contrast tests (BRD-001). |
+| `analytics-consent` | No third-party script host anywhere in the app, no analytics globals, and `Analytics` constructible only in the consent wrapper (PUB-006, ARC-007, ANL-001). |
 
 Where an exception is legitimate it is annotated in the code (`northstar-allow-claim:`, `northstar-allow-regulatory:`, `-- global:`) and reviewed in the pull request. The annotation is the audit trail.
 
 Authorization is enforced at three layers, all required: the policy layer (`packages/auth`), row-level security in PostgreSQL, and — from CC-04 — per-request signed URLs for files. A check in a UI component is presentation, never a gate.
+
+## What works today
+
+`pnpm dev` gives you the public conversion journey, in English and French:
+
+- an eight-question readiness qualifier, one question per page, with progress, save-and-resume and accessible validation;
+- a result that shows the inputs behind it, the reason each one mattered, the rule version and an uncertainty notice;
+- the free official route offered as a first-class link rather than buried;
+- a contact page reachable from everywhere that asks for nothing first;
+- a consent banner where accepting and declining are the same control, and nothing third-party loads either way.
+
+The whole journey works with JavaScript disabled — a Playwright project completes it that way on every run.
+
+There is no marketing homepage yet: that needs brand, photography and counsel-reviewed copy, none of which exist. What is built is the conversion *system*.
 
 ## Accessibility
 

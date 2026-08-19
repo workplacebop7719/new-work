@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { SkipLink } from '@northstar/ui';
+import { ConsentBanner } from '@/app/components/consent-banner';
+import { readConsent } from '@/lib/session';
 import '@northstar/ui/tokens.css';
 import '../globals.css';
 import { isLocale, t, type Locale } from '@/lib/i18n';
@@ -39,6 +42,7 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
 
   const other: Locale = locale === 'en' ? 'fr' : 'en';
+  const consent = await readConsent();
 
   return (
     // `lang` is set from the route so assistive technology announces the page in
@@ -47,7 +51,13 @@ export default async function LocaleLayout({
       <body>
         <SkipLink targetId="main">{t(locale, 'nav.skipToContent')}</SkipLink>
         <header className="ns-header">
-          <p className="ns-header__brand">{t(locale, 'site.name')}</p>
+          <p className="ns-header__brand">
+            <Link href={`/${locale}`}>{t(locale, 'site.name')}</Link>
+          </p>
+          <nav aria-label={t(locale, 'nav.mainLabel')}>
+            <Link href={`/${locale}/check`}>{t(locale, 'nav.checkReadiness')}</Link>
+            <Link href={`/${locale}/contact`}>{t(locale, 'nav.contact')}</Link>
+          </nav>
           <nav aria-label={t(locale, 'nav.languageLabel')}>
             <a href={`/${other}`} lang={other} hrefLang={other}>
               {t(locale, other === 'fr' ? 'nav.switchToFrench' : 'nav.switchToEnglish')}
@@ -60,6 +70,9 @@ export default async function LocaleLayout({
         <footer className="ns-footer">
           <p>{t(locale, 'footer.legal')}</p>
         </footer>
+        {/* Rendered last and not focus-trapping: a consent prompt that blocks the
+            page is an inaccessible urgency pattern (CNV-003). */}
+        {consent.decided ? null : <ConsentBanner locale={locale} returnTo={`/${locale}`} />}
       </body>
     </html>
   );

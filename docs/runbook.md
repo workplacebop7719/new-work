@@ -1,6 +1,6 @@
 # Runbook
 
-- **Status:** v0 (CC-01) — local and CI operations only. Production runbooks are a CC-09 deliverable (SEC-010) and must be tested by someone who did not write them.
+- **Status:** v1 (CC-02) — local and CI operations only. Production runbooks are a CC-09 deliverable (SEC-010) and must be tested by someone who did not write them.
 
 ## Local setup
 
@@ -61,10 +61,21 @@ The second tenant exists so the tenant boundary is demonstrable rather than mere
 
 **The homepage shows "This guidance is being reviewed" instead of the deadline.** Correct behaviour. The seeded regulatory claim is `in_review` pending counsel sign-off (open question Q-04), and an unreviewed claim structurally cannot render its statement (CNT-005). This demonstrates the safety mechanism rather than bypassing it.
 
+**"This page couldn't load" on the qualifier.** Almost always a database that is behind on migrations — the qualifier persists sessions from the first answer. Run `pnpm db:migrate`. CI runs migrations before the end-to-end job for this reason.
+
+**The homepage keeps asking about analytics.** The decision lives in the `ns_consent` cookie. Clearing cookies clears the decision, which is intended: no decision is not consent.
+
 **A guard fails in `pnpm lint`.** The repository guards enforce PRD §27 constraints, not style. Read the message: each names the requirement and, where an exception is legitimate, the annotation that records it (`northstar-allow-claim:`, `northstar-allow-regulatory:`, `-- global:`). Annotations are reviewed in the pull request; that is the audit trail.
 
 **Playwright can't find a browser.** Set `CHROMIUM_PATH` to an existing Chromium, or run `pnpm --filter @northstar/web exec playwright install chromium`.
 
 ## CI
 
-`.github/workflows/ci.yml` runs three jobs: quality (lint, typecheck, migrate, seed, test, test:authz against a Postgres service), end-to-end (build, test:e2e, test:a11y), and supply-chain (dependency audit, secret scan). Every command exits non-zero on failure.
+`.github/workflows/ci.yml` runs three jobs: quality (lint, typecheck, migrate, seed, test, test:authz against a Postgres service), end-to-end (migrate, build, test:e2e, test:a11y — also against a Postgres service, since the qualifier persists sessions), and supply-chain (dependency audit, secret scan). Every command exits non-zero on failure.
+
+## Scheduled jobs
+
+`pnpm db:retention` is not yet scheduled. It must run daily once the qualifier is
+public, because CNV-001 commits to a retention schedule and an unrun sweep means
+that commitment is not being kept. Scheduling it is part of the CC-03
+infrastructure work.

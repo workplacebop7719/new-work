@@ -33,7 +33,7 @@ export default defineConfig({
       // without client-side JavaScript. Asserted, not assumed.
       name: 'no-javascript',
       use: { ...devices['Desktop Chrome'], launchOptions, javaScriptEnabled: false },
-      testMatch: /no-javascript\.spec\.ts/,
+      testMatch: /no-javascript\.spec\.ts|qualifier-no-js\.spec\.ts/,
     },
   ],
   webServer: {

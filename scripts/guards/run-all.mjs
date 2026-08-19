@@ -14,6 +14,7 @@ const GUARDS = [
   ['tenant-columns.mjs', 'DAT-002'],
   ['domain-purity.mjs', 'ARC-002, ENG-001'],
   ['tokens-drift.mjs', 'BRD-001'],
+  ['analytics-consent.mjs', 'PUB-006, ARC-007, ANL-001'],
 ];
 
 console.log('Repository guards (PRD §27 non-negotiable constraints)');

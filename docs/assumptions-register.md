@@ -50,6 +50,15 @@ The PRD is vendor-neutral by design (§17). Each of these is answered by a **pro
 | Q-25 | Storybook was cut from CC-01 (accessibility contracts are tested directly per component instead). Confirm it lands in CC-02, or that component documentation takes another form. | §27 repo shape | B3 | Design lead | CC-02 |
 | Q-26 | Abandoned-qualifier retention is set to 30 days by assumption A-15; the PRD says only "short". Privacy lead to confirm before CC-02 ships the qualifier. | CNV-001 | B1 (CC-02) | Privacy lead | CC-02 |
 
+### A3c. Raised during the CC-02 build
+
+| # | Question | Basis | Severity | Owner | Needed by |
+|---|---|---|---|---|---|
+| Q-27 | **Rate limiting on the anonymous qualifier endpoints.** CC-02 ships public POST endpoints that write rows and accept an email address, with no rate limiting and no bot mitigation. Any mitigation must not become an inaccessible challenge (ACC-005), so a CAPTCHA is not an acceptable default. What approach do we take? This is the largest open security item from the slice. | §16 Assurance, ACC-005 | **B1** (before public traffic) | Security/privacy lead | CC-03 |
+| Q-28 | Confirm the draft "routing vs. conclusion" rule (Q-21) as implemented: the qualifier states what is likely in scope and what to do next, never whether an obligation is met, and never uses compliant / non-compliant / pass / fail. `assertNoConclusion` enforces the vocabulary half mechanically. Does the AODA specialist accept the wording now in `apps/web/lib/i18n.ts`? | §8, §12 | **B1** (before public launch) | AODA specialist | CC-03 |
+| Q-29 | The result page offers the free official route as a first-class link and measures the click (`official_source_opened`). Confirm growth accepts this — it will reduce measured conversion and is the deliberate choice described in ADR-0007. | §2, §8, CNV-003 | B2 | Founder / growth | CC-03 |
+| Q-30 | Completed qualifier sessions are retained 90 days (abandoned: 30). Both figures are engineering assumptions pending the same privacy-lead decision as Q-26. | CNV-001 | B1 (CC-03) | Privacy lead | CC-03 |
+
 ### A4. Requirements that appear to conflict or need a tie-breaker
 
 | # | Tension | PRD basis | Proposed resolution | Severity |

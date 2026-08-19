@@ -73,6 +73,18 @@ jobs:
   end-to-end:
     name: build, e2e and accessibility
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: northstar_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+        ports: ['5432:5432']
     steps:
       - uses: actions/checkout@v5
 
@@ -88,6 +100,12 @@ jobs:
 
       - name: install browsers
         run: pnpm --filter @northstar/web exec playwright install --with-deps chromium
+
+      # The qualifier persists sessions, so the journeys need a real schema.
+      # Running migrate here also means a missing migration fails CI rather than
+      # showing up as an unexplained server error in a test run.
+      - name: db:migrate
+        run: pnpm db:migrate
 
       - name: build
         run: pnpm build

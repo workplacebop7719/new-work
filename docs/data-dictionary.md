@@ -1,6 +1,6 @@
 # Data dictionary
 
-- **Status:** v0 (CC-01). Every slice that adds a table or column updates this file in the same pull request.
+- **Status:** v1 (CC-02). Every slice that adds a table or column updates this file in the same pull request.
 - **Source:** `packages/db/migrations/`, `packages/domain/src/entities.ts`.
 - **Classification key:** **P** personal data · **S** business-sensitive · **I** internal-only (never client-visible) · **G** general.
 
@@ -13,6 +13,7 @@ Not owned by a tenant. Each is declared `-- global:` in the migration with a rea
 | `users` | A person, who may hold memberships in several organizations. | `email` (unique), `display_name`, `preferred_language` | P | While any membership exists, then per the offboarding workflow (SEC-013). |
 | `regulatory_claims` | Versioned, source-backed regulatory statements shared across tenants. | `claim_key`+`version` (unique), `source_url`, `effective_date`, `last_verified_at`, `next_review_at`, two reviewer ids, `status` | G | Permanent; superseded versions retained for traceability. |
 | `schema_migrations` | Applied migration ledger. | `name`, `applied_at` | G | Permanent. |
+| `qualifier_sessions` | An anonymous visitor's qualifier answers, consent decision and result. Exists before any organization does, which is what CNV-001 requires. | `resume_token_hash` (unique), `answers`, `consent_analytics` + `consent_decided_at`, `contact_email` + `contact_consent_at`, `result_category`, `rule_version` | P | Abandoned 30 days, completed 90 days. |
 
 ## Tenant-owned tables
 
@@ -47,12 +48,26 @@ Enforced by the analytics denylist (`packages/observability/src/events.ts`) and 
 
 | Data | Schedule | Basis |
 |---|---|---|
-| Abandoned qualifier sessions | 30 days (assumption **A-15** — the PRD says "short" without a number; the privacy lead may set a different figure) | CNV-001 |
+| Abandoned qualifier sessions | 30 days (assumption **A-15** — the PRD says "short" without a number; the privacy lead may set a different figure, question Q-26) | CNV-001 |
+| Completed qualifier sessions | 90 days — a visitor may legitimately return to a result they were sent | CNV-001 |
 | Evidence | `retention_until` per object, suspended by `legal_hold` | SEC-007, SEC-013 |
 | Audit events | Retained beyond tenant deletion where lawfully required | SEC-006 |
 | Financial records | Retained through tenant deletion (lawful basis) | §24 offboarding scenario |
 
 Retention jobs are dry-runnable and log before deleting (assumption A-14).
+
+## Protection of `qualifier_sessions`
+
+It is the one table with no tenant to scope it to, so it is protected differently
+and the difference is deliberate:
+
+- rows are reachable only by an unguessable resume token, and only its hash is stored;
+- there is no listing, searching or enumerating function in the codebase;
+- the analytics denylist keeps its contents out of every event payload;
+- the retention sweep bounds how long any of it exists.
+
+What it does **not** yet have is rate limiting on the endpoints that write to it —
+recorded as the main open item in the threat model.
 
 ## Open
 

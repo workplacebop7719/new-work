@@ -46,19 +46,26 @@ test.describe('keyboard operation @a11y', () => {
     await expect(page.locator('main')).toBeFocused();
   });
 
-  test('every interactive element shows a visible focus indicator', async ({ page }) => {
+  test('every focusable element shows a visible focus indicator', async ({ page }) => {
     await page.goto('/en');
-    const focusable = page.locator('a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+
+    // Hidden inputs carry form state and are never focused; including them would
+    // assert an outline on something a user can never reach.
+    const focusable = page.locator(
+      'a[href], button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
     const count = await focusable.count();
     expect(count).toBeGreaterThan(0);
 
     for (let i = 0; i < count; i += 1) {
       const element = focusable.nth(i);
+      if (!(await element.isVisible())) continue;
       await element.focus();
-      const outlineWidth = await element.evaluate(
-        (node) => window.getComputedStyle(node).outlineWidth,
-      );
-      expect(Number.parseFloat(outlineWidth), `element ${i} has no focus outline`).toBeGreaterThan(0);
+      const { outlineWidth, describe } = await element.evaluate((node) => ({
+        outlineWidth: window.getComputedStyle(node).outlineWidth,
+        describe: `${node.tagName.toLowerCase()}${node.getAttribute('type') ? `[type=${node.getAttribute('type')}]` : ''} "${(node.textContent ?? '').trim().slice(0, 40)}"`,
+      }));
+      expect(Number.parseFloat(outlineWidth), `${describe} has no focus outline`).toBeGreaterThan(0);
     }
   });
 });

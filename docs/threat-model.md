@@ -1,6 +1,6 @@
 # Threat model
 
-- **Status:** v0 (CC-01). PRD §16 requires this to be revised at every slice that adds a data class or an external boundary, not merely updated.
+- **Status:** v1 (CC-02). PRD §16 requires this to be revised at every slice that adds a data class or an external boundary, not merely updated.
 - **Standard:** OWASP ASVS 5.0 Level 2 (SEC-001); OWASP Top 10 for awareness and training.
 - **Owner:** security/privacy lead, who holds stop-ship authority (PRD §20).
 
@@ -57,6 +57,30 @@ External boundaries declared but not yet crossed in CC-01: object storage, malwa
 | T18 | A new table ships without tenant isolation. | CI guard requires `organization_id` + `ENABLE` + `FORCE` + policy, or an explicit `-- global:` declaration with a reason. | `scripts/guards/tenant-columns.mjs`. |
 | T19 | A migration reaches production with no rollback plan. | CI guard requires a paired notes file containing Rollback, Roll-forward and Backup impact sections. | `scripts/guards/migration-notes.mjs`. |
 | T20 | Destructive tooling runs against production. | `db:reset-safe` requires both a non-production `APP_ENV` **and** a local-looking host. | `packages/db/test/config.test.ts`. |
+
+## Added in CC-02 — the public qualifier
+
+The first surface that accepts input from anonymous visitors and stores it.
+
+| # | Threat | Control | Verified by |
+|---|---|---|---|
+| T21 | A resume link is guessed or brute-forced, exposing another visitor's answers. | 32 bytes of randomness; only the SHA-256 hash is stored, so a database disclosure yields no working links; there is no listing or search function anywhere in the module. | `packages/db/test/qualifier-session.test.ts`. |
+| T22 | Answers are read by script through an XSS. | The resume cookie is `httpOnly`; answers are never rendered into a script context. | Code review; CSP follows in CC-03. |
+| T23 | Analytics fires before consent. | The gate is in the dispatcher, and `readConsent` treats "no decision" as refusal. | `apps/web/e2e/qualifier.spec.ts` asserts **zero** non-local requests before a decision. |
+| T24 | A third-party tag is added to a template later, bypassing the gate. | `scripts/guards/analytics-consent.mjs` fails the build on any third-party host, on analytics globals, and on constructing `Analytics` outside the consent wrapper. | Guard negative-tested in both directions. |
+| T25 | An open redirect is introduced by the "official source" hand-off. | The destination is resolved from the registered claim; the form carries only a claim key. A caller-supplied URL is never followed. | Code review; the action has no path that reads a URL from input. |
+| T26 | An email address is stored without consent. | Enforced in the form, in the action, and by the `contact_email_requires_consent` database constraint. | `qualifier-session.test.ts` — the raw insert is rejected. |
+| T27 | Consent is recorded without provenance. | `consent_recorded_together` constraint: the decision and its timestamp are set as a pair. | Same file. |
+| T28 | Abandoned visitor data is retained indefinitely. | Retention sweep, dry-run by default, with the window in one constant. | Same file — both dry-run and applied modes. |
+| T29 | The qualifier states a compliance conclusion. | `assertNoConclusion` over rule output; 144-permutation sweep; an end-to-end assertion over the rendered page. | `packages/domain/src/qualifier.test.ts`, `apps/web/e2e/qualifier.spec.ts`. |
+
+## Known gaps at CC-02
+
+| Gap | Why it matters | Closes in |
+|---|---|---|
+| **No rate limiting** on the qualifier actions or the resume-email form. | An anonymous POST endpoint that writes rows is an abuse vector: session flooding, and email-address enumeration through the resume form. The retention sweep bounds the storage cost but not the abuse. **This is the most significant open item from this slice.** | CC-03, with the identity work |
+| No Content-Security-Policy beyond baseline headers. | Now that there are forms, a nonce-based CSP is worth the effort. | CC-03 |
+| No CAPTCHA-free bot mitigation decided. | Any mitigation must not become an inaccessible challenge (ACC-005); this needs a design decision, not a drop-in widget. | CC-03 |
 
 ## Accepted risks in CC-01
 

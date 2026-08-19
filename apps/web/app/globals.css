@@ -102,3 +102,123 @@ main:focus-visible {
   margin-block-start: 0;
   font-size: var(--font-size-base);
 }
+
+/* ---- CC-02: qualifier, result, consent ---- */
+
+.ns-header nav {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.ns-header__brand a {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.ns-plain-list {
+  padding-inline-start: var(--space-6);
+}
+
+.ns-plain-list li {
+  margin-block-end: var(--space-2);
+}
+
+.ns-question {
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-tight);
+  margin: 0;
+}
+
+.ns-step-actions {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-block-start: var(--space-4);
+}
+
+/* Link styled as a button still needs its own target size and focus ring. */
+a.ns-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.ns-alt-path {
+  margin-block-start: var(--space-8);
+}
+
+.ns-alt-path a:not(.ns-button) {
+  color: var(--interactive);
+}
+
+.ns-resume {
+  margin-block-start: var(--space-8);
+}
+
+.ns-trace {
+  margin: 0;
+}
+
+.ns-trace__row {
+  border-block-start: 1px solid var(--border-subtle);
+  padding-block: var(--space-3);
+}
+
+.ns-trace dt {
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.ns-trace dd {
+  margin: var(--space-1) 0 0;
+}
+
+.ns-trace__because {
+  color: var(--text-secondary);
+}
+
+.ns-contact dt {
+  font-weight: 600;
+  margin-block-start: var(--space-4);
+}
+
+.ns-contact dd {
+  margin: var(--space-1) 0 0;
+}
+
+.ns-contact a {
+  color: var(--interactive);
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-comfortable);
+}
+
+/*
+ * The consent banner sits in normal flow at the end of the page rather than
+ * fixed over it: an overlay that covers content is the thing PUB-006 and
+ * CNV-003 are written against.
+ */
+.ns-consent {
+  border-block-start: 2px solid var(--emphasis-border);
+  background: var(--surface-raised);
+  padding: var(--space-4) var(--space-6);
+}
+
+.ns-consent h2 {
+  margin-block-start: 0;
+  font-size: var(--font-size-lg);
+}
+
+.ns-consent p {
+  max-inline-size: var(--measure);
+}
+
+/* Both choices are the same control, same size, same weight (CNV-003). */
+.ns-consent__actions {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}

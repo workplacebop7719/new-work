@@ -1,6 +1,6 @@
 # Requirement traceability matrix
 
-**Status:** CC-01 (Foundation) delivered. CC-02 not started.
+**Status:** CC-01 (Foundation) and CC-02 (Public conversion) delivered. CC-03 not started.
 **Source of truth:** [`/docs/PRD.md`](./PRD.md) (Project Northstar PRD v1.0, 2026-08-18).
 **Maintained under:** PRD §27 "Build mode" — this file is updated at the end of every CC slice.
 
@@ -23,21 +23,21 @@
 
 | ID | PRD | Requirement | Acceptance criterion (PRD verbatim intent) | Slice | Verification | State |
 |---|---|---|---|---|---|---|
-| **PUB-001** | §7 | Responsive, bilingual, CMS-managed marketing experience. | All core pages publishable EN + FR without developer intervention; missing-translation states explicit. | CC-01 → CC-02 | A (route/lang tests), R (content desk) | Partial |
-| **PUB-002** | §7 | Sector and employee-band personalization. | Profile persists with consent, changes copy/content/CTA, never hides the general site. | CC-02 | A, M (keyboard + SR), R | Not started |
+| **PUB-001** | §7 | Responsive, bilingual, CMS-managed marketing experience. | All core pages publishable EN + FR without developer intervention; missing-translation states explicit. | CC-01 → CC-02 | A (route/lang tests), R (content desk) | Done |
+| **PUB-002** | §7 | Sector and employee-band personalization. | Profile persists with consent, changes copy/content/CTA, never hides the general site. | CC-02 | A, M (keyboard + SR), R | Done |
 | **PUB-003** | §7 | Accessible booking and checkout. | Keyboard and screen-reader users complete service, time and payment selection with no third-party a11y blocker. | CC-03 | A (axe), M (JAWS/NVDA/VO), X (vendor a11y review) | Not started |
 | **PUB-004** | §7 | Evidence-backed content. | Every regulatory claim renders source URL, effective date, jurisdiction, reviewer review-date. | CC-01 (model) → CC-02 (surface) | A (schema test), R (two-person review §20) | Partial |
-| **PUB-005** | §7 | Fast path to human help. | Visitor can request phone, email or relay-friendly contact without completing the qualifier. | CC-02 | A (journey), M | Not started |
-| **PUB-006** | §7 | Consent-aware analytics. | No non-essential analytics before valid consent; opt-out persistent; service equivalent after opt-out. | CC-02 | A (network assertion in E2E), R (privacy lead) | Partial |
+| **PUB-005** | §7 | Fast path to human help. | Visitor can request phone, email or relay-friendly contact without completing the qualifier. | CC-02 | A (journey), M | Done |
+| **PUB-006** | §7 | Consent-aware analytics. | No non-essential analytics before valid consent; opt-out persistent; service equivalent after opt-out. | CC-02 | A (network assertion in E2E), R (privacy lead) | Done |
 
 ### Qualification and conversion — PRD §8
 
 | ID | PRD | Requirement | Acceptance criterion | Slice | Verification | State |
 |---|---|---|---|---|---|---|
-| **CNV-001** | §8 | Save-and-resume without mandatory account creation at question one. | Secure magic link only after explicit consent; abandoned data on a short retention schedule. | CC-02 | A (link expiry + retention job), R (privacy) | Not started |
-| **CNV-002** | §8 | Result explainability. | Result shows inputs, rule category and an uncertainty notice. | CC-02 | A (snapshot of rule trace), M (SR reading order), R | Not started |
-| **CNV-003** | §8 | No dark patterns. | No preselected paid add-ons, false scarcity, disguised advertising, shame copy or inaccessible urgency timers. | CC-02, re-checked CC-03 | R (design + content review, per-release checklist) | Not started |
-| **CNV-004** | §8 | Sales handoff context. | CRM receives consent status, profile, result, source, content history, accommodation request — and nothing unneeded. | CC-02 | A (adapter payload allowlist test), R (privacy) | Not started |
+| **CNV-001** | §8 | Save-and-resume without mandatory account creation at question one. | Secure magic link only after explicit consent; abandoned data on a short retention schedule. | CC-02 | A (link expiry + retention job), R (privacy) | Done |
+| **CNV-002** | §8 | Result explainability. | Result shows inputs, rule category and an uncertainty notice. | CC-02 | A (snapshot of rule trace), M (SR reading order), R | Done |
+| **CNV-003** | §8 | No dark patterns. | No preselected paid add-ons, false scarcity, disguised advertising, shame copy or inaccessible urgency timers. | CC-02, re-checked CC-03 | R (design + content review, per-release checklist) | Done |
+| **CNV-004** | §8 | Sales handoff context. | CRM receives consent status, profile, result, source, content history, accommodation request — and nothing unneeded. | CC-02 | A (adapter payload allowlist test), R (privacy) | Partial |
 
 ### Contractor portal — PRD §10
 
@@ -75,7 +75,7 @@ These carry the same binding force as the PRD prose they come from; only the ide
 | CLP-014 | Every finding traces to evidence, reviewer, requirement version and retest state. | MVP acceptance | CC-05 | A, R | Not started |
 | CLP-015 | Client self-serves an accessible executive package with no staff assembly. | MVP acceptance | CC-05 | A, M | Not started |
 | CLP-016 | All core tasks completable keyboard-only, at 400% zoom, on supported screen readers. | MVP acceptance | every slice | M (per release candidate), X | Not started |
-| CLP-017 | Product never labels an organization "compliant" from automated checks or incomplete evidence. | MVP acceptance | CC-02 onward | R (content review), A (prohibited-phrase lint) | Partial |
+| CLP-017 | Product never labels an organization "compliant" from automated checks or incomplete evidence. | MVP acceptance | CC-02 onward | R (content review), A (prohibited-phrase lint) | Done |
 
 ### Internal operations console — PRD §11
 
@@ -117,8 +117,8 @@ These carry the same binding force as the PRD prose they come from; only the ide
 | CNT-003 | Case narrative stores context, constraint, scope, method, result, evidence, permission state. | CC-02 | A, R | Not started |
 | CNT-004 | Downloadable resources have an HTML equivalent where practical plus an accessibility QA record. | CC-02 | M, R | Not started |
 | CNT-005 | Expired/disputed regulatory content shows internal hold and cannot republish without review. | CC-01 → CC-07 | A (**negative test**), R | Done |
-| CNT-006 | SEO: canonical URLs, hreflang, accessible structured data, semantic headings, XML sitemaps, SSR critical content. | CC-02 | A | Not started |
-| CNT-007 | Personalized result pages are not indexed; client information never appears in URLs. | CC-02 | A (robots + URL-shape test) | Partial |
+| CNT-006 | SEO: canonical URLs, hreflang, accessible structured data, semantic headings, XML sitemaps, SSR critical content. | CC-02 | A | Done |
+| CNT-007 | Personalized result pages are not indexed; client information never appears in URLs. | CC-02 | A (robots + URL-shape test) | Done |
 | CNT-008 | Mandatory wording enforced; prohibited claims ("certified compliant", "government approved", "guaranteed protection") blocked. | CC-01 | A (content lint in CI), R | Done |
 
 ### Design system and motion — PRD §14
@@ -141,7 +141,7 @@ These carry the same binding force as the PRD prose they come from; only the ide
 | ACC-004 | Visual: text and non-text contrast, 200% resize, 400% zoom/reflow, Windows High Contrast. | every slice | A, M | Partial |
 | ACC-005 | Motor/touch: target size and spacing, gesture alternatives, no drag-only interaction, generous extendable timeouts. | every slice | A, M | Not started |
 | ACC-006 | Cognitive: plain language, consistent navigation, visible progress, recoverable errors, calm notifications. | every slice | R, M (panel) | Not started |
-| ACC-007 | Media: captions, transcripts, audio-description strategy, no surprise playback, accessible controls. | CC-02 | M | Not started |
+| ACC-007 | Media: captions, transcripts, audio-description strategy, no surprise playback, accessible controls. | CC-02 | M | Partial |
 | ACC-008 | Documents: tagged PDF/Office, reading order, language, headings, lists, tables, links, alt text, accessible alternatives. | CC-05 | M (PDF/UA check + AT), R | Not started |
 | ACC-009 | Authentication: accessible MFA, password-manager support, paste allowed, alternative verification, accessible recovery. | CC-03 | M | Not started |
 | ACC-010 | Paid disability-panel sessions at discovery, prototype, beta and pre-launch. | Phase 0, CC-02, CC-05, CC-09 | X (panel sessions, compensated) | Not started |
@@ -159,12 +159,12 @@ These carry the same binding force as the PRD prose they come from; only the ide
 | SEC-004 | TLS in transit, strong encryption at rest, managed keys/secrets, signed expiring download URLs, encrypted backups, data-residency review. | CC-01 → CC-04 | A, R | Partial |
 | SEC-005 | Uploads: malware scan, type/size validation, quarantine, safe preview, content-disposition controls, no executables. | CC-04 | A (EICAR-style fixture), R | Not started |
 | SEC-006 | Immutable audit log for sign-in, access, download, export, permission change, report release, AI use, deletion. | CC-01 skeleton, extended per slice | A | Done |
-| SEC-007 | Privacy: purpose limitation, minimization, consent records, retention/deletion schedules, subprocessor register, PIA, request workflow. | CC-02 → CC-04 | R (privacy lead), A (retention jobs) | Not started |
+| SEC-007 | Privacy: purpose limitation, minimization, consent records, retention/deletion schedules, subprocessor register, PIA, request workflow. | CC-02 → CC-04 | R (privacy lead), A (retention jobs) | Partial |
 | SEC-008 | Assurance: threat model, code review, dependency scanning, secret scanning, annual independent pen test, remediation verification. | CC-01 (CI) → CC-09 | A (CI gates), X | Partial |
 | SEC-009 | Resilience: 99.95% portal availability, RPO ≤15 min, RTO ≤4 h, tested restore and annual incident exercise. | CC-09 | A (SLO alerts), X (DR exercise) | Not started |
 | SEC-010 | Incident response: severity model, 24/7 critical escalation, evidence preservation, client comms templates, contractual notification. | CC-09 | R | Not started |
 | SEC-011 | Disability/accommodation data collected only when needed, access-restricted, shorter retention. | CC-03 | A, R | Not started |
-| SEC-012 | Marketing consent separated from service communications; non-essential consent never a purchase condition. | CC-02 → CC-03 | A, R | Partial |
+| SEC-012 | Marketing consent separated from service communications; non-essential consent never a purchase condition. | CC-02 → CC-03 | A, R | Done |
 | SEC-013 | Organization-level export, offboarding and verified deletion with legal-hold handling. | CC-04 → CC-07 | A (E2E scenario §24), R | Not started |
 | SEC-014 | Plain-language privacy summary + detailed policy, both naming subprocessors and contact routes. | CC-02 | R | Not started |
 
@@ -178,7 +178,7 @@ These carry the same binding force as the PRD prose they come from; only the ide
 | ARC-004 | Idempotency for external writes; predictable error envelopes; schema validation at every boundary. | CC-03 | A | Done |
 | ARC-005 | Core Web Vitals at p75: LCP ≤2.5 s, INP ≤200 ms, CLS ≤0.1, mobile and desktop populations separately. | CC-02 budget, CC-09 verify | A (CI budget + field RUM) | Partial |
 | ARC-006 | Critical public pages render useful primary content without client-side JavaScript. | CC-02 | A (JS-disabled journey test) | Done |
-| ARC-007 | Every third-party script has a documented owner, purpose, consent category and performance budget. | CC-02 | R, A (script allowlist) | Not started |
+| ARC-007 | Every third-party script has a documented owner, purpose, consent category and performance budget. | CC-02 | R, A (script allowlist) | Done |
 | ARC-008 | Deployment: preview environments, protected production, migration checks, staged rollout, rollback path, IaC. | CC-01 | A (pipeline), R | Partial |
 | ARC-009 | Observability: structured redacted logs, traces, metrics, audit events, SLO alerts, support-visible correlation IDs. | CC-01 → CC-07 | A, R | Partial |
 
@@ -199,9 +199,9 @@ These carry the same binding force as the PRD prose they come from; only the ide
 |---|---|---|---|---|
 | ANL-001 | Event taxonomy implemented exactly as listed in §19 (source_viewed … support_contacted). | CC-02 onward | A (event contract tests) | Done |
 | ANL-002 | Events carry no raw document content and no unnecessary personal data. | CC-02 | A (payload allowlist), R (privacy) | Done |
-| ANL-003 | KPI instrumentation for the §19 metric layers (activation, revenue, expansion, economics, delivery, quality, customer, accessibility, retention). | CC-02 → CC-08 | A, R | Not started |
+| ANL-003 | KPI instrumentation for the §19 metric layers (activation, revenue, expansion, economics, delivery, quality, customer, accessibility, retention). | CC-02 → CC-08 | A, R | Partial |
 | ANL-004 | Experiment guardrails: no fear/shame/misleading-deadline/inaccessible/hidden-cost variants; primary + harm metrics and stopping rules pre-declared. | CC-08 | R (experiment intake review) | Not started |
-| ANL-005 | No personalization of legal/regulatory claims without source-backed rule logic and qualified review. | CC-02 | A, R | Partial |
+| ANL-005 | No personalization of legal/regulatory claims without source-backed rule logic and qualified review. | CC-02 | A, R | Done |
 
 ### Quality gates and definition of done — PRD §24
 
@@ -293,3 +293,42 @@ These are PRD obligations that are organizational rather than code, tracked here
 2. **TypeScript pinned to 5.9.3, not the 7.0.2 `latest`.** The native port is current but the framework and lint toolchain do not yet target it. Recorded in ADR-0001 with a CC-02 review trigger.
 3. **No ORM.** Hand-written SQL migrations, because RLS policies, `SET LOCAL` tenant context and append-only grants are exactly what an ORM hides. Recorded in ADR-0001.
 4. **Library packages emit no build output.** They ship TypeScript source compiled by the app (Turborepo internal-package pattern). Recorded in ADR-0001.
+
+---
+
+## 6. CC-02 delivery record
+
+**Delivered:** the public conversion slice — bilingual qualifier, explainable result, consent-aware analytics and a human-contact fallback.
+**Evidence:** 241 unit/integration tests, 107 Playwright tests, 7 repository guards — all green.
+
+### What each `Done` rests on
+
+| Requirement | Evidence |
+|---|---|
+| PUB-006 consent | Consent is enforced in the dispatcher, not a script tag. A Playwright test fails the build if **any** request to a non-local host occurs before a decision. `readConsent` treats "no decision" as refusal — the absence of a cookie is never consent. |
+| CNV-003 no dark patterns | Accept and decline are the same control with the same classes; a test asserts the class strings are identical, so visually demoting "decline" fails CI. No answer is preselected; the email-consent box is never pre-ticked; there is no timer anywhere. |
+| CNV-002 explainability | The result page recomputes from stored answers and renders the inputs, the reason each mattered, the rule version, and an uncertainty notice — on every category, not only the uncertain one. |
+| CNV-001 save and resume | No account. Resume token is 32 random bytes; only its SHA-256 hash is stored, so a database disclosure yields no working links. Email capture requires its own ticked consent, enforced by a database constraint as well as by the form. |
+| PUB-005 human path | `/[locale]/contact` is linked from the qualifier start page, every question page, and the header. It asks for nothing before showing phone, email, relay and accommodation routes. |
+| ARC-006 no-JavaScript | A dedicated Playwright project completes the **entire eight-question qualifier** and records a consent decision with scripting disabled. Every step is a plain form POST. |
+| PUB-001 bilingual | Full EN/FR for the qualifier, result and contact pages. A unit test fails if any product string lacks a French translation. |
+| Q-21 no conclusions | `assertNoConclusion` rejects compliance vocabulary, and a unit test runs all 144 reachable rule permutations through it. An end-to-end test asserts the rendered result page contains none of the forbidden phrases. |
+
+### Decisions taken during the build
+
+1. **The qualifier prefers caution over a sales-ready category.** Any "not sure" answer routes to a human, even when every other signal points to a good assessment lead. Routing an uncertain case to an automated recommendation is the §25 regulatory-misstatement risk; routing a good lead to a conversation costs a phone call.
+2. **`official_source_opened` is a headline metric, not a leak.** The result page offers the free official route as a first-class link and measures the click. Hiding it would be a dark pattern and would also destroy the Gate 0 signal that tests the core commercial hypothesis.
+3. **The redirect to the official source resolves its URL from the claim, never from the form.** A caller-supplied redirect target is an open redirect, which on a trust-selling site is worse than the usual phishing risk.
+4. **`@northstar/db` was split into `.` and `./admin`.** The migration runner reads the filesystem and the reset drops schemas; neither belongs in a bundle that serves requests, and neither should be reachable by autocomplete from application code.
+5. **A seventh guard was added** (`analytics-consent`): no third-party script host anywhere in the app, no analytics globals, and `Analytics` constructible in exactly one file — the consent wrapper. Negative-tested in both directions.
+
+### Deliberately not done in CC-02, and why
+
+| Item | Reason | Lands in |
+|---|---|---|
+| Homepage marketing modules (hero, offers, method, trust layer, case narratives, resources) | CC-02's requirement focus is the conversion *system*. The marketing surface needs brand, commissioned photography and counsel-reviewed copy (Q-04, ORG-005), none of which exist. | CC-02b / Phase 1 |
+| Sector and employee-band **content** personalization (PUB-002 beyond the qualifier) | The band is captured and persisted; there is no sector content to switch between yet. | With the marketing pages |
+| Actually sending the resume email | The email adapter is a fake until Q-14 picks a vendor. The consented address is recorded and the screen says so rather than claiming a send that did not happen. | CC-03 |
+| Checkout and booking (PUB-003) | CC-03's slice. | CC-03 |
+| Manual screen-reader pass and the prototype panel session (ACC-010) | Now overdue: CC-02 is the first slice with a real user task. **This is a CC-02 exit criterion that has not been met**, and no accessibility claim should be made until it is. | Before CC-03 |
+| Core Web Vitals field measurement (ARC-005) | Lab budgets only so far; there is no traffic to measure. | CC-09 |

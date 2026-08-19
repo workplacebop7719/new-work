@@ -10,6 +10,7 @@ const config: NextConfig = {
     '@northstar/auth',
     '@northstar/observability',
     '@northstar/integrations',
+    '@northstar/db',
   ],
   poweredByHeader: false,
   async headers() {

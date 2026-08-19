@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@northstar/auth": "workspace:*",
+    "@northstar/db": "workspace:*",
     "@northstar/domain": "workspace:*",
     "@northstar/integrations": "workspace:*",
     "@northstar/observability": "workspace:*",

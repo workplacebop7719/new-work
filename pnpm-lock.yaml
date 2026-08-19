@@ -35,6 +35,9 @@ importers:
       '@northstar/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@northstar/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@northstar/domain':
         specifier: workspace:*
         version: link:../../packages/domain

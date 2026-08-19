@@ -32,6 +32,9 @@ export function SiteHeader({ locale }: { locale: Locale }) {
           <Link className="ns-nav__link" href={`/${locale}#services`}>
             {t(locale, 'nav.services')}
           </Link>
+          <Link className="ns-nav__link" href={`/${locale}/resources`}>
+            {t(locale, 'nav.resources')}
+          </Link>
           <Link className="ns-nav__link" href={`/${locale}/contact`}>
             {t(locale, 'nav.contact')}
           </Link>
@@ -84,6 +87,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
               <li><Link href={`/${locale}/check`}>{t(locale, 'nav.checkReadiness')}</Link></li>
               <li><Link href={`/${locale}/how-it-works`}>{t(locale, 'nav.howItWorks')}</Link></li>
               <li><Link href={`/${locale}#services`}>{t(locale, 'nav.services')}</Link></li>
+              <li><Link href={`/${locale}/resources`}>{t(locale, 'nav.resources')}</Link></li>
               <li><Link href={`/${locale}/contact`}>{t(locale, 'nav.contact')}</Link></li>
             </ul>
           </section>

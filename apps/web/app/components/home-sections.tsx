@@ -283,6 +283,53 @@ export function ProofPending({ locale }: { locale: Locale }) {
 
 /* ------------------------------------------------------------------ */
 
+/**
+ * Editorial resources on the homepage — PRD §7.
+ *
+ * The module's stated conversion purpose is to build search demand and
+ * retargeting audiences. It does that only if the writing is worth reading, so
+ * this shows three real pieces rather than a category grid pointing at nothing.
+ */
+export function Resources({
+  locale,
+  items,
+}: {
+  locale: Locale;
+  items: readonly { slug: string; title: string; summary: string; minutes: number }[];
+}) {
+  return (
+    <section className="ns-section" id="resources">
+      <div className="ns-container">
+        <p className="ns-eyebrow">{t(locale, 'resources.eyebrow')}</p>
+        <h2 className="ns-section__title">{t(locale, 'resources.home.heading')}</h2>
+        <p className="ns-section__lede">{t(locale, 'resources.home.lede')}</p>
+
+        <ul className="ns-resource-list">
+          {items.map((item) => (
+            <li key={item.slug}>
+              <article className="ns-resource">
+                <p className="ns-resource__meta">
+                  {t(locale, 'resources.minutes').replace('{n}', String(item.minutes))}
+                </p>
+                <h3 className="ns-resource__title">
+                  <Link href={`/${locale}/resources/${item.slug}`}>{item.title}</Link>
+                </h3>
+                <p className="ns-resource__summary">{item.summary}</p>
+              </article>
+            </li>
+          ))}
+        </ul>
+
+        <p className="ns-cta-row">
+          <Link className="ns-button ns-button--secondary" href={`/${locale}/resources`}>
+            {t(locale, 'resources.home.cta')}
+          </Link>
+        </p>
+      </div>
+    </section>
+  );
+}
+
 export function FinalCta({ locale }: { locale: Locale }) {
   return (
     <section className="ns-section ns-section--raised" id="start">

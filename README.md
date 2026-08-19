@@ -88,6 +88,8 @@ The anonymous endpoints are rate limited, and the refusal is an ordinary page wi
 
 The homepage carries the PRD §7 modules: a source-stamped notice band, hero, employee-size selector, the full offer ladder with exclusions stated, the four-stage method, and a trust layer.
 
+There is also a small resources section — three articles in both languages about how the work is actually done. An article may cite a versioned regulatory claim, but never restate one: when the cited claim goes on hold, the article shows the hold notice in its place.
+
 Two sections are deliberately empty rather than invented. There are no case narratives and no named leadership, because there are no engagements and no hired team yet — fabricating either on a site whose proposition is trustworthiness would destroy the only asset the business has. There is no photography either: §14 warns against tokenistic stock and AI-perfect imagery, so the art direction is typographic until real commissioned photography exists.
 
 ## Accessibility

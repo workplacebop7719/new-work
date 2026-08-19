@@ -22,12 +22,18 @@ const REGULATORY_VOCABULARY = [
 
 const ALLOW = /northstar-allow-regulatory:/;
 
-// Component and page code. The domain content model, the guards and the docs are
-// where regulatory vocabulary legitimately lives.
-const COMPONENT_PATHS = /^(apps\/web\/(app|components)|packages\/ui\/src\/components)\//;
+// Component and page code, plus editorial content sources.
+//
+// The content sources matter as much as the components: an article is rendered
+// to the same reader, and a regulatory sentence typed into a resource body would
+// bypass the claim model exactly as one typed into JSX would. `lib/claims.ts` is
+// the one exemption — it *is* the claim source, and carries the review metadata
+// that makes the statement safe to render.
+const COMPONENT_PATHS =
+  /^(apps\/web\/(app|components)|apps\/web\/lib\/resources|packages\/ui\/src\/components)/;
 // Tests are not rendered to a user; they legitimately quote source titles and
-// assert on regulatory copy. Only shipped component source is scanned.
-const EXTENSIONS = /(?<!\.test)\.(tsx|jsx)$/;
+// assert on regulatory copy. Only shipped source is scanned.
+const EXTENSIONS = /(?<!\.test)\.(tsx|jsx|ts)$/;
 
 const files = await walk(ROOT, (p) => EXTENSIONS.test(p));
 const failures = [];

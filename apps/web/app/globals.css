@@ -961,3 +961,95 @@ h1, h2, h3 {
   padding-inline: var(--space-6);
 }
 .ns-button--primary:hover { background: var(--interactive-hover); }
+
+/* ---- Resources --------------------------------------------------------- */
+
+.ns-resource-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-8);
+  grid-template-columns: repeat(auto-fit, minmax(min(19rem, 100%), 1fr));
+}
+
+.ns-resource {
+  padding-block-start: var(--space-5);
+  border-block-start: 2px solid var(--text-primary);
+  block-size: 100%;
+}
+
+.ns-resource__meta {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.ns-resource__title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-xl);
+  line-height: 1.25;
+}
+.ns-resource__title a {
+  color: var(--text-primary);
+  text-decoration-color: var(--border-subtle);
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--duration-base) var(--easing-standard);
+}
+.ns-resource__title a:hover { text-decoration-color: var(--interactive); }
+
+.ns-resource__summary { margin: 0; color: var(--text-secondary); line-height: 1.6; }
+
+/* ---- Article ----------------------------------------------------------- */
+
+.ns-page--article { max-inline-size: 46rem; }
+
+.ns-article { margin-block-start: var(--space-10); }
+
+.ns-article__heading {
+  margin: var(--space-10) 0 var(--space-4);
+  font-size: var(--font-size-xl);
+  line-height: 1.25;
+  max-inline-size: 28ch;
+}
+.ns-article__heading:first-child { margin-block-start: 0; }
+
+/* Article prose runs slightly longer and looser than UI text: it is read, not
+   scanned. */
+.ns-article__paragraph {
+  margin: 0 0 var(--space-5);
+  max-inline-size: 62ch;
+  font-size: var(--font-size-lg);
+  line-height: 1.7;
+}
+
+.ns-article__list {
+  margin: 0 0 var(--space-5);
+  padding-inline-start: var(--space-6);
+  max-inline-size: 62ch;
+  font-size: var(--font-size-lg);
+  line-height: 1.7;
+}
+.ns-article__list li { margin-block-end: var(--space-3); }
+
+.ns-article__claim { margin-block: var(--space-8); }
+
+.ns-article__qa {
+  margin-block-start: var(--space-12);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  max-inline-size: 62ch;
+}
+
+/* A missing accessibility record is stated, not hidden — and marked with the
+   same gold rule the product uses everywhere else for "unreviewed". */
+.ns-article__qa--missing {
+  border-block-start: 0;
+  border-inline-start: 4px solid var(--emphasis);
+  padding: var(--space-4) 0 var(--space-4) var(--space-4);
+  font-size: var(--font-size-base);
+}

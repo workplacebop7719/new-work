@@ -114,8 +114,8 @@ These carry the same binding force as the PRD prose they come from; only the ide
 |---|---|---|---|---|
 | CNT-001 | Regulatory content object stores jurisdiction, source URL, effective date, last-verified date, reviewer, next-review date. | CC-01 | A (schema), R | Done |
 | CNT-002 | Bilingual page stores translation status, translator/reviewer, source-language version, sync state. | CC-01 | A | Done |
-| CNT-003 | Case narrative stores context, constraint, scope, method, result, evidence, permission state. | CC-02 | A, R | Partial |
-| CNT-004 | Downloadable resources have an HTML equivalent where practical plus an accessibility QA record. | CC-02 | M, R | Not started |
+| CNT-003 | Case narrative stores context, constraint, scope, method, result, evidence, permission state. | CC-02 | A, R | Done |
+| CNT-004 | Downloadable resources have an HTML equivalent where practical plus an accessibility QA record. | CC-02 | M, R | Done |
 | CNT-005 | Expired/disputed regulatory content shows internal hold and cannot republish without review. | CC-01 → CC-07 | A (**negative test**), R | Done |
 | CNT-006 | SEO: canonical URLs, hreflang, accessible structured data, semantic headings, XML sitemaps, SSR critical content. | CC-02 | A | Done |
 | CNT-007 | Personalized result pages are not indexed; client information never appears in URLs. | CC-02 | A (robots + URL-shape test) | Done |
@@ -412,3 +412,48 @@ commissioned photography replaces it.
 - One correction found by the tests: `border-subtle` was listed as a meaningful
   boundary and fails 3:1. It is a decorative hairline; a test now pins that and
   says so, so it can never become the only marker of a control.
+
+---
+
+## 9. Editorial resources (CNT-003, CNT-004)
+
+The last outstanding §7 homepage module. **289 unit/integration tests, 165
+Playwright tests, 7 guards.**
+
+Three articles in English and French — an evidence checklist, a guide to
+briefing a website audit, and questions to ask any accessibility supplier
+(including us). §13 warns against mass-produced keyword pages, so the index is
+deliberately short and says so.
+
+### The design decision that matters
+
+`Resource` is a **separate content type from `RegulatoryClaim`**, and the split
+is the point:
+
+- A resource is our own method and opinion. We can write it and revise it.
+- A claim is a statement about the law, and carries two reviewers, an effective
+  date and an automatic hold.
+
+An article may **cite** a claim by key, but never restate one in its prose. The
+body is a closed set of block types with no free-HTML escape hatch — which is
+both an XSS decision and an ENG-007 one. When a cited claim goes on hold, the
+article renders the hold notice in its place, so an article cannot outlive the
+accuracy of the law it cites. Proven end to end: the audit-briefing guide cites
+the unreviewed deadline claim, and a test asserts the claim's own wording appears
+nowhere on the page.
+
+### CNT-004
+
+Every resource is HTML; there are no PDFs, which satisfies the "HTML equivalent"
+half by construction. The accessibility QA record is nullable, and where it is
+absent the page **says so** — an unstated absence reads as a completed check.
+All three currently say so, because no named reviewer has checked them.
+
+### Guard widened
+
+`regulatory-hardcoding` previously scanned only components. Editorial content is
+rendered to the same reader, so a regulatory sentence typed into an article body
+would have bypassed the claim model exactly as one typed into JSX would. The
+guard now scans content sources too, exempting `lib/claims.ts` (which *is* the
+claim source). Negative-tested: planting a hard-coded deadline in an article body
+fails the build.

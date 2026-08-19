@@ -8,11 +8,13 @@ import {
   Method,
   OfferArchitecture,
   ProofPending,
+  Resources,
   TrustLayer,
 } from '@/app/components/home-sections';
 import { getClaim } from '@/lib/claims';
 import { isLocale, t } from '@/lib/i18n';
 import { readBand } from '@/lib/profile';
+import { listResources } from '@/lib/resources';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +33,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const claim = getClaim('on.reporting.deadline');
   const resolved = claim ? resolveClaim(claim, locale, new Date()) : undefined;
   const band = await readBand();
+  const resources = listResources(locale);
 
   return (
     <>
@@ -59,6 +62,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <Method locale={locale} />
       <TrustLayer locale={locale} />
       <ProofPending locale={locale} />
+      <Resources locale={locale} items={resources} />
 
       <FinalCta locale={locale} />
     </>

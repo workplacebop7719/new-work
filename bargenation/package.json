@@ -2,7 +2,7 @@
   "name": "bargenation",
   "version": "0.1.0",
   "private": true,
-  "description": "BARGENATION — shopping intelligence. Is this actually a good price?",
+  "description": "BARGENATION \u2014 shopping intelligence. Is this actually a good price?",
   "engines": {
     "node": ">=22"
   },
@@ -14,12 +14,18 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "contrast": "node scripts/check-contrast.mjs"
+    "contrast": "node scripts/check-contrast.mjs",
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:seed": "tsx scripts/seed.mts",
+    "db:reset": "node scripts/reset-db.mjs && node scripts/migrate.mjs && tsx scripts/seed.mts",
+    "test:db": "vitest run src/db"
   },
   "dependencies": {
     "next": "^15.5.23",
+    "pg": "^8.23.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "server-only": "^0.0.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -28,6 +34,7 @@
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^26.2.0",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^6.0.5",
@@ -37,6 +44,7 @@
     "playwright": "^1.62.1",
     "postcss": "^8.5.26",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.12",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.67.0",
     "vitest": "^4.1.11"

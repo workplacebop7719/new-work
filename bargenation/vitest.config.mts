@@ -10,6 +10,10 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
   },
   resolve: {
-    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // see test/server-only-stub.ts
+      'server-only': fileURLToPath(new URL('./test/server-only-stub.ts', import.meta.url)),
+    },
   },
 });

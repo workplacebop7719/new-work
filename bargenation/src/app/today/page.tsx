@@ -11,12 +11,15 @@ export const metadata: Metadata = {
   description: 'Only what cleared the bar today — and what we would hold off buying.',
 };
 
-export default function TodayPage() {
-  const standout = getStandout();
-  const cut = getMadeTheCut();
-  const hold = getWeWouldHold();
-  const withheld = getWithheld();
-  const total = getDeals().length;
+export default async function TodayPage() {
+  const [standout, cut, hold, withheld, all] = await Promise.all([
+    getStandout(),
+    getMadeTheCut(),
+    getWeWouldHold(),
+    getWithheld(),
+    getDeals(),
+  ]);
+  const total = all.length;
 
   return (
     <div className="mx-auto max-w-[1600px] px-5 pb-20 pt-12 sm:px-8">

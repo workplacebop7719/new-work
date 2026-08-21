@@ -21,7 +21,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const cat = CATEGORIES.find((c) => c.slug === slug);
   if (!cat) notFound();
 
-  const deals = getDeals(cat.slug as CategorySlug);
+  const deals = await getDeals(cat.slug as CategorySlug);
 
   return (
     <div className="mx-auto max-w-[1600px] px-5 pb-24 pt-12 sm:px-8">

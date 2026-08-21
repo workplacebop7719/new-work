@@ -1,4 +1,4 @@
-import { dataMode } from '@/data/repository';
+import { containsSampleData } from '@/data/repository';
 
 /**
  * Top utility bar (PRD §45 disclosure, §05 reference register).
@@ -10,8 +10,9 @@ import { dataMode } from '@/data/repository';
  *
  * Not dismissible: if the product is running on fixtures it says so, always.
  */
-export function UtilityBar() {
-  if (dataMode === 'LIVE') return null;
+export async function UtilityBar() {
+  // Asks the dataset, not the environment — see containsSampleData().
+  if (!(await containsSampleData())) return null;
   return (
     <div className="bg-ink text-white">
       <p className="mx-auto flex min-h-[34px] max-w-[1600px] items-center justify-center gap-2.5 px-5 py-2 text-center text-[0.625rem] font-medium uppercase leading-[1.5] tracking-[0.14em]">

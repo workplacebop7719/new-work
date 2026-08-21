@@ -5,13 +5,18 @@ import { getDeals } from '@/data/repository';
 
 export const metadata: Metadata = { title: 'Categories' };
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+  const counts = new Map(
+    await Promise.all(
+      CATEGORIES.map(async (c) => [c.slug, (await getDeals(c.slug)).length] as const),
+    ),
+  );
   return (
     <div className="mx-auto max-w-[1600px] px-5 pb-24 pt-12 sm:px-8">
       <h1 className="display display-xl">Browse</h1>
       <ul className="mt-12 border-t border-ink">
         {CATEGORIES.map((c) => {
-          const count = getDeals(c.slug).length;
+          const count = counts.get(c.slug) ?? 0;
           return (
             <li key={c.slug} className="border-b border-line">
               <Link

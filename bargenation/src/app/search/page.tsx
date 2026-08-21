@@ -10,7 +10,7 @@ export default async function SearchPage({
 }: { searchParams: Promise<{ q?: string }> }) {
   const { q = '' } = await searchParams;
   const query = q.trim();
-  const results = query ? searchDeals(query) : [];
+  const results = query ? await searchDeals(query) : [];
 
   return (
     <div className="mx-auto max-w-[1600px] px-5 pb-24 pt-12 sm:px-8">

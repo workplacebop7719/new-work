@@ -8,11 +8,15 @@ import { Hero } from '@/components/chrome/Hero';
 import { formatUsd, CATEGORIES } from '@/domain/types';
 import { WEIGHTS } from '@/domain/value-index';
 
-export default function HomePage() {
-  const standout = getStandout();
-  const cut = getMadeTheCut().slice(0, 6);
-  const hold = getWeWouldHold().slice(0, 3);
-  const withheld = getWithheld();
+export default async function HomePage() {
+  const [standout, allCut, allHold, withheld] = await Promise.all([
+    getStandout(),
+    getMadeTheCut(),
+    getWeWouldHold(),
+    getWithheld(),
+  ]);
+  const cut = allCut.slice(0, 6);
+  const hold = allHold.slice(0, 3);
 
   return (
     <>

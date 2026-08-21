@@ -9,14 +9,14 @@ import { PriceHistoryChart } from '@/components/deal/PriceHistoryChart';
 import { DealCard } from '@/components/deal/DealCard';
 
 export async function generateStaticParams() {
-  return getDeals().map((d) => ({ slug: d.offer.product.slug }));
+  return (await getDeals()).map((d) => ({ slug: d.offer.product.slug }));
 }
 
 export async function generateMetadata({
   params,
 }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const deal = getDeal(slug);
+  const deal = await getDeal(slug);
   if (!deal) return { title: 'Not found' };
   return {
     title: `${deal.offer.product.name} — ${deal.offer.retailer.name}`,
@@ -26,12 +26,12 @@ export async function generateMetadata({
 
 export default async function DealPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const deal = getDeal(slug);
+  const deal = await getDeal(slug);
   if (!deal) notFound();
 
   const { offer } = deal;
   const index = deal.publishable && deal.index.scorable ? deal.index : null;
-  const similar = getDeals()
+  const similar = (await getDeals())
     .filter((d) => d.offer.product.category === offer.product.category && d.offer.id !== offer.id)
     .slice(0, 3);
 

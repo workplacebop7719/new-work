@@ -3,7 +3,6 @@ import { getStandout, getMadeTheCut, getWeWouldHold, getWithheld } from '@/data/
 import { DealCard } from '@/components/deal/DealCard';
 import { ValueIndexMark } from '@/components/deal/ValueIndexMark';
 import { RecommendationMark } from '@/components/deal/RecommendationMark';
-import { NotBuiltYet } from '@/components/ui/NotBuiltYet';
 import { Hero } from '@/components/chrome/Hero';
 import { formatUsd, CATEGORIES } from '@/domain/types';
 import { WEIGHTS } from '@/domain/value-index';
@@ -228,11 +227,12 @@ export default async function HomePage() {
                 A short edition of only what cleared the bar. No account needed, and it still
                 earns its place in your inbox on the days you buy nothing.
               </p>
-              <NotBuiltYet
-                label="Get the Edit"
-                reason="Not built yet — sending email needs a provider credential we don't have."
-                className="mt-7"
-              />
+              <Link
+                href="/edit"
+                className="mt-7 inline-flex min-h-[44px] items-center bg-ink px-6 text-[0.8125rem] font-semibold uppercase tracking-[0.04em] text-white transition-opacity duration-[--dur-micro] hover:opacity-80"
+              >
+                Read today’s Edit
+              </Link>
             </div>
           </div>
         </div>

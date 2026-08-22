@@ -48,7 +48,8 @@ See [docs/DATABASE.md](docs/DATABASE.md) for what the schema guarantees and why,
 [docs/DEAL-SIGNALS.md](docs/DEAL-SIGNALS.md) for why the signal engine stays quiet, and
 [docs/INGESTION.md](docs/INGESTION.md) for how feed data becomes history, and
 [docs/ADMIN.md](docs/ADMIN.md) for the operations surface, and
-[docs/LEGAL.md](docs/LEGAL.md) for how the legal pages handle what we do not know.
+[docs/LEGAL.md](docs/LEGAL.md) for how the legal pages handle what we do not know, and
+[docs/NEWSLETTER.md](docs/NEWSLETTER.md) for how consent is kept provable.
 
 ## The rules that are actually enforced
 
@@ -81,6 +82,9 @@ These are not conventions. Each one has a test or a guard that fails the build.
 | A doubtful price never enters the permanent record | quarantined until a **different** source agrees |
 | Two products are never silently merged | matching asks for review instead of picking a winner |
 | A resolved match never has to be resolved twice | the answer is stored as an alias and consulted before similarity |
+| Consent is provable, not asserted | append-only log; status is derived from it, never set directly |
+| A subscriber's token cannot reach another's row | token-scoped RLS policies, not a `WHERE` clause |
+| An issue with nothing to say is not sent | sections are omitted rather than padded; below two items, no issue |
 | Brand pink is a surface, never type on white | `scripts/check-contrast.mjs` fails the build if it ever clears AA |
 
 ### The palette problem, and why it is solved this way
@@ -106,6 +110,7 @@ src/data/        repository (the only module that knows where deals come from),
 src/auth/        typed port, dev + supabase adapters, return-url allowlist
 src/ingest/      source port, normalisation, product matching, watchdog, pipeline
 src/content/     legal document metadata and the details we do not yet have
+src/newsletter/  issue composition, email port, subscription and consent
 src/app/app/     the member portal, behind a real session check
 src/db/          pooled client, schema, parity and signal-job tests
 db/migrations/   … 0007 adds the narrowly-granted signal job role
@@ -125,6 +130,8 @@ shot.mjs         visual QA — screenshots every page at 375 / 768 / 1440
 
 **Operations** — `/admin` · `/admin/review` · `/admin/quarantine`
 
+**The Edit** — `/edit` · `/edit/confirm` · `/edit/manage`
+
 **Legal** — `/privacy` · `/terms` · `/disclosures` · `/contact` · `/about`
 
 ## Not built yet
@@ -136,7 +143,7 @@ visibly disabled with the reason, and no navigation links to them.
 |---|---|
 | Real sign-in (architecture and portal built, forms disabled) | Supabase Auth credentials |
 | Forgot / reset / verify-email pages | the next slice |
-| The Bargenation Edit + newsletter | an email provider credential |
+| Sending The Edit (composition and signup are built) | an email provider credential |
 | Affiliate `/go/[offer]` redirects | an affiliate account |
 | Admin platform | depends on authentication |
 | Legal review of the drafted pages | a lawyer, not more writing |

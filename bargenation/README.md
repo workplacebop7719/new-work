@@ -26,6 +26,7 @@ npm run build
 npm run contrast   # WCAG AA guard over the shipped tokens
 npm run smoke      # end-to-end member flow in a real browser (needs a dev server)
 npm run signals    # one Deal Signal sweep (connects as the jobs role)
+npm run ingest     # one ingestion pass from a local records file
 ```
 
 No database is required. Without `DATABASE_URL` the app serves the fictional
@@ -43,7 +44,8 @@ npm run test:db     # the database guarantees, against a real database
 
 See [docs/DATABASE.md](docs/DATABASE.md) for what the schema guarantees and why,
 [docs/AUTH.md](docs/AUTH.md) for how authentication is layered, and
-[docs/DEAL-SIGNALS.md](docs/DEAL-SIGNALS.md) for why the signal engine stays quiet.
+[docs/DEAL-SIGNALS.md](docs/DEAL-SIGNALS.md) for why the signal engine stays quiet, and
+[docs/INGESTION.md](docs/INGESTION.md) for how feed data becomes history.
 
 ## The rules that are actually enforced
 
@@ -67,6 +69,9 @@ These are not conventions. Each one has a test or a guard that fails the build.
 | One customer cannot touch another's Saved, Watchlist or Signals | every member query runs *as the customer*; RLS is the enforcement |
 | Signals cannot become spam | edge-triggered rules, one signal per watch per sweep, 24h quiet period |
 | The signal job cannot roam | narrow role-scoped grants, `nobypassrls`, asserted by tests |
+| Ambiguous feed data is refused, not guessed | extraction returns a reason; `"1,234"` is rejected outright |
+| A doubtful price never enters the permanent record | quarantined until a **different** source agrees |
+| Two products are never silently merged | matching asks for review instead of picking a winner |
 | Brand pink is a surface, never type on white | `scripts/check-contrast.mjs` fails the build if it ever clears AA |
 
 ### The palette problem, and why it is solved this way
@@ -90,6 +95,7 @@ src/domain/      value-index, confidence, urgency, buy-hold, price-history — f
 src/data/        repository (the only module that knows where deals come from),
                  fixture + postgres adapters behind one contract
 src/auth/        typed port, dev + supabase adapters, return-url allowlist
+src/ingest/      source port, normalisation, product matching, watchdog, pipeline
 src/app/app/     the member portal, behind a real session check
 src/db/          pooled client, schema, parity and signal-job tests
 db/migrations/   … 0007 adds the narrowly-granted signal job role

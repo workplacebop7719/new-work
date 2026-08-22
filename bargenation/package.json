@@ -2,7 +2,7 @@
   "name": "bargenation",
   "version": "0.1.0",
   "private": true,
-  "description": "BARGENATION \u2014 shopping intelligence. Is this actually a good price?",
+  "description": "BARGENATION — shopping intelligence. Is this actually a good price?",
   "engines": {
     "node": ">=22"
   },
@@ -21,6 +21,7 @@
     "test:db": "vitest run src/db"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
     "next": "^15.5.23",
     "pg": "^8.23.0",
     "react": "^19.2.8",

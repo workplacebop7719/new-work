@@ -7,15 +7,14 @@ import { usePathname } from 'next/navigation';
  * Mobile navigation (PRD §33). 44px minimum targets, safe-area aware.
  *
  * This is the LOGGED-OUT set on purpose. §33 lists Watchlist / Saved /
- * Profile for the signed-in bar, and accounts are not built yet — putting
- * those tabs here would be a control that looks live and does nothing (§01).
- * They arrive with the account system, not before.
+ * Profile for the signed-in bar; those tabs arrive when the member portal
+ * does. Until then they would be controls that look live and do nothing (§01).
  */
 const TABS = [
   { href: '/today', label: 'Today' },
   { href: '/search', label: 'Search' },
   { href: '/categories', label: 'Browse' },
-  { href: '/how-it-works', label: 'Method' },
+  { href: '/login', label: 'Sign in' },
 ];
 
 export function MobileNav() {

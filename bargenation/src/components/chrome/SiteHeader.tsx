@@ -53,16 +53,11 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        {/* right — account, honestly disabled */}
+        {/* right — the sign-in route now exists, so it is a real link */}
         <div className="flex items-center justify-end">
-          <button
-            type="button"
-            disabled
-            title="Accounts are not built yet — this needs Supabase credentials."
-            className="cursor-not-allowed text-[0.6875rem] font-medium uppercase tracking-[0.14em] text-ink-50"
-          >
-            Account
-          </button>
+          <Link href="/login" className={navLink}>
+            Sign in
+          </Link>
         </div>
       </div>
     </header>

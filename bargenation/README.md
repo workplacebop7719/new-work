@@ -5,9 +5,9 @@ score today's price against **our own record** — not against the retailer's
 claim about it. Sometimes the answer is that it isn't worth buying.
 
 > **Status:** foundation build. The scoring engine, design system, public
-> reading surfaces and the database layer are implemented and tested.
-> Authentication, newsletter delivery, admin and affiliate redirects are
-> **not** built — see *Not built yet* below.
+> reading surfaces, database layer and authentication architecture are
+> implemented and tested. The member portal, newsletter delivery, admin and
+> affiliate redirects are **not** built — see *Not built yet* below.
 
 ## Run it
 
@@ -39,7 +39,8 @@ npm run db:seed
 npm run test:db     # the database guarantees, against a real database
 ```
 
-See [docs/DATABASE.md](docs/DATABASE.md) for what the schema guarantees and why.
+See [docs/DATABASE.md](docs/DATABASE.md) for what the schema guarantees and why,
+and [docs/AUTH.md](docs/AUTH.md) for how authentication is layered.
 
 ## The rules that are actually enforced
 
@@ -57,6 +58,9 @@ These are not conventions. Each one has a test or a guard that fails the build.
 | One customer cannot read another | RLS enabled **and forced**; proven by cross-user tests |
 | Commission is unreachable from the app | `commerce` schema, no grant — a reaching query fails loudly |
 | Sample data is always disclosed | the banner asks the **data**, not the environment |
+| A fake auth provider cannot reach production | production without credentials degrades to a port that refuses everything |
+| `returnTo` cannot become an open redirect | allowlist validation, 40 tests of hostile payloads |
+| Provider errors never reach a customer | closed error set, our own copy |
 | Brand pink is a surface, never type on white | `scripts/check-contrast.mjs` fails the build if it ever clears AA |
 
 ### The palette problem, and why it is solved this way
@@ -79,6 +83,7 @@ confident blocks is editorial, pink on every link is candy.
 src/domain/      value-index, confidence, urgency, buy-hold, price-history — framework-free
 src/data/        repository (the only module that knows where deals come from),
                  fixture + postgres adapters behind one contract
+src/auth/        typed port, dev + supabase adapters, return-url allowlist
 src/db/          pooled client, schema and parity tests
 db/migrations/   catalog, append-only, accounts+RLS, newsletter, commerce isolation
 src/components/  chrome, deal, ui
@@ -99,7 +104,8 @@ visibly disabled with the reason, and no navigation links to them.
 
 | Area | Blocked on |
 |---|---|
-| Sign-in, session handling, the member portal | Supabase Auth credentials |
+| Real sign-in (architecture built, forms disabled) | Supabase Auth credentials |
+| The `/app` member portal, forgot/reset/verify pages | the next slice |
 | The Bargenation Edit + newsletter | an email provider credential |
 | Affiliate `/go/[offer]` redirects | an affiliate account |
 | Admin platform | depends on authentication |

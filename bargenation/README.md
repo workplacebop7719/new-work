@@ -25,6 +25,7 @@ npm test
 npm run build
 npm run contrast   # WCAG AA guard over the shipped tokens
 npm run smoke      # end-to-end member flow in a real browser (needs a dev server)
+npm run signals    # one Deal Signal sweep (connects as the jobs role)
 ```
 
 No database is required. Without `DATABASE_URL` the app serves the fictional
@@ -41,7 +42,8 @@ npm run test:db     # the database guarantees, against a real database
 ```
 
 See [docs/DATABASE.md](docs/DATABASE.md) for what the schema guarantees and why,
-and [docs/AUTH.md](docs/AUTH.md) for how authentication is layered.
+[docs/AUTH.md](docs/AUTH.md) for how authentication is layered, and
+[docs/DEAL-SIGNALS.md](docs/DEAL-SIGNALS.md) for why the signal engine stays quiet.
 
 ## The rules that are actually enforced
 
@@ -63,6 +65,8 @@ These are not conventions. Each one has a test or a guard that fails the build.
 | `returnTo` cannot become an open redirect | allowlist validation, 40 tests of hostile payloads |
 | Provider errors never reach a customer | closed error set, our own copy |
 | One customer cannot touch another's Saved, Watchlist or Signals | every member query runs *as the customer*; RLS is the enforcement |
+| Signals cannot become spam | edge-triggered rules, one signal per watch per sweep, 24h quiet period |
+| The signal job cannot roam | narrow role-scoped grants, `nobypassrls`, asserted by tests |
 | Brand pink is a surface, never type on white | `scripts/check-contrast.mjs` fails the build if it ever clears AA |
 
 ### The palette problem, and why it is solved this way
@@ -87,8 +91,8 @@ src/data/        repository (the only module that knows where deals come from),
                  fixture + postgres adapters behind one contract
 src/auth/        typed port, dev + supabase adapters, return-url allowlist
 src/app/app/     the member portal, behind a real session check
-src/db/          pooled client, schema and parity tests
-db/migrations/   catalog, append-only, accounts+RLS, newsletter, commerce isolation
+src/db/          pooled client, schema, parity and signal-job tests
+db/migrations/   … 0007 adds the narrowly-granted signal job role
 src/components/  chrome, deal, ui
 src/app/         routes
 scripts/         contrast guard

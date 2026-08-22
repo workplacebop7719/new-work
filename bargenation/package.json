@@ -19,7 +19,8 @@
     "db:seed": "tsx scripts/seed.mts",
     "db:reset": "node scripts/reset-db.mjs && node scripts/migrate.mjs && tsx scripts/seed.mts",
     "test:db": "vitest run src/db",
-    "smoke": "node scripts/smoke-member-flow.mjs"
+    "smoke": "node scripts/smoke-member-flow.mjs",
+    "signals": "tsx scripts/run-signals.mts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

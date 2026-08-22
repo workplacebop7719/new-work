@@ -1,6 +1,6 @@
 # Runbook
 
-- **Status:** v3 (CC-03a) — local and CI operations only. Production runbooks are a CC-09 deliverable (SEC-010) and must be tested by someone who did not write them.
+- **Status:** v4 (CC-03a + outbox) — local and CI operations only. Production runbooks are a CC-09 deliverable (SEC-010) and must be tested by someone who did not write them.
 
 ## Local setup
 
@@ -32,6 +32,7 @@ proving nothing.
 | `pnpm test:authz` | Cross-tenant and role matrix; every protected resource class. |
 | `pnpm db:migrate` | Applies pending migrations in filename order, each in its own transaction. |
 | `pnpm db:seed` | Loads the fictional Maple Grove and Riverside demo tenants. |
+| `pnpm db:outbox` | Shows the outbound queue. `--apply` delivers; `--dead` prints the dead-letter queue for review. |
 | `pnpm db:reset-safe` | Drops, re-migrates and reseeds. **Refuses** unless `APP_ENV` is non-production *and* the host is local. |
 | `pnpm build` | Production build. |
 | `pnpm start` | Serves the production build. |
@@ -107,9 +108,16 @@ reseeded while the server was running, in which case restart it. The fake
 provider derives its subject ids from the address precisely so a restart does not
 orphan the rows the database already holds.
 
-**An invitation "sends" but no email arrives.** There is no mail server locally.
-The team page prints the acceptance link once, on the page that created it,
-whenever the fake email adapter is in use.
+**An invitation "sends" but no email arrives.** Two reasons, and both are
+working as designed. There is no mail server locally — the team page prints the
+acceptance link once, on the page that created it, whenever the fake email
+adapter is in use. And the send is queued rather than performed: run
+`pnpm db:outbox --apply` to drain it.
+
+**Nothing is running the outbox worker.** `pnpm db:outbox` is a command, not a
+scheduled job. A queued invitation or CRM contact sits until somebody runs it.
+Scheduling it belongs with the deployment work; saying so here is better than
+implying a worker exists.
 
 **Everyone gets signed out after a while.** By design (ACC-004): twelve hours
 idle for a client session, two for an internal one, with a warning and a
@@ -132,5 +140,13 @@ that commitment is not being kept. Scheduling it is part of the CC-03
 infrastructure work.
 
 As of CC-03a it also sweeps auth sessions (90 days from last activity), closed
-invitations (30 days, which removes the stored address) and sign-in throttle
-counters (2 days). It is still dry-run by default; `--apply` deletes.
+invitations (30 days, which removes the stored address), sign-in throttle
+counters (2 days) and **delivered** outbox messages (30 days). It is still
+dry-run by default; `--apply` deletes.
+
+Dead outbox messages are never swept. They are the review queue ARC-003 asks
+somebody to keep, and a queue that empties itself is not one.
+
+`pnpm db:outbox` needs scheduling too, and more urgently: retention not running
+means data is kept too long, while the outbox not running means an invited
+colleague never hears from us.

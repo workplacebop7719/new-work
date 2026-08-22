@@ -16,6 +16,7 @@ import {
 } from '@northstar/domain';
 import { writeAuditEvent } from '@northstar/observability';
 import { withSystemContext, withTenant } from './client';
+import { enqueue } from './outbox';
 
 export interface Invitation {
   readonly id: string;
@@ -84,8 +85,20 @@ export async function createInvitation(input: {
   role: Role;
   invitedByUserId: string;
   correlationId?: string;
-}): Promise<{ token: string; invitation: Invitation }> {
+  /**
+   * Builds the link the email carries. The caller owns it because the path is
+   * locale-dependent and this package knows nothing about routing.
+   *
+   * When supplied, the intent to send that email is enqueued in the **same**
+   * transaction as the invitation row — so an invitation either exists with a
+   * message queued for it, or does not exist at all. Sent directly, a mail
+   * outage would leave a row nobody was ever told about.
+   */
+  acceptUrlFor?: (token: string) => string;
+  locale?: 'en' | 'fr';
+}): Promise<{ token: string; invitation: Invitation; acceptUrl: string | undefined }> {
   const token = newInvitationToken();
+  const acceptUrl = input.acceptUrlFor?.(token);
   const invitation = await withTenant(input.organizationId, async (tx) => {
     await tx.query(
       `UPDATE invitations
@@ -122,9 +135,18 @@ export async function createInvitation(input: {
       // already holds it under a retention schedule.
       context: { role: created.role },
     });
+
+    if (acceptUrl) {
+      await enqueue(tx, {
+        organizationId: input.organizationId,
+        messageType: 'email.invitation',
+        payload: { to: created.email, locale: input.locale ?? 'en', acceptUrl },
+      });
+    }
+
     return created;
   });
-  return { token, invitation };
+  return { token, invitation, acceptUrl };
 }
 
 export async function listInvitations(

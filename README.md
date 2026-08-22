@@ -34,6 +34,7 @@ The full PRD §27 contract. Every one exits non-zero on failure.
 |---|---|
 | `pnpm install` | Deterministic install from the committed lockfile. |
 | `pnpm dev` | Full local experience with safe fake integrations. |
+| `pnpm db:outbox` | Drains the outbound queue (`--apply`), or reviews the dead-letter queue (`--dead`). |
 | `pnpm lint` | ESLint across the workspace **plus** the repository guards below. |
 | `pnpm typecheck` | `tsc --noEmit` in every package. |
 | `pnpm test` | Unit and integration tests, including row-level-security isolation (needs a database). |

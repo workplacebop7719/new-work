@@ -36,6 +36,13 @@ export const RETENTION_DAYS = {
   closedInvitation: 30,
   /** Throttle counters are transient; a day past the lockout window is ample. */
   signInThrottle: 2,
+  /**
+   * Delivered outbox messages. Kept a month so "did we ever email them?" has an
+   * answer during a support conversation. **Dead** messages are never swept:
+   * they are the review queue (ARC-003), and a queue that empties itself is not
+   * one.
+   */
+  deliveredOutboxMessage: 30,
 } as const;
 
 export interface RetentionReport {
@@ -44,6 +51,7 @@ export interface RetentionReport {
   readonly expiredAuthSessions: number;
   readonly closedInvitations: number;
   readonly signInThrottleRows: number;
+  readonly deliveredOutboxMessages: number;
   /** Closed rate-limit windows. Always pruned: they hold no personal data and
    *  keeping them serves no purpose. */
   readonly rateLimitCountersPruned: number;
@@ -87,6 +95,11 @@ export async function runRetention(options: { apply: boolean } = { apply: false 
         WHERE updated_at < now() - ($1 || ' days')::interval`,
       RETENTION_DAYS.signInThrottle,
     );
+    const deliveredOutboxMessages = await count(
+      `SELECT count(*) AS n FROM outbox_messages
+        WHERE state = 'delivered' AND delivered_at < now() - ($1 || ' days')::interval`,
+      RETENTION_DAYS.deliveredOutboxMessage,
+    );
 
     if (options.apply) {
       await tx.query(
@@ -102,6 +115,14 @@ export async function runRetention(options: { apply: boolean } = { apply: false 
       await tx.query(
         `DELETE FROM sign_in_throttle WHERE updated_at < now() - ($1 || ' days')::interval`,
         [RETENTION_DAYS.signInThrottle],
+      );
+      // Delivered only. A dead message is evidence of something that did not
+      // reach a person, and deleting it on a schedule would quietly close the
+      // review queue ARC-003 asks somebody to keep open.
+      await tx.query(
+        `DELETE FROM outbox_messages
+          WHERE state = 'delivered' AND delivered_at < now() - ($1 || ' days')::interval`,
+        [RETENTION_DAYS.deliveredOutboxMessage],
       );
       await tx.query(
         `DELETE FROM qualifier_sessions
@@ -123,6 +144,7 @@ export async function runRetention(options: { apply: boolean } = { apply: false 
       expiredAuthSessions,
       closedInvitations,
       signInThrottleRows,
+      deliveredOutboxMessages,
       rateLimitCountersPruned,
       applied: options.apply,
     };

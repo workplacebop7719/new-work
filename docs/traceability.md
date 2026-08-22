@@ -606,3 +606,101 @@ Stated rather than quietly narrowed, per the working rules:
 - **Email delivery is a fake.** Invitations are not actually sent; a local build
   prints the link on the page that created it, and only when the fake adapter is
   the one in use.
+
+---
+
+## 11. The transactional outbox (ADR-0006, ARC-003, ARC-004, CNV-004)
+
+Not a new slice — the mechanism CC-03a shipped without and CC-03b cannot be
+built on top of. It closes a gap this repository had already written down.
+
+**Requirement IDs:** ARC-003, ARC-004, CNV-004, SEC-011, SEC-012, ENG-003,
+OPS-009*.
+
+### The problem, in one sentence
+
+An outbound side effect and the domain change that caused it must either both
+happen or neither, and an HTTP call cannot join a database transaction.
+
+Call the vendor first and the write may fail, leaving them holding a record of
+something that did not happen. Write first and the call may fail, leaving the
+platform ahead of the world. OPS-009 names the case that matters commercially: a
+payment succeeds and the project shell is never created.
+
+Writing the *intent* transactionally removes the choice. The worker then has one
+job — deliver, retry, or give up loudly.
+
+### What landed
+
+| Piece | Where |
+|---|---|
+| The allowlist of what may leave the platform | `packages/domain/src/outbound.ts` |
+| The delivery mapping (message type → port call) | `packages/integrations/src/delivery.ts` |
+| The queue, the worker, backoff and the dead-letter state | `packages/db/src/outbox.ts` |
+| The marketing consent register | `migrations/0005_outbox.sql`, same module |
+| `pnpm db:outbox` and `pnpm db:outbox --dead` | `packages/db/src/cli/outbox.ts` |
+
+### The allowlist is in the domain, not with the adapters
+
+ADR-0006 says each adapter declares what may leave. On writing it, the better
+home turned out to be the domain: it is a policy about *data*, it would read the
+same if every vendor were replaced, and putting it there means the check runs
+where a message is **written** rather than where it is finally sent — so a
+disallowed field is refused in the request that caused it, next to the code that
+made the mistake.
+
+It rejects rather than strips. Silently dropping an undeclared field would leave
+a caller believing it was sent, and a vendor missing data nobody realizes was
+never delivered is much harder to find than a loud failure.
+
+### Consent is a precondition, not a filter
+
+`enqueue` refuses a `crm.contact_upserted` without `marketingConsent === true`,
+so there is no state in which the platform holds a queued message it is not
+permitted to send. `'false'` is truthy in JavaScript, so the check is against the
+boolean, and a test asserts exactly that — a consent check that accepted the
+string would look correct in review.
+
+`marketing_consents` is append-only by trigger *and* by grant. A withdrawal is a
+new row, because the question a regulator asks is "what had they agreed to on
+this date?", and an editable row cannot answer it.
+
+### A gap in CC-03a, closed
+
+CC-03a's sign-up was three transactions ordered so the recoverable failure came
+first. That was a mitigation, and the delivery record said so. It is now one
+transaction — user, organization, membership, consent record and the outbound
+message together — because with the outbox in place the only thing that could
+not join a transaction is a row rather than a call.
+
+A test proves it: a second sign-up with the same address is rejected by the
+unique index, and leaves no organization and no extra queued message behind.
+
+### The checkbox that did nothing
+
+`signUp` parsed `marketingConsent` and discarded it. The control on the form was,
+in effect, decorative — a worse failure than not offering it, because someone
+ticking it was told something untrue. It now reaches a consent register and,
+only when ticked, an outbound message.
+
+Found by reading the diff for where each field ends up, which is the same habit
+that produced the `storage_key`, `client_hash` and `token_hash` decisions.
+
+### A new guard, negative-tested
+
+`domain-purity` now forbids `packages/db` from importing an adapter, exempting
+`src/cli` as a composition root. The outbox worker takes its deliverer as a
+parameter; without the guard that injection would erode the first time somebody
+found it inconvenient, and a data-layer package that performs HTTP cannot be
+tested without a network.
+
+Confirmed to fail on a planted import and pass again once removed.
+
+### Deliberately not done
+
+| Cut | Reason |
+|---|---|
+| A scheduled worker | `pnpm db:outbox` is a command. Scheduling belongs with the deployment work, and the runbook says plainly that nothing is running it yet rather than implying something is. |
+| Automatic retry of dead letters | A message that failed eight times over four hours failed for a reason waiting does not fix. Reviving one should be a decision somebody makes about that message. |
+| `signature` destination messages | The port exists; Q-19 has not been answered, and there is nothing to send yet. |
+| Webhook ingestion | ADR-0006 decision 6. Inbound is a separate surface with its own signature-verification and replay concerns, and it arrives with the payment adapter. |

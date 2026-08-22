@@ -100,6 +100,9 @@ importers:
       '@northstar/domain':
         specifier: workspace:*
         version: link:../domain
+      '@northstar/integrations':
+        specifier: workspace:*
+        version: link:../integrations
       '@northstar/observability':
         specifier: workspace:*
         version: link:../observability

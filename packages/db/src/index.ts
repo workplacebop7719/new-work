@@ -13,5 +13,6 @@ export * from './auth-session';
 export * from './accounts';
 export * from './invitations';
 export * from './sign-in-throttle';
+export * from './outbox';
 export * from './retention';
 export * from './rate-limit';

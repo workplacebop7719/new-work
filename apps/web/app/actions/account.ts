@@ -19,12 +19,12 @@ import {
   acceptInvitation,
   changeMembership,
   createInvitation,
-  createOrganizationWithFounder,
   createUser,
   findUserByEmail,
   LastAdministratorError,
   linkIdentitySubject,
   listTeam,
+  provisionOrganization,
   revokeAllUserSessions,
   revokeInvitation,
   updateOrganizationProfile,
@@ -70,16 +70,11 @@ function isBand(value: string): value is EmployeeBand {
 /**
  * Creates an organization and its first administrator.
  *
- * Three writes that must not partially happen: a provider subject, a user row
- * and an organization with a membership. They are ordered so that the failure
- * modes are recoverable rather than confusing — a provider subject with no user
- * row is re-provisioned idempotently on the next attempt (same idempotency key),
- * whereas a user row pointing at a subject that was never created would be an
- * account nobody can sign in to.
- *
- * A durable outbox (ADR-0006) is what makes this properly atomic. It arrives
- * with the payment path in CC-03b; until then this ordering is the mitigation,
- * and it is recorded as a gap rather than described as a solution.
+ * Everything the platform owns — user, organization, membership, the consent
+ * record and any outbound message — commits in **one** transaction
+ * (`provisionOrganization`). The only step outside it is creating the provider
+ * subject, which is unavoidable because the user row needs its id, and which is
+ * idempotent on the address so a retry reuses it rather than orphaning one.
  */
 export async function signUp(formData: FormData): Promise<void> {
   const locale = safeLocale(formData.get('locale'));
@@ -136,19 +131,21 @@ export async function signUp(formData: FormData): Promise<void> {
   );
   await identity.setPassword({ subjectId: subject.externalId, password });
 
-  const user = await createUser({
-    email: parsed.data.email,
-    displayName: parsed.data.displayName,
-    preferredLanguage: parsed.data.preferredLanguage,
-    identitySubjectId: subject.externalId,
-  });
-  await createOrganizationWithFounder({
+  await provisionOrganization({
     legalName: parsed.data.organizationLegalName,
     organizationType,
     employeeBand,
     jurisdiction: parsed.data.jurisdiction,
     preferredLanguage: parsed.data.preferredLanguage,
-    founderUserId: user.id,
+    founder: {
+      email: parsed.data.email,
+      displayName: parsed.data.displayName,
+      identitySubjectId: subject.externalId,
+    },
+    // The checkbox on the form now reaches a consent register and, only when
+    // it is ticked, an outbound CRM message. Before this it was parsed and
+    // dropped, which made the control a lie.
+    marketingConsent: parsed.data.marketingConsent,
     correlationId,
   });
 
@@ -225,32 +222,25 @@ export async function inviteMember(formData: FormData): Promise<void> {
   // role is permitted to name?" — the privilege-escalation containment.
   if (!canInviteRole(membership.role, role)) redirect(`${returnTo}?error=role`);
 
-  const { token } = await createInvitation({
+  // The invitation row and the intent to email it commit together. Sent
+  // directly, a mail-provider outage would leave an invitation nobody was ever
+  // told about — a row that looks correct and does nothing.
+  const { acceptUrl } = await createInvitation({
     organizationId: membership.organizationId,
     email,
     role,
     invitedByUserId: viewer.user.id,
     correlationId: newCorrelationId(),
+    acceptUrlFor: (issued) => `/${locale}/join?token=${encodeURIComponent(issued)}`,
+    locale,
   });
-
-  const acceptUrl = `/${locale}/join?token=${encodeURIComponent(token)}`;
-  await integrations().email.send(
-    {
-      to: email,
-      templateKey: 'invitation',
-      locale,
-      // The link is the whole message. The template holds the wording, so a
-      // change of copy is a content change rather than a deploy (ADR-0005).
-      variables: { acceptUrl },
-    },
-    { idempotencyKey: `invitation:${token.slice(0, 16)}` },
-  );
 
   // A local build has no mail server, so the link would otherwise be
   // unreachable and the acceptance flow untestable. Shown once, on the page that
   // created it, and only when the fakes are the integrations actually in use —
   // the same condition and the same reasoning as the demo accounts panel.
-  const localLink = usingFakeIdentity() ? `&link=${encodeURIComponent(acceptUrl)}` : '';
+  const localLink =
+    usingFakeIdentity() && acceptUrl ? `&link=${encodeURIComponent(acceptUrl)}` : '';
   redirect(`${returnTo}?invited=1${localLink}`);
 }
 

@@ -21,6 +21,9 @@ console.log(
 console.log(
   `  sign-in throttle rows older than ${RETENTION_DAYS.signInThrottle}d: ${report.signInThrottleRows}`,
 );
+console.log(
+  `  delivered outbox messages older than ${RETENTION_DAYS.deliveredOutboxMessage}d: ${report.deliveredOutboxMessages}`,
+);
 console.log(`  closed rate-limit windows pruned: ${report.rateLimitCountersPruned}`);
 if (!apply) console.log('\nNothing was deleted. Re-run with --apply to delete.');
 

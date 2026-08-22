@@ -21,6 +21,7 @@
     "db:seed": "pnpm --filter @northstar/db run seed",
     "db:reset-safe": "pnpm --filter @northstar/db run reset-safe",
     "db:retention": "pnpm --filter @northstar/db run retention",
+    "db:outbox": "pnpm --filter @northstar/db run outbox",
     "guards": "node scripts/guards/run-all.mjs",
     "clean": "turbo run clean && rm -rf node_modules"
   },

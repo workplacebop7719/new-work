@@ -15,13 +15,15 @@
     "seed": "tsx src/cli/seed.ts",
     "reset-safe": "tsx src/cli/reset-safe.ts",
     "clean": "rm -rf dist *.tsbuildinfo",
-    "retention": "tsx src/cli/retention.ts"
+    "retention": "tsx src/cli/retention.ts",
+    "outbox": "tsx src/cli/outbox.ts"
   },
   "dependencies": {
     "@northstar/auth": "workspace:*",
     "@northstar/domain": "workspace:*",
     "@northstar/observability": "workspace:*",
-    "pg": "8.23.0"
+    "pg": "8.23.0",
+    "@northstar/integrations": "workspace:*"
   },
   "devDependencies": {
     "@types/pg": "8.23.1",

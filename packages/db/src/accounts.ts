@@ -16,6 +16,7 @@ import {
 import type { Actor } from '@northstar/auth';
 import { writeAuditEvent } from '@northstar/observability';
 import { withSystemContext, withTenant } from './client';
+import { enqueue, recordMarketingConsent } from './outbox';
 
 const SYSTEM_REASON = 'actor assembly (memberships span tenants by definition)';
 
@@ -339,13 +340,133 @@ export async function changeMembership(input: {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Creates an organization and seats its first administrator.
+ * Creates the user, the organization, the founding membership, the consent
+ * record and any outbound message — in **one** transaction.
  *
- * Both writes happen in one transaction under system context, because until the
- * organization row exists there is no tenant to scope to — this is the
- * bootstrap case ADR-0003 anticipates. Everything afterwards runs inside
- * `withTenant`.
+ * CC-03a shipped this as three separate transactions ordered so the recoverable
+ * failure came first. That was a mitigation, not a solution: a crash between the
+ * second and the third left an account with no organization, which nothing could
+ * repair automatically. With the outbox in place there is no longer a reason to
+ * accept that, because the one thing that genuinely cannot join a transaction —
+ * the call to the CRM — is now a row rather than a call.
+ *
+ * The provider subject is still created first, outside this transaction. That is
+ * unavoidable: the user row needs its id. It is idempotent on the address, so a
+ * retry reuses the same subject rather than orphaning one.
+ *
+ * Runs under system context because until the organization row exists there is
+ * no tenant to scope to — the bootstrap case ADR-0003 anticipates.
  */
+export async function provisionOrganization(input: {
+  legalName: string;
+  organizationType: string;
+  employeeBand: EmployeeBand;
+  jurisdiction: string;
+  preferredLanguage: 'en' | 'fr';
+  founder: {
+    email: string;
+    displayName: string;
+    identitySubjectId: string;
+  };
+  marketingConsent: boolean;
+  correlationId?: string;
+}): Promise<{ organizationId: string; userId: string }> {
+  return withSystemContext('organization bootstrap (no tenant exists yet)', async (tx) => {
+    const { rows: userRows } = await tx.query<UserRow>(
+      `INSERT INTO users (id, email, display_name, preferred_language, identity_subject_id)
+       VALUES ($1, lower($2), $3, $4, $5)
+       RETURNING ${USER_COLUMNS}`,
+      [
+        newId(),
+        input.founder.email.trim(),
+        input.founder.displayName,
+        input.preferredLanguage,
+        input.founder.identitySubjectId,
+      ],
+    );
+    const founderUserId = userRows[0]!.id;
+
+    const organizationId = newId();
+    await tx.query(
+      `INSERT INTO organizations (id, legal_name, organization_type, employee_band, jurisdiction, preferred_language)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        organizationId,
+        input.legalName,
+        input.organizationType,
+        input.employeeBand,
+        input.jurisdiction,
+        input.preferredLanguage,
+      ],
+    );
+    await tx.query(
+      `INSERT INTO memberships (organization_id, user_id, role) VALUES ($1, $2, $3)`,
+      [organizationId, founderUserId, FOUNDING_ROLE],
+    );
+
+    // CNV-004: both answers are recorded. A recorded refusal is what stops a
+    // later "we must have had consent" from being an argument rather than a fact.
+    await recordMarketingConsent(tx, {
+      organizationId,
+      userId: founderUserId,
+      email: input.founder.email,
+      granted: input.marketingConsent,
+      source: 'sign_up',
+    });
+
+    if (input.marketingConsent) {
+      // The one outbound effect of signing up, and it is a row in this same
+      // transaction rather than an HTTP call. `enqueue` refuses a CRM message
+      // without consent, so this branch is the only way it can be written.
+      await enqueue(tx, {
+        organizationId,
+        messageType: 'crm.contact_upserted',
+        payload: {
+          email: input.founder.email,
+          organizationName: input.legalName,
+          employeeBand: input.employeeBand,
+          locale: input.preferredLanguage,
+          source: 'sign_up',
+          marketingConsent: true,
+        },
+      });
+    }
+
+    await writeAuditEvent(tx, {
+      action: input.marketingConsent ? 'consent.granted' : 'consent.withdrawn',
+      actorId: founderUserId,
+      organizationId,
+      objectType: 'marketing_consent',
+      objectId: founderUserId,
+      correlationId: input.correlationId ?? organizationId,
+      context: { source: 'sign_up', granted: input.marketingConsent },
+    });
+    await writeAuditEvent(tx, {
+      action: 'organization.created',
+      actorId: founderUserId,
+      organizationId,
+      objectType: 'organization',
+      objectId: organizationId,
+      correlationId: input.correlationId ?? organizationId,
+      // The band, not the legal name: the audit log answers "what happened",
+      // and the organizations table already holds who it happened to.
+      context: { employeeBand: input.employeeBand, jurisdiction: input.jurisdiction },
+    });
+    await writeAuditEvent(tx, {
+      action: 'access.permission_granted',
+      actorId: founderUserId,
+      organizationId,
+      objectType: 'membership',
+      objectId: founderUserId,
+      correlationId: input.correlationId ?? organizationId,
+      context: { role: FOUNDING_ROLE, via: 'organization_creation' },
+    });
+
+    return { organizationId, userId: founderUserId };
+  });
+}
+
+/** @deprecated superseded by `provisionOrganization`; kept for the seed only. */
 export async function createOrganizationWithFounder(input: {
   legalName: string;
   organizationType: string;

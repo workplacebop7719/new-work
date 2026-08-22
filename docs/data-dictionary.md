@@ -1,6 +1,6 @@
 # Data dictionary
 
-- **Status:** v2 (CC-03a). Every slice that adds a table or column updates this file in the same pull request.
+- **Status:** v3 (CC-03a + outbox). Every slice that adds a table or column updates this file in the same pull request.
 - **Source:** `packages/db/migrations/`, `packages/domain/src/entities.ts`.
 - **Classification key:** **P** personal data · **S** business-sensitive · **I** internal-only (never client-visible) · **G** general.
 
@@ -36,6 +36,8 @@ Every one carries `organization_id`, has RLS `ENABLE`d and `FORCE`d, and a `tena
 | `assignment_evidence` | The exact evidence a contractor may see. | S | Absence is the default; presence is the grant. |
 | `deliverables` | A client-facing artefact and its release state. | S | `released_requires_approver` CHECK: a release always names its approver. |
 | `invitations` | An offer of membership, addressed to one address and single-use. | P | `token_hash` only. Partial unique index allows one live invitation per address per organization. The `role` CHECK accepts client roles only — the third layer under the domain rule and the policy layer. |
+| `outbox_messages` | Outbound intents, written in the same transaction as the domain change that caused them. | P, S | `payload` is checked against a per-type allowlist before it is stored, so the table cannot become an accidental export of the domain model. `last_error` is redacted on the way in. Dead rows are never swept — they are the review queue. |
+| `marketing_consents` | Who agreed to marketing email, when, and from where. | P | Append-only by trigger **and** by grant: a withdrawal is a new row. The history is what makes "current" defensible. |
 | `audit_events` | Security-relevant actions. | P, I | Append-only: no UPDATE/DELETE grant **and** a trigger that raises. |
 
 ### Columns that deliberately do not exist
@@ -56,6 +58,7 @@ Enforced by the analytics denylist (`packages/observability/src/events.ts`) and 
 - Any contractor rate, internal margin or wholesale cost
 - Any document content, file name or private audit note
 - Any session, invitation or resume token — including its hash
+- Anything not named in `packages/domain/src/outbound.ts` for its message type
 - `users.identity_subject_id` (the provider's handle for a person)
 
 ## Retention
@@ -69,6 +72,9 @@ Enforced by the analytics denylist (`packages/observability/src/events.ts`) and 
 | Auth sessions | 90 days from last activity | SEC-006 |
 | Closed invitations | 30 days after acceptance or revocation — which removes the stored address with them | SEC-007 |
 | Sign-in throttle counters | 2 days | SEC-007 |
+| Delivered outbox messages | 30 days | SEC-007 |
+| **Dead** outbox messages | **Never swept.** They are the ARC-003 review queue, and a queue that empties itself is not one. | ARC-003 |
+| Marketing consent records | Retained while the tenant exists; removed by a deletion request (SEC-013) | CNV-004 |
 | Financial records | Retained through tenant deletion (lawful basis) | §24 offboarding scenario |
 
 Retention jobs are dry-runnable and log before deleting (assumption A-14).

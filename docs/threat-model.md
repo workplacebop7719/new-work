@@ -119,12 +119,27 @@ about what happens when one is stolen, replayed or guessed.
 | T52 | A TOTP setup key or a set of recovery codes ends up in browser history or an access log. | Both travel from the action that created them to the page that renders them in a two-minute `httpOnly` hand-off cookie, never in the URL. The query string carries only a non-secret enrolment id, which must match the cookie. | `apps/web/e2e/identity.spec.ts` asserts the URL contains neither the setup key nor any recovery code. |
 | T51 | A local convenience leaks into a real environment. | The demo accounts panel, the demo TOTP hint and the printed invitation link all render only when the fake adapter is the object actually in use — a check on the instance, not on an environment variable. The demo bootstrap additionally touches only the reserved `.example` TLD. | Code review; the bootstrap's scope was added after an end-to-end test caught it resetting a real account's password. |
 
+## Added with the transactional outbox
+
+| # | Threat | Control | Verified by |
+|---|---|---|---|
+| T53 | A domain change is rolled back but its vendor call already happened. | The intent is a row written in the caller's transaction; delivery is a separate worker that only ever sees committed rows. | `packages/db/test/outbox.test.ts` — enqueue, roll back, drain, assert nothing was delivered. |
+| T54 | A retry double-charges or double-sends. | Idempotency key derived from the message row's own id, so it is identical across every attempt and unique across messages. `UNIQUE` in the schema; the fake adapters refuse a write without one. | Same file — a flaky provider is called three times and the vendor sees one write with one key. |
+| T55 | A field is added to a domain model and silently starts being exported. | Per-message-type allowlist checked at enqueue, plus a global denylist covering accommodation and disability data (SEC-011), storage keys, signed URLs, secrets and every commercial figure. | `packages/domain/src/outbound.test.ts`; `outbox.test.ts` asserts a rejected message is not stored. |
+| T56 | Marketing data is sent without consent. | `enqueue` refuses the message; the check is against the boolean `true`, not truthiness. The consent register is append-only, so a withdrawal cannot be lost by an edit. | `outbound.test.ts`; `outbox.test.ts` proves the append-only refusal against live PostgreSQL. |
+| T57 | A vendor error message is stored with a person's address in it. | `last_error` is redacted before it is written — provider errors routinely quote the request body back, and this table is read during incident review. | `outbox.test.ts` asserts the address is absent and the reason survives. |
+| T58 | A failed message disappears quietly. | A message that exhausts its attempts moves to `dead` and stops. A CHECK constraint means it always carries its reason, `pnpm db:outbox --dead` prints the queue, and retention **never** sweeps dead rows. | `outbox.test.ts`; the retention module deletes delivered rows only. |
+| T59 | A queued message leaks across tenants. | `outbox_messages` carries `organization_id` with RLS enabled and forced. The worker runs under an explicitly reasoned system context, which is the only way to see across tenants. | `outbox.test.ts` — a cross-tenant read returns nothing and a cross-tenant enqueue is rejected. |
+| T60 | Two workers deliver the same message. | Claimed with `FOR UPDATE SKIP LOCKED`, and `markDelivered` is guarded on `state = 'pending'`. | Code review; the claim query is exercised by every drain in the suite. |
+
 ### Gaps opened by this slice
 
 | Gap | Why it matters | Closes in |
 |---|---|---|
 | The authentication audit event is written **after** the provider call, not in the same transaction. | A crash between the two loses the record. A-11 asks for one transaction, and there is no local transaction that can enclose an HTTP call. Every audit event whose action *is* a database write — invitation, membership, organization — does commit in the same transaction. | Reviewed at CC-09 |
 | Sign-up is three writes, not one. | Provider subject, user row, organization. Ordered so the recoverable failure comes first, but a durable outbox is what makes it atomic. | CC-03b (arrives with payments) |
+| Nothing is running the worker. | `pnpm db:outbox` is a command, not a scheduled job, so a queued invitation sits until somebody runs it. Recorded in the runbook in those words rather than implying a worker exists. | CC-03b / infra |
+| No inbound webhook handling. | ADR-0006 decision 6 — signature verification, replay protection, and never trusting a webhook for an authorization decision. Nothing sends us one yet. | CC-03b |
 | No passkey implementation. | The port and the policy both distinguish phishing-resistant factors, and privileged roles require one — but the fake stands in a fixed assertion for a WebAuthn signature. Internal staff therefore cannot yet satisfy their own requirement. | CC-03b / CC-07, with the Q-13 vendor |
 | Session `client_hash` is derived from `x-forwarded-for`. | Inherits the CC-02 deployment constraint above. Here it affects only the "signed in from somewhere new" display, not an access decision. | CC-09 / infra |
 

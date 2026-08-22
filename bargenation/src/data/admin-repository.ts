@@ -1,6 +1,7 @@
 import 'server-only';
 import pg from 'pg';
 import { toRole, type Role } from '@/auth/roles';
+import { titleSimilarity, aliasKey, NEW_PRODUCT_CONFIDENCE } from '@/ingest/product-match';
 
 /**
  * Operational data for the admin surface (PRD §49).
@@ -80,6 +81,9 @@ export interface ReviewItem {
   raw: Record<string, unknown>;
   createdAt: string;
   sourceName: string;
+  retailerSlug: string | null;
+  /** The products the matcher could not choose between. */
+  candidates: Array<{ id: string; title: string; confidence: number }>;
 }
 
 export async function listReviewQueue(actorId: string, limit = 50): Promise<ReviewItem[]> {
@@ -93,15 +97,132 @@ export async function listReviewQueue(actorId: string, limit = 50): Promise<Revi
        from ingest_rejections r
        join source_runs sr on sr.id = r.run_id
        join data_sources ds on ds.id = sr.source_id
-       where r.stage = 'MATCH'
+       where r.stage = 'MATCH' and r.resolved_at is null
        order by r.created_at desc
        limit $1`,
       [limit],
     );
-    return rows.map((r) => ({
-      id: r.id, runId: r.run_id, stage: r.stage, reason: r.reason,
-      raw: r.raw, createdAt: r.created_at.toISOString(), sourceName: r.source_name,
+
+    // Recompute the candidates rather than storing them: the catalog moves,
+    // and a stale list would offer an operator products that no longer exist.
+    const { rows: catalog } = await client.query<{
+      id: string; slug: string; title: string; brand: string | null;
+    }>(`select p.id, p.slug, p.name as title, b.name as brand
+        from products p left join brands b on b.id = p.brand_id`);
+    const existing = catalog.map((c) => ({
+      id: c.id, slug: c.slug, title: c.title, brand: c.brand,
     }));
+
+    return rows.map((r) => {
+      const title = typeof r.raw.title === 'string' ? r.raw.title : '';
+      const candidates = existing
+        .map((p) => ({ id: p.id, title: p.title, confidence: titleSimilarity(p.title, title) }))
+        .filter((c) => c.confidence >= NEW_PRODUCT_CONFIDENCE)
+        .sort((a, b) => b.confidence - a.confidence)
+        .slice(0, 6);
+
+      return {
+        id: r.id, runId: r.run_id, stage: r.stage, reason: r.reason,
+        raw: r.raw, createdAt: r.created_at.toISOString(), sourceName: r.source_name,
+        retailerSlug: typeof r.raw.__retailerSlug === 'string' ? r.raw.__retailerSlug : null,
+        candidates,
+      };
+    });
+  });
+}
+
+export type MatchDecision =
+  | { kind: 'MATCHED'; productId: string }
+  | { kind: 'NEW_PRODUCT' }
+  | { kind: 'DISMISSED' };
+
+/**
+ * Answers an ambiguous match, and teaches the system the answer.
+ *
+ * The important part is the alias. Fixing only this record would leave the
+ * same feed asking the same question on every future run, which is not a
+ * resolution — it is a chore that repeats. The alias is keyed on the
+ * normalised, stemmed title so trivial rewording does not reopen it.
+ *
+ * WHAT THIS DELIBERATELY DOES NOT DO: it does not backfill the price from the
+ * held record. That observation may be days old by the time somebody looks,
+ * and inserting a stale price as though it were just seen would corrupt the
+ * timeline every Value Index is measured against — permanently, because the
+ * record is append-only. The alias makes the NEXT run resolve cleanly, with a
+ * price that is actually current.
+ */
+export async function resolveMatch(
+  actorId: string,
+  rejectionId: string,
+  decision: MatchDecision,
+  reason: string,
+): Promise<void> {
+  await asStaff(actorId, async (client) => {
+    const { rows } = await client.query<{
+      raw: Record<string, unknown>; resolved_at: Date | null;
+    }>(
+      `select raw, resolved_at from ingest_rejections where id = $1 for update`,
+      [rejectionId],
+    );
+    const item = rows[0];
+    if (!item) throw new Error('That queue item no longer exists.');
+    if (item.resolved_at) throw new Error('That queue item has already been resolved.');
+
+    const title = typeof item.raw.title === 'string' ? item.raw.title : '';
+    const retailerSlug =
+      typeof item.raw.__retailerSlug === 'string' ? item.raw.__retailerSlug : null;
+
+    if (decision.kind !== 'DISMISSED') {
+      if (!title.trim()) throw new Error('That record has no title to key an alias on.');
+      if (!retailerSlug) throw new Error('That record did not record which retailer it came from.');
+    }
+
+    let productId: string | null = null;
+
+    if (decision.kind === 'MATCHED') {
+      const exists = await client.query('select 1 from products where id = $1', [decision.productId]);
+      if (exists.rowCount === 0) throw new Error('That product no longer exists.');
+      productId = decision.productId;
+    } else if (decision.kind === 'NEW_PRODUCT') {
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+      const created = await client.query<{ id: string }>(
+        `insert into products (slug, name, category_id)
+         values ($1, $2, (select id from categories order by sort_order limit 1))
+         on conflict (slug) do update set name = excluded.name
+         returning id`,
+        [slug, title.trim()],
+      );
+      productId = created.rows[0]!.id;
+    }
+
+    if (productId && retailerSlug) {
+      // One answer per question per retailer. Re-answering replaces the
+      // previous one rather than failing, and the audit trail keeps both.
+      await client.query(
+        `insert into product_aliases (retailer_id, normalised_title, product_id, created_by, reason)
+         values ((select id from retailers where slug = $1), $2, $3, $4, $5)
+         on conflict (retailer_id, normalised_title)
+           do update set product_id = excluded.product_id,
+                         created_by = excluded.created_by,
+                         reason = excluded.reason,
+                         created_at = now()`,
+        [retailerSlug, aliasKey(title), productId, actorId, reason],
+      );
+    }
+
+    await client.query(
+      `update ingest_rejections
+       set resolved_at = now(), resolved_by = $2, resolution = $3
+       where id = $1`,
+      [rejectionId, actorId, decision.kind],
+    );
+
+    await client.query(
+      `insert into admin_actions (actor_id, action, target, reason, detail)
+       values ($1,'RESOLVE_MATCH',$2,$3,$4)`,
+      [actorId, `ingest_rejections:${rejectionId}`, reason,
+       JSON.stringify({ decision: decision.kind, productId, retailerSlug, title })],
+    );
   });
 }
 

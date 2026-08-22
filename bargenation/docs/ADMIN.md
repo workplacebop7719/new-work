@@ -62,6 +62,10 @@ row of that table is a test.
 
 ## Two permission levels, because two weights of action
 
+**Resolving a match** is available to operators. It records an alias that
+redirects future records, which is consequential enough to need a written
+reason but does not touch permanent history.
+
 **Discard** is available to operators. The price can be observed again
 tomorrow, so a wrong discard costs a day.
 
@@ -90,8 +94,5 @@ something by removing the account.
 
 ## Not built yet
 
-- **Resolving a match.** The queue and its audit trail exist; the editor —
-  a product picker plus a re-ingest of the held record — does not. The control
-  renders disabled with that reason.
 - **Everything else in §49**: sources, agents, revenue, users, newsletter.
 - **Stale quarantine never expires.** Held observations wait indefinitely.

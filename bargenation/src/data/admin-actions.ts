@@ -4,7 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { readSession } from '@/auth/session';
 import { readRole } from './admin-repository';
 import * as admin from './admin-repository';
-import { canReleaseQuarantine, canDiscardQuarantine } from '@/auth/roles';
+import { canReleaseQuarantine, canDiscardQuarantine, canResolveMatches } from '@/auth/roles';
+import type { MatchDecision } from './admin-repository';
 
 /**
  * Operator mutations (PRD §49).
@@ -28,6 +29,49 @@ async function requireStaff() {
   if (!session) return null;
   const role = await readRole(session.user.id);
   return { id: session.user.id, role };
+}
+
+export async function resolveMatchAction(
+  _prev: ActionState, form: FormData,
+): Promise<ActionState> {
+  const staff = await requireStaff();
+  if (!staff) return { error: 'You are not signed in.', done: null };
+  if (!canResolveMatches(staff.role)) {
+    return { error: 'That needs an operator account.', done: null };
+  }
+
+  const id = String(form.get('rejectionId') ?? '');
+  const reason = String(form.get('reason') ?? '').trim();
+  const choice = String(form.get('choice') ?? '');
+
+  if (reason.length < 8) {
+    return { error: 'Say why in a few words — this is written to an audit trail.', done: null };
+  }
+
+  let decision: MatchDecision;
+  if (choice === 'NEW_PRODUCT') decision = { kind: 'NEW_PRODUCT' };
+  else if (choice === 'DISMISSED') decision = { kind: 'DISMISSED' };
+  else if (choice.startsWith('product:')) {
+    decision = { kind: 'MATCHED', productId: choice.slice('product:'.length) };
+  } else {
+    return { error: 'Choose a product, or choose to create a new one.', done: null };
+  }
+
+  try {
+    await admin.resolveMatch(staff.id, id, decision, reason);
+  } catch (err) {
+    return { error: (err as Error).message, done: null };
+  }
+
+  revalidatePath('/admin/review');
+  revalidatePath('/admin');
+  return {
+    error: null,
+    done:
+      decision.kind === 'DISMISSED'
+        ? 'Dismissed. No alias was recorded, so this may be asked again.'
+        : 'Resolved. The next run will match this without asking.',
+  };
 }
 
 export async function releaseQuarantineAction(

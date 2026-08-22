@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { releaseQuarantineAction, discardQuarantineAction, type ActionState } from '@/data/admin-actions';
 import type { HeldObservation } from '@/data/admin-repository';
 
@@ -13,6 +13,10 @@ const usd = (c: number) => `$${(c / 100).toFixed(2)}`;
  * permanently and "why" is the only part that cannot be reconstructed
  * afterwards from the data itself.
  *
+ * The reason fields are CONTROLLED: React 19 resets uncontrolled fields after
+ * a form action runs, so a rejected submission was discarding what the
+ * operator had just typed.
+ *
  * Release is NOT styled as the primary action, deliberately. It writes into an
  * append-only record and cannot be undone by anyone, and making the
  * irreversible choice the most inviting button on the screen is how people end
@@ -23,6 +27,8 @@ export function QuarantineCard({ held, canRelease }: { held: HeldObservation; ca
   const initial: ActionState = { error: null, done: null };
   const [releaseState, release, releasing] = useActionState(releaseQuarantineAction, initial);
   const [discardState, discard, discarding] = useActionState(discardQuarantineAction, initial);
+  const [discardReason, setDiscardReason] = useState('');
+  const [releaseReason, setReleaseReason] = useState('');
 
   const state = releaseState.error || releaseState.done ? releaseState : discardState;
   const drop =
@@ -81,6 +87,8 @@ export function QuarantineCard({ held, canRelease }: { held: HeldObservation; ca
           <input
             id={`discard-${held.id}`}
             name="reason"
+            value={discardReason}
+            onChange={(e) => setDiscardReason(e.target.value)}
             className="min-h-[44px] border-b border-ink bg-transparent pb-1 text-[0.9375rem] outline-none"
           />
           <button
@@ -100,6 +108,8 @@ export function QuarantineCard({ held, canRelease }: { held: HeldObservation; ca
           <input
             id={`release-${held.id}`}
             name="reason"
+            value={releaseReason}
+            onChange={(e) => setReleaseReason(e.target.value)}
             disabled={!canRelease}
             className="min-h-[44px] border-b border-ink bg-transparent pb-1 text-[0.9375rem] outline-none disabled:border-line-strong"
           />

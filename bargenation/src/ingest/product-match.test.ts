@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  matchProduct, titleSimilarity, AUTO_MATCH_CONFIDENCE, NEW_PRODUCT_CONFIDENCE,
+  matchProduct, titleSimilarity, aliasKey, AUTO_MATCH_CONFIDENCE, NEW_PRODUCT_CONFIDENCE,
   type ExistingProduct, type IncomingProduct,
 } from './product-match';
 
@@ -135,5 +135,59 @@ describe('title similarity', () => {
 describe('no existing catalog', () => {
   it('treats everything as new', () => {
     expect(matchProduct(incoming(), []).kind).toBe('NEW');
+  });
+});
+
+describe('a resolved match is remembered', () => {
+  const existing = [
+    product({ id: 'p1', title: 'Ambiguous Widget Blue' }),
+    product({ id: 'p2', title: 'Ambiguous Widget Green' }),
+  ];
+
+  it('without an alias, still refuses to choose', () => {
+    const r = matchProduct(incoming({ title: 'Ambiguous Widget' }), existing);
+    expect(r.kind).toBe('NEEDS_REVIEW');
+  });
+
+  it('with an alias, resolves immediately and never asks again', () => {
+    const aliases = new Map([[aliasKey('Ambiguous Widget'), 'p2']]);
+    const r = matchProduct(incoming({ title: 'Ambiguous Widget' }), existing, aliases);
+    expect(r.kind).toBe('MATCHED');
+    if (r.kind === 'MATCHED') {
+      expect(r.product.id).toBe('p2');
+      expect(r.via).toBe('alias');
+    }
+  });
+
+  /** Trivial rewording must not reopen a question somebody already answered. */
+  it('survives singular/plural and punctuation changes in the feed', () => {
+    const aliases = new Map([[aliasKey('Ambiguous Widget'), 'p2']]);
+    for (const variant of ['ambiguous widgets', 'AMBIGUOUS  WIDGET!', 'Widget, Ambiguous']) {
+      const r = matchProduct(incoming({ title: variant }), existing, aliases);
+      expect(r.kind, variant).toBe('MATCHED');
+    }
+  });
+
+  it('outranks a SKU, because a person looked at the actual record', () => {
+    const withSku = [
+      product({ id: 'p1', title: 'Ambiguous Widget Blue', skus: { 'calder-kids': 'SKU-9' } }),
+      product({ id: 'p2', title: 'Ambiguous Widget Green' }),
+    ];
+    const aliases = new Map([[aliasKey('Ambiguous Widget'), 'p2']]);
+    const r = matchProduct(incoming({ title: 'Ambiguous Widget', sku: 'SKU-9' }), withSku, aliases);
+    expect(r.kind).toBe('MATCHED');
+    if (r.kind === 'MATCHED') expect(r.product.id).toBe('p2');
+  });
+
+  it('falls through rather than failing when an alias points at a deleted product', () => {
+    const aliases = new Map([[aliasKey('Ambiguous Widget'), 'gone']]);
+    const r = matchProduct(incoming({ title: 'Ambiguous Widget' }), existing, aliases);
+    expect(r.kind).toBe('NEEDS_REVIEW');
+  });
+
+  it('does not leak between unrelated titles', () => {
+    const aliases = new Map([[aliasKey('Ambiguous Widget'), 'p2']]);
+    const r = matchProduct(incoming({ title: 'Completely Different Thing' }), existing, aliases);
+    expect(r.kind).toBe('NEW');
   });
 });

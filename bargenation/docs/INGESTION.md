@@ -72,6 +72,39 @@ So: identifiers first, then similarity with brand as a hard gate, and when two
 candidates score within 0.05 of each other the pipeline records a question
 rather than picking the higher one.
 
+## Resolving an ambiguous match
+
+The matcher's refusal is correct, but until it had an outcome it produced a
+queue nothing could empty — and the same feed asked the same question on every
+run.
+
+A resolution is therefore not a fix applied to one record. It is a fact the
+system **learns**: *at this retailer, a record titled X is product Y*. Stored in
+`product_aliases`, keyed on the normalised and stemmed title so trivial
+rewording does not reopen a settled question, and consulted **before**
+similarity on every future run.
+
+An alias outranks even a retailer SKU. If a person said these are the same
+product and the retailer's own identifier disagrees, the person is the one who
+actually looked.
+
+Three outcomes, all requiring a written reason because all three become part of
+the audit trail:
+
+| Choice | Effect |
+|---|---|
+| One of the candidates | alias recorded; future runs match silently |
+| Not a product we track | product created, then aliased to it |
+| Dismiss | **no alias**, so the question will return — and the interface says so |
+
+### What resolving deliberately does not do
+
+It does not backfill the held price. That observation may be days old by the
+time somebody looks, and inserting a stale price as though it were just
+observed would corrupt the timeline every Value Index is measured against —
+permanently, because the record is append-only. The alias makes the *next* run
+resolve cleanly at a price that is actually current.
+
 ## Known gaps
 
 - **The SKU fast path is unreachable from the pipeline.** `matchProduct`

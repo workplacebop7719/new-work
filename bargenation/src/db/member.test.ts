@@ -168,23 +168,40 @@ d('member repository isolation', () => {
       );
     });
 
+    /**
+     * Asserts ISOLATION, not an exact list. The Deal Signal sweep is global and
+     * may legitimately generate a signal for this customer's own watch, so
+     * pinning the array made the suite order-dependent — it passed alone and
+     * failed after the signal-job suite had run. What matters is that neither
+     * customer can see the other's.
+     */
     it('shows each customer only their own signals', async () => {
       const alice = await repo.listDealSignals(ALICE);
       const bob = await repo.listDealSignals(BOB);
-      expect(alice.map((s) => s.message)).toEqual(['Alice signal']);
-      expect(bob.map((s) => s.message)).toEqual(['Bob signal']);
+
+      expect(alice.map((s) => s.message)).toContain('Alice signal');
+      expect(alice.map((s) => s.message)).not.toContain('Bob signal');
+
+      expect(bob.map((s) => s.message)).toContain('Bob signal');
+      expect(bob.map((s) => s.message)).not.toContain('Alice signal');
     });
 
     it('cannot mark another customer’s signal as read', async () => {
-      const [aliceSignal] = await repo.listDealSignals(ALICE);
+      const aliceSignal = (await repo.listDealSignals(ALICE)).find(
+        (s) => s.message === 'Alice signal',
+      );
       await repo.markSignalRead(BOB, aliceSignal!.id);
-      expect((await repo.listDealSignals(ALICE))[0]!.readAt).toBeNull();
+      const after = (await repo.listDealSignals(ALICE)).find((s) => s.id === aliceSignal!.id);
+      expect(after!.readAt).toBeNull();
     });
 
     it('lets the owner mark their own signal read', async () => {
-      const [aliceSignal] = await repo.listDealSignals(ALICE);
+      const aliceSignal = (await repo.listDealSignals(ALICE)).find(
+        (s) => s.message === 'Alice signal',
+      );
       await repo.markSignalRead(ALICE, aliceSignal!.id);
-      expect((await repo.listDealSignals(ALICE))[0]!.readAt).not.toBeNull();
+      const after = (await repo.listDealSignals(ALICE)).find((s) => s.id === aliceSignal!.id);
+      expect(after!.readAt).not.toBeNull();
     });
   });
 

@@ -107,6 +107,20 @@ export async function ingestFromSource(
       id: c.id, slug: c.slug, title: c.title, brand: c.brand,
     }));
 
+    /**
+     * Answers an operator has already given for this retailer. Consulted
+     * before similarity, so a question resolved once is never asked again —
+     * which is the whole point of the review queue having an outcome.
+     */
+    const { rows: aliasRows } = await client.query<{ normalised_title: string; product_id: string }>(
+      `select a.normalised_title, a.product_id
+       from product_aliases a
+       join retailers r on r.id = a.retailer_id
+       where r.slug = $1`,
+      [retailerSlug],
+    );
+    const aliases = new Map(aliasRows.map((a) => [a.normalised_title, a.product_id]));
+
     for (const raw of records) {
       // ---- EXTRACT ----
       const title = pick(raw, FIELD.title);
@@ -138,6 +152,7 @@ export async function ingestFromSource(
           sku: typeof skuValue === 'string' ? skuValue : null,
         },
         existing,
+        aliases,
       );
 
       if (match.kind === 'NEEDS_REVIEW') {
@@ -147,7 +162,9 @@ export async function ingestFromSource(
           `insert into ingest_rejections (run_id, stage, reason, raw) values ($1,'MATCH',$2,$3)`,
           [result.runId,
            `ambiguous match against ${match.candidates.length} candidate(s); needs review`,
-           JSON.stringify(raw)],
+           // The retailer is recorded alongside the raw row because an alias
+           // is per-retailer, and resolving needs to know which one.
+           JSON.stringify({ ...raw, __retailerSlug: retailerSlug })],
         );
         result.needsReview++;
         continue;

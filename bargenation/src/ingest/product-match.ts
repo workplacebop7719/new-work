@@ -32,8 +32,26 @@ export interface IncomingProduct {
   sku: string | null;
 }
 
+/**
+ * The exact string an alias is stored and looked up under.
+ *
+ * Normalisation AND stemming, so "Kids Sneakers" and "Kids Sneaker" resolve to
+ * the same answer — a trivial feed rewording must not reopen a question
+ * somebody has already answered. Exported so the database stores precisely
+ * what this function produces; a mismatch here would make aliases silently
+ * never hit.
+ */
+export function aliasKey(title: string): string {
+  return [...tokens(title)].sort().join(' ');
+}
+
 export type MatchResult =
-  | { kind: 'MATCHED'; product: ExistingProduct; confidence: number; via: 'sku' | 'exact' | 'similarity' }
+  | {
+      kind: 'MATCHED';
+      product: ExistingProduct;
+      confidence: number;
+      via: 'alias' | 'sku' | 'exact' | 'similarity';
+    }
   | { kind: 'NEEDS_REVIEW'; candidates: Array<{ product: ExistingProduct; confidence: number }> }
   | { kind: 'NEW' };
 
@@ -95,8 +113,23 @@ export function titleSimilarity(a: string, b: string): number {
 export function matchProduct(
   incoming: IncomingProduct,
   existing: readonly ExistingProduct[],
+  /** Learned answers for this retailer, keyed by aliasKey(). */
+  aliases: ReadonlyMap<string, string> = new Map(),
 ): MatchResult {
-  // 1. A retailer SKU is an identifier, not a guess. Trust it outright.
+  // 1. An alias is a person's explicit answer to exactly this question, given
+  //    while looking at the actual record. It outranks every inference below,
+  //    including a SKU: if a human said these are the same product and the
+  //    retailer's own identifier disagrees, the human was the one who checked.
+  const aliased = aliases.get(aliasKey(incoming.title));
+  if (aliased) {
+    const product = existing.find((p) => p.id === aliased);
+    if (product) return { kind: 'MATCHED', product, confidence: 1, via: 'alias' };
+    // The alias points at a product that no longer exists. Fall through rather
+    // than fail: the remaining strategies may still resolve it, and a stale
+    // alias should not block ingestion.
+  }
+
+  // 2. A retailer SKU is an identifier, not a guess. Trust it outright.
   if (incoming.sku) {
     const bySku = existing.find(
       (p) => p.skus?.[incoming.retailerSlug] === incoming.sku,
@@ -107,7 +140,7 @@ export function matchProduct(
   const incomingTitle = normaliseTitle(incoming.title);
   const incomingBrand = incoming.brand ? normaliseTitle(incoming.brand) : null;
 
-  // 2. Exact normalised title plus matching brand.
+  // 3. Exact normalised title plus matching brand.
   const exact = existing.find(
     (p) =>
       normaliseTitle(p.title) === incomingTitle &&
@@ -115,7 +148,7 @@ export function matchProduct(
   );
   if (exact) return { kind: 'MATCHED', product: exact, confidence: 1, via: 'exact' };
 
-  // 3. Similarity, with brand as a hard gate rather than a scoring nudge.
+  // 4. Similarity, with brand as a hard gate rather than a scoring nudge.
   const scored = existing
     .filter((p) => {
       if (incomingBrand === null || p.brand === null) return true;

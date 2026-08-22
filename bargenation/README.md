@@ -80,6 +80,7 @@ These are not conventions. Each one has a test or a guard that fails the build.
 | Ambiguous feed data is refused, not guessed | extraction returns a reason; `"1,234"` is rejected outright |
 | A doubtful price never enters the permanent record | quarantined until a **different** source agrees |
 | Two products are never silently merged | matching asks for review instead of picking a winner |
+| A resolved match never has to be resolved twice | the answer is stored as an alias and consulted before similarity |
 | Brand pink is a surface, never type on white | `scripts/check-contrast.mjs` fails the build if it ever clears AA |
 
 ### The palette problem, and why it is solved this way

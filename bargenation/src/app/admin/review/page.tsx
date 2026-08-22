@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { readSession } from '@/auth/session';
 import { listReviewQueue } from '@/data/admin-repository';
-import { NotBuiltYet } from '@/components/ui/NotBuiltYet';
+import { ReviewCard } from '@/components/admin/ReviewCard';
 
 export const metadata: Metadata = { title: 'Needs review' };
 
@@ -30,31 +30,9 @@ export default async function ReviewPage() {
           </p>
         </div>
       ) : (
-        <>
-          <ul className="mt-8 divide-y divide-line border-t border-line">
-            {items.map((item) => (
-              <li key={item.id} className="py-5">
-                <p className="eyebrow text-ink-50">
-                  {item.sourceName} ·{' '}
-                  {new Date(item.createdAt).toLocaleString('en-US', {
-                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-                  })}
-                </p>
-                <p className="mt-1.5 text-[1rem]">
-                  {typeof item.raw.title === 'string' ? item.raw.title : '(no title)'}
-                </p>
-                <p className="mt-1 text-[0.8125rem] text-ink-70">{item.reason}</p>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-10 border-t border-line pt-8">
-            <NotBuiltYet
-              label="Resolve match"
-              reason="Not built yet. Resolving needs a product picker and a re-ingest of the held record; the queue and its audit trail exist, the editor does not."
-            />
-          </div>
-        </>
+        <ul className="mt-8">
+          {items.map((item) => <ReviewCard key={item.id} item={item} />)}
+        </ul>
       )}
     </section>
   );

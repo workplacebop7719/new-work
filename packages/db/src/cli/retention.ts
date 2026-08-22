@@ -12,6 +12,15 @@ console.log(
 console.log(
   `  completed qualifier sessions older than ${RETENTION_DAYS.completedQualifierSession}d: ${report.completedSessions}`,
 );
+console.log(
+  `  auth sessions unused for ${RETENTION_DAYS.expiredAuthSession}d: ${report.expiredAuthSessions}`,
+);
+console.log(
+  `  invitations closed more than ${RETENTION_DAYS.closedInvitation}d ago: ${report.closedInvitations}`,
+);
+console.log(
+  `  sign-in throttle rows older than ${RETENTION_DAYS.signInThrottle}d: ${report.signInThrottleRows}`,
+);
 console.log(`  closed rate-limit windows pruned: ${report.rateLimitCountersPruned}`);
 if (!apply) console.log('\nNothing was deleted. Re-run with --apply to delete.');
 

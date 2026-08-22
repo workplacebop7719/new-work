@@ -1,6 +1,6 @@
 # Incremental delivery plan — CC-01 through CC-09
 
-- **Status:** Draft for approval. No application code exists yet.
+- **Status:** In delivery. CC-01, CC-02, CC-02b and CC-03a have shipped; see `docs/traceability.md` §5–§10 for what each actually delivered and what each cut.
 - **PRD basis:** §27 Claude Code delivery sequence, Build mode, Environment and command contract; §20 Roadmap and release gates
 - **Companion documents:** [traceability](./traceability.md) · [assumptions](./assumptions-register.md) · [ADRs](./adr/) · [Phase 0](./phase-0-validation-plan.md) · [programme risks](./programme-risks.md)
 
@@ -101,6 +101,15 @@ Per PRD §27 "Build mode":
 **Security threats:** account takeover, invitation-link abuse, payment webhook forgery, privilege escalation via invitation role, session fixation.
 **Exit evidence:** CLP-013 demonstrated live (invite two roles with different permissions, revoke, show immediate effect); MFA enrolment completed by a screen-reader user; payment retry proven idempotent.
 **Non-scope:** evidence upload, contractor access, change orders (CLP-008 completes in CC-07).
+
+**Delivered in two halves.** CC-03a (identity: sign-in, MFA, recovery, sign-up,
+invitations, roles, organization profile) shipped first because it depends on no
+vendor decision — `IdentityPort` with a fake satisfies the whole slice, and the
+adapter under Q-13 must pass the same contract test. CC-03b (booking, checkout,
+payment, agreement, project shell) waits on Q-14 and on the transactional outbox
+ADR-0006 requires: a checkout whose failure mode is "payment taken, no project
+created" would be worse than no checkout. The split and its consequences are
+recorded in `docs/traceability.md` §10.
 
 ---
 

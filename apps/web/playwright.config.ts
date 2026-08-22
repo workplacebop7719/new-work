@@ -57,7 +57,7 @@ export default defineConfig({
         javaScriptEnabled: false,
         extraHTTPHeaders: { 'x-forwarded-for': clientAddress('30') },
       },
-      testMatch: /no-javascript\.spec\.ts|qualifier-no-js\.spec\.ts/,
+      testMatch: /no-javascript\.spec\.ts|qualifier-no-js\.spec\.ts|identity-no-js\.spec\.ts/,
     },
   ],
   webServer: {

@@ -50,6 +50,18 @@ export const RATE_LIMITS = {
   /** Enough for a small team to each request a link; tight enough to be useless for sending mail in volume. */
   resume_email: { limit: 10, windowSeconds: 3600 },
   consent: { limit: 200, windowSeconds: 3600 },
+  /**
+   * Sign-in attempts from one address. Sized against the false-positive case:
+   * the buyers are organizations behind one office NAT, so a limit tuned for a
+   * single person would lock out a whole client at 9am. Per-account throttling
+   * (`sign_in_throttle`) is the control that actually stops credential stuffing;
+   * this one stops a flood.
+   */
+  sign_in: { limit: 120, windowSeconds: 3600 },
+  /** Enrolment and recovery are rarer, and each one costs a provider call. */
+  account_security: { limit: 60, windowSeconds: 3600 },
+  /** Organization creation. Generous for a genuine office, useless for scripting. */
+  sign_up: { limit: 20, windowSeconds: 3600 },
 } as const satisfies Record<string, RateLimitRule>;
 
 export type RateLimitedAction = keyof typeof RATE_LIMITS;

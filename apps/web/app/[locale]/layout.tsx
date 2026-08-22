@@ -4,9 +4,11 @@ import { SkipLink } from '@northstar/ui';
 import '@northstar/ui/tokens.css';
 import '../globals.css';
 import { ConsentBanner } from '@/app/components/consent-banner';
+import { SessionTimeoutWarning } from '@/app/components/session-timeout';
 import { SiteFooter, SiteHeader } from '@/app/components/site-chrome';
 import { display, sans } from '@/lib/fonts';
 import { isLocale, t, type Locale } from '@/lib/i18n';
+import { currentViewer } from '@/lib/auth';
 import { readConsent } from '@/lib/session';
 
 export function generateStaticParams() {
@@ -46,12 +48,19 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
 
   const consent = await readConsent();
+  // Costs a cookie read for an anonymous visitor and a session lookup for a
+  // signed-in one. The header needs to know either way, and ACC-004's warning
+  // has to be able to appear on whatever page the person is actually on.
+  const viewer = await currentViewer();
 
   return (
     <html lang={locale} className={`${sans.variable} ${display.variable}`}>
       <body>
         <SkipLink targetId="main">{t(locale, 'nav.skipToContent')}</SkipLink>
-        <SiteHeader locale={locale} />
+        <SiteHeader locale={locale} signedIn={viewer.status === 'active'} />
+        {viewer.status === 'active' && viewer.warnAboutTimeout ? (
+          <SessionTimeoutWarning locale={locale} returnTo={`/${locale}/account`} />
+        ) : null}
         <main id="main" tabIndex={-1}>
           {children}
         </main>

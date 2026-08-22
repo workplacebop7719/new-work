@@ -18,7 +18,9 @@
     "retention": "tsx src/cli/retention.ts"
   },
   "dependencies": {
+    "@northstar/auth": "workspace:*",
     "@northstar/domain": "workspace:*",
+    "@northstar/observability": "workspace:*",
     "pg": "8.23.0"
   },
   "devDependencies": {

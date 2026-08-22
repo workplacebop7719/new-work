@@ -20,11 +20,30 @@ import { pruneRateLimitCounters } from './rate-limit';
 export const RETENTION_DAYS = {
   abandonedQualifierSession: 30,
   completedQualifierSession: 90,
+  /**
+   * Sessions are swept well after they stop working, not when they stop
+   * working: SEC-006 wants "signed in from a new place" to be answerable, and
+   * that needs the row to survive the session. 90 days matches the audit
+   * window the same question is asked over.
+   */
+  expiredAuthSession: 90,
+  /**
+   * A closed invitation still holds the address it was sent to. Thirty days is
+   * long enough for an administrator to see that someone accepted and short
+   * enough that a declined invitation does not become a permanent record of an
+   * address that never became a user (SEC-007 minimization).
+   */
+  closedInvitation: 30,
+  /** Throttle counters are transient; a day past the lockout window is ample. */
+  signInThrottle: 2,
 } as const;
 
 export interface RetentionReport {
   readonly abandonedSessions: number;
   readonly completedSessions: number;
+  readonly expiredAuthSessions: number;
+  readonly closedInvitations: number;
+  readonly signInThrottleRows: number;
   /** Closed rate-limit windows. Always pruned: they hold no personal data and
    *  keeping them serves no purpose. */
   readonly rateLimitCountersPruned: number;
@@ -49,7 +68,41 @@ export async function runRetention(options: { apply: boolean } = { apply: false 
       RETENTION_DAYS.completedQualifierSession,
     );
 
+    // Swept on `last_seen_at` alone, revoked or not. Any session untouched for
+    // 90 days is long past its absolute ceiling, so this window is strictly
+    // wider than the one that decides whether a session still works.
+    const expiredAuthSessions = await count(
+      `SELECT count(*) AS n FROM auth_sessions
+        WHERE last_seen_at < now() - ($1 || ' days')::interval`,
+      RETENTION_DAYS.expiredAuthSession,
+    );
+    const closedInvitations = await count(
+      `SELECT count(*) AS n FROM invitations
+        WHERE (accepted_at IS NOT NULL OR revoked_at IS NOT NULL)
+          AND coalesce(accepted_at, revoked_at) < now() - ($1 || ' days')::interval`,
+      RETENTION_DAYS.closedInvitation,
+    );
+    const signInThrottleRows = await count(
+      `SELECT count(*) AS n FROM sign_in_throttle
+        WHERE updated_at < now() - ($1 || ' days')::interval`,
+      RETENTION_DAYS.signInThrottle,
+    );
+
     if (options.apply) {
+      await tx.query(
+        `DELETE FROM auth_sessions WHERE last_seen_at < now() - ($1 || ' days')::interval`,
+        [RETENTION_DAYS.expiredAuthSession],
+      );
+      await tx.query(
+        `DELETE FROM invitations
+          WHERE (accepted_at IS NOT NULL OR revoked_at IS NOT NULL)
+            AND coalesce(accepted_at, revoked_at) < now() - ($1 || ' days')::interval`,
+        [RETENTION_DAYS.closedInvitation],
+      );
+      await tx.query(
+        `DELETE FROM sign_in_throttle WHERE updated_at < now() - ($1 || ' days')::interval`,
+        [RETENTION_DAYS.signInThrottle],
+      );
       await tx.query(
         `DELETE FROM qualifier_sessions
           WHERE completed_at IS NULL AND updated_at < now() - ($1 || ' days')::interval`,
@@ -64,6 +117,14 @@ export async function runRetention(options: { apply: boolean } = { apply: false 
 
     const rateLimitCountersPruned = options.apply ? await pruneRateLimitCounters() : 0;
 
-    return { abandonedSessions, completedSessions, rateLimitCountersPruned, applied: options.apply };
+    return {
+      abandonedSessions,
+      completedSessions,
+      expiredAuthSessions,
+      closedInvitations,
+      signInThrottleRows,
+      rateLimitCountersPruned,
+      applied: options.apply,
+    };
   });
 }

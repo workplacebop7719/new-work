@@ -203,6 +203,81 @@ describe('platform admin and break-glass (DAT-005)', () => {
   });
 });
 
+describe('team administration (CLP-013)', () => {
+  it('lets a client administrator invite and revoke', () => {
+    const admin = actorWithRole('client_admin');
+    const invitation = resource('invitation', TENANT_A);
+    expect(can(admin, 'create', invitation, NOW).allowed).toBe(true);
+    expect(can(admin, 'read', invitation, NOW).allowed).toBe(true);
+    // Revoking is an update. The record of who invited whom survives it.
+    expect(can(admin, 'update', invitation, NOW).allowed).toBe(true);
+    expect(can(admin, 'delete', invitation, NOW).allowed).toBe(false);
+  });
+
+  it('refuses everyone else in the tenant, including the executive', () => {
+    // §18: an executive sees released reporting, not the administration of the
+    // team. A contributor sees neither.
+    for (const role of ['client_contributor', 'client_executive'] as const) {
+      for (const action of ACTIONS) {
+        expect(
+          can(actorWithRole(role), action, resource('invitation', TENANT_A), NOW).allowed,
+          `${role} ${action} invitation`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it('refuses a qualified reviewer, whose remit is review and not administration', () => {
+    for (const action of ACTIONS) {
+      expect(
+        can(actorWithRole('qualified_reviewer'), action, resource('invitation', TENANT_A), NOW).allowed,
+      ).toBe(false);
+    }
+  });
+
+  it('lets internal staff seat a client organization during assisted onboarding', () => {
+    const pm = actorWithRole('internal_pm');
+    expect(can(pm, 'create', resource('invitation', TENANT_A), NOW).allowed).toBe(true);
+    expect(can(pm, 'delete', resource('invitation', TENANT_A), NOW).allowed).toBe(false);
+  });
+
+  it('refuses a contractor holding an active grant on the project', () => {
+    // The contractor branch is evaluated first and exclusively, so this also
+    // proves team administration is unreachable through the grant path.
+    const contractor: Actor = {
+      userId: 'usr_contractor',
+      memberships: [],
+      contractorGrants: [
+        {
+          organizationId: TENANT_A,
+          projectId: PROJECT_A,
+          assignmentId: 'asg_1',
+          expiresAt: new Date('2026-09-30T00:00:00Z'),
+          evidenceIds: [],
+        },
+      ],
+    };
+    for (const action of ACTIONS) {
+      expect(can(contractor, action, resource('invitation', TENANT_A), NOW).allowed).toBe(false);
+    }
+  });
+
+  it('gives a platform admin under break-glass read access and nothing more', () => {
+    const admin: Actor = {
+      userId: 'usr_platform_admin',
+      memberships: [{ organizationId: TENANT_B, role: 'platform_admin' }],
+      contractorGrants: [],
+      breakGlass: {
+        organizationId: TENANT_A,
+        reason: 'incident INC-2',
+        expiresAt: new Date('2026-09-01T16:00:00Z'),
+      },
+    };
+    expect(can(admin, 'read', resource('invitation', TENANT_A), NOW).allowed).toBe(true);
+    expect(can(admin, 'create', resource('invitation', TENANT_A), NOW).allowed).toBe(false);
+  });
+});
+
 describe('coverage', () => {
   it('has cross-tenant coverage for every protected resource class (CMD-001)', () => {
     const missing = RESOURCE_CLASSES.filter((cls) => !crossTenantCoverage.has(cls));

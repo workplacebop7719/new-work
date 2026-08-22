@@ -289,6 +289,227 @@ const en = {
   'howItWorks.limits.heading': 'What we will not do',
   'howItWorks.limits.body':
     'We will not tell you that you are finished. We do not file anything on your behalf, we are not affiliated with any government, and nothing we produce is legal advice. If an overlay widget is what you are looking for, we are not the right supplier — those do not fix inaccessible content.',
+
+  /* ---- Accounts and access (CC-03a) ---------------------------------- */
+
+  'nav.signIn': 'Sign in',
+  'nav.account': 'Your account',
+
+  'auth.signIn.title': 'Sign in',
+  'auth.signIn.lede':
+    'Every account uses a second step. You will need your authenticator app or your passkey after your password.',
+  'auth.signIn.emailLabel': 'Email address',
+  'auth.signIn.passwordLabel': 'Password',
+  'auth.signIn.passwordHint': 'Paste from a password manager if you use one — it works here.',
+  'auth.signIn.submit': 'Continue',
+  'auth.signIn.forgot': 'I have lost access to my second step',
+  'auth.signIn.noAccount': 'Setting up a new organization?',
+  'auth.signIn.createAccount': 'Create an organization',
+
+  'auth.error.credentials': 'That email address and password did not match an account.',
+  'auth.error.locked':
+    'Too many attempts have been made against this address. Try again in about fifteen minutes. Nothing is wrong with your account.',
+  'auth.error.expired': 'That step took too long and has expired. Please start again.',
+  'auth.error.code': 'That code was not accepted. Signing in again will send you a fresh one to answer.',
+  'auth.error.method': 'That verification method is not available on this account.',
+
+  'auth.notice.created': 'Your organization is ready. Sign in to set up your second step.',
+  'auth.notice.joined': 'You have joined the organization. Sign in to set up your second step.',
+  'auth.notice.enrolled': 'That step is set up. Sign in with it now.',
+  'auth.notice.recovered':
+    'Your recovery code was accepted and your old second step has been removed. Sign in to set up a new one.',
+  'auth.notice.ended.idle': 'You were signed out after a period of inactivity.',
+  'auth.notice.ended.absolute': 'Your session reached its time limit and you were signed out.',
+  'auth.notice.ended.revoked': 'Your access to this account was changed, so you were signed out.',
+
+  'auth.verify.title': 'Your second step',
+  'auth.verify.lede': 'Enter the current code from your authenticator app.',
+  'auth.verify.codeLabel': 'Six-digit code',
+  'auth.verify.codeHint': 'Spaces are fine. Pasting is fine.',
+  'auth.verify.submit': 'Verify and sign in',
+  'auth.verify.usePasskey': 'Use a passkey instead',
+  'auth.verify.useApp': 'Use an authenticator app instead',
+  'auth.verify.passkeyBody':
+    'Confirm with the passkey stored on this device. In this preview build there is no real device prompt, so the confirmation is a single button.',
+  'auth.verify.passkeySubmit': 'Confirm with passkey',
+  'auth.verify.lost': 'I do not have my second step',
+
+  'auth.enrol.title': 'Set up your second step',
+  'auth.enrol.lede':
+    'Two ways in, so that losing one device does not lock you out. Set up an authenticator app now; you can add a passkey afterwards.',
+  'auth.enrol.chooseTotp': 'Set up an authenticator app',
+  'auth.enrol.choosePasskey': 'Set up a passkey',
+  'auth.enrol.totpStep1':
+    'Add this account to your authenticator app, either by scanning the code or by typing the key below.',
+  'auth.enrol.totpManualLabel': 'Setup key',
+  'auth.enrol.totpUriLabel': 'Full setup link',
+  'auth.enrol.totpStep2': 'Then enter the six-digit code your app is showing.',
+  'auth.enrol.confirmLabel': 'Six-digit code',
+  'auth.enrol.confirm': 'Confirm',
+  'auth.enrol.passkeyBody':
+    'A passkey uses this device to prove it is you. In this preview build the browser prompt is stood in for by a button.',
+  'auth.enrol.passkeyConfirm': 'Create the passkey',
+  'auth.enrol.qrAlt': 'Setup code for your authenticator app. The same key is written out below in text.',
+
+  'auth.recover.title': 'Use a recovery code',
+  'auth.recover.lede':
+    'If you no longer have your authenticator app or passkey, one of the recovery codes you saved will let you set up a new one. Each code works once.',
+  'auth.recover.emailLabel': 'Email address',
+  'auth.recover.codeLabel': 'Recovery code',
+  'auth.recover.submit': 'Use this code',
+  'auth.recover.error.code': 'That code was not accepted.',
+  'auth.recover.error.locked': 'Too many attempts have been made against this address. Try again shortly.',
+  'auth.recover.noCodes':
+    'If you do not have a recovery code either, an administrator in your organization can remove your access and invite you again.',
+
+  'auth.signOut': 'Sign out',
+  'auth.signOutEverywhere': 'Sign out everywhere',
+
+  'auth.timeout.heading': 'You will be signed out shortly',
+  'auth.timeout.body': 'This session is about to time out for inactivity. Nothing you have saved will be lost.',
+  'auth.timeout.extend': 'Keep me signed in',
+
+  'account.title': 'Your account',
+  'account.lede': 'Your sign-in, your second steps and the organizations you belong to.',
+  'account.organizations': 'Organizations',
+  'account.security.link': 'Sign-in and security',
+  'account.security.title': 'Sign-in and security',
+  'account.security.lede':
+    'How you prove it is you, and where you are currently signed in.',
+  'account.factors.heading': 'Your second steps',
+  'account.factors.none': 'You have not set up a second step yet.',
+  'account.factors.one':
+    'You have one second step. Adding a second one means losing a device does not lock you out — which is why we ask for two.',
+  'account.factors.totp': 'Authenticator app',
+  'account.factors.passkey': 'Passkey',
+  'account.factors.enrolledAt': 'Added',
+  'account.factors.lastUsed': 'Last used',
+  'account.factors.neverUsed': 'Not used yet',
+  'account.recovery.heading': 'Recovery codes',
+  'account.recovery.body':
+    'Ten single-use codes. Save them somewhere you can reach without this device. We keep only the date they were issued, never the codes themselves.',
+  'account.recovery.issue': 'Generate new codes',
+  'account.recovery.issuedOn': 'Codes were last generated on {date}.',
+  'account.recovery.never': 'You have not generated recovery codes yet.',
+  'account.recovery.shownOnce':
+    'These are shown once. Save them now — this page cannot show them again, because we do not keep them.',
+  'account.sessions.heading': 'Where you are signed in',
+  'account.sessions.current': 'This device',
+  'account.sessions.startedAt': 'Started',
+  'account.sessions.lastSeen': 'Last active',
+  'account.sessions.unknownClient': 'Unrecognized browser',
+
+  'signUp.title': 'Create an organization',
+  'signUp.lede':
+    'This sets up your organization and makes you its first administrator. You can invite colleagues straight afterwards.',
+  'signUp.orgSection': 'Your organization',
+  'signUp.personSection': 'You',
+  'signUp.orgName': 'Legal name of the organization',
+  'signUp.orgNameHint': 'The name as it appears on your incorporation or registration documents.',
+  'signUp.orgType': 'What kind of organization is it?',
+  'signUp.band': 'How many employees?',
+  'signUp.bandHint': 'A range is all we store. We never record an exact headcount.',
+  'signUp.jurisdiction': 'Province or territory',
+  'signUp.yourName': 'Your name',
+  'signUp.email': 'Your email address',
+  'signUp.password': 'Choose a password',
+  'signUp.passwordHint':
+    'At least twelve characters. A short phrase you will remember beats a short password you will not. Password managers are welcome.',
+  'signUp.marketing': 'Send me occasional email about this service. Optional, and separate from account email.',
+  'signUp.submit': 'Create the organization',
+  'signUp.haveAccount': 'Already have an account?',
+  'signUp.error.details': 'Some of these details were not accepted. Check the fields below.',
+  'signUp.error.password_too_short': 'That password is shorter than twelve characters.',
+  'signUp.error.password_too_long': 'That password is longer than we can accept.',
+  'signUp.error.password_contains_personal_detail':
+    'That password contains your name, your address or your organization’s name, which makes it easy to guess.',
+  'signUp.check.title': 'Check your email',
+  'signUp.check.body':
+    'If that address can be used to create an organization, there is now a message in the inbox explaining what to do next.',
+
+  'orgType.private_school': 'Private school',
+  'orgType.childcare': 'Childcare',
+  'orgType.care_provider': 'Care provider',
+  'orgType.nonprofit': 'Non-profit',
+  'orgType.association': 'Association',
+  'orgType.professional_services': 'Professional services',
+  'orgType.other': 'Something else',
+
+  'org.title': 'Organization',
+  'org.lede': 'What we hold about your organization, and who can change it.',
+  'org.save': 'Save changes',
+  'org.saved': 'Saved.',
+  'org.error.details': 'Some of these details were not accepted.',
+  'org.teamLink': 'People and access',
+
+  'team.title': 'People and access',
+  'team.lede':
+    'Who can see and do what. Changes take effect immediately — removing someone ends the sessions they already have.',
+  'team.invite.heading': 'Invite someone',
+  'team.invite.email': 'Their email address',
+  'team.invite.role': 'What should they be able to do?',
+  'team.invite.submit': 'Send invitation',
+  'team.invited': 'Invitation sent.',
+  'team.revoked': 'Invitation revoked.',
+  'team.updated': 'Role updated.',
+  'team.removed': 'Access removed, and their sessions ended.',
+  'team.members.heading': 'Members',
+  'team.members.role': 'Role',
+  'team.members.joined': 'Joined',
+  'team.members.change': 'Change',
+  'team.members.remove': 'Remove from organization',
+  'team.pending.heading': 'Pending invitations',
+  'team.pending.none': 'No invitations are waiting.',
+  'team.pending.sent': 'Sent',
+  'team.pending.expires': 'Expires',
+  'team.pending.revoke': 'Revoke',
+  'team.state.pending': 'Waiting',
+  'team.state.expired': 'Expired',
+  'team.state.revoked': 'Revoked',
+  'team.state.accepted': 'Accepted',
+  'team.error.last_admin':
+    'That would leave the organization with no administrator, and nobody able to invite one. Make someone else an administrator first.',
+  'team.error.role': 'You cannot give someone a role you do not have the standing to give.',
+  'team.error.details': 'Those details were not accepted.',
+  'team.localLink.heading': 'Invitation link (local build only)',
+  'team.localLink.body':
+    'This build has no mail server, so nothing was actually sent. Open this link, or paste it to the person you invited, to try the acceptance flow.',
+
+  'role.client_admin': 'Administrator',
+  'role.client_admin.description': 'Manages people, evidence and the organization’s details.',
+  'role.client_contributor': 'Contributor',
+  'role.client_contributor.description': 'Uploads evidence and works on findings. No billing, no user management.',
+  'role.client_executive': 'Executive',
+  'role.client_executive.description': 'Sees released reporting and approves scope. Not the working detail.',
+  'role.contractor': 'Specialist',
+  'role.internal_pm': 'Delivery manager',
+  'role.qualified_reviewer': 'Qualified reviewer',
+  'role.platform_admin': 'Platform administrator',
+
+  'join.title': 'Join {organization}',
+  'join.lede': 'You have been invited as {role}. Set a password and you are in.',
+  'join.existing': 'This address already has an account. Enter its password to accept the invitation.',
+  'join.emailLabel': 'Email address',
+  'join.emailFixed': 'The invitation was sent to this address and can only be accepted with it.',
+  'join.nameLabel': 'Your name',
+  'join.passwordLabel': 'Choose a password',
+  'join.submit': 'Accept invitation',
+  'join.invalid.title': 'This invitation cannot be used',
+  'join.invalid.unknown': 'We do not recognize this invitation link.',
+  'join.invalid.expired': 'This invitation has expired. Ask an administrator to send a new one.',
+  'join.invalid.revoked': 'This invitation was withdrawn.',
+  'join.invalid.accepted': 'This invitation has already been used.',
+  'join.error.address': 'This invitation can only be accepted by the address it was sent to.',
+  'join.error.invalid': 'This invitation can no longer be used.',
+  'join.error.details': 'Those details were not accepted.',
+
+  'demo.heading': 'Demo accounts (local build only)',
+  'demo.body':
+    'This build is running against the in-memory identity provider, so these accounts exist only on this machine. Sign in with any of them and the password below, then set up an authenticator app.',
+  'demo.password': 'Password for every demo account',
+  'demo.totpHint':
+    'There is no real authenticator app here either: the setup screen prints a key you can paste into one, and the current code is shown alongside it.',
+  'demo.currentCode': 'Current code',
 } satisfies Dictionary;
 
 const fr = {
@@ -558,6 +779,238 @@ const fr = {
   'howItWorks.limits.heading': 'Ce que nous ne ferons pas',
   'howItWorks.limits.body':
     "Nous ne vous dirons pas que vous avez terminé. Nous ne déposons rien en votre nom, nous ne sommes affiliés à aucun gouvernement et rien de ce que nous produisons ne constitue un avis juridique. Si vous cherchez un widget de superposition, nous ne sommes pas le bon fournisseur — ces outils ne corrigent pas un contenu inaccessible.",
+
+  /* ---- Comptes et accès (CC-03a) ------------------------------------- */
+
+  'nav.signIn': 'Se connecter',
+  'nav.account': 'Votre compte',
+
+  'auth.signIn.title': 'Connexion',
+  'auth.signIn.lede':
+    'Chaque compte comporte une deuxième étape. Après votre mot de passe, vous aurez besoin de votre application d’authentification ou de votre clé d’accès.',
+  'auth.signIn.emailLabel': 'Adresse courriel',
+  'auth.signIn.passwordLabel': 'Mot de passe',
+  'auth.signIn.passwordHint':
+    'Vous pouvez coller depuis un gestionnaire de mots de passe — cela fonctionne ici.',
+  'auth.signIn.submit': 'Continuer',
+  'auth.signIn.forgot': 'J’ai perdu l’accès à ma deuxième étape',
+  'auth.signIn.noAccount': 'Vous créez une nouvelle organisation ?',
+  'auth.signIn.createAccount': 'Créer une organisation',
+
+  'auth.error.credentials': 'Cette adresse courriel et ce mot de passe ne correspondent à aucun compte.',
+  'auth.error.locked':
+    'Trop de tentatives ont été faites avec cette adresse. Réessayez dans une quinzaine de minutes. Votre compte n’a rien d’anormal.',
+  'auth.error.expired': 'Cette étape a pris trop de temps et a expiré. Veuillez recommencer.',
+  'auth.error.code':
+    'Ce code n’a pas été accepté. En vous reconnectant, vous recevrez une nouvelle demande à laquelle répondre.',
+  'auth.error.method': 'Cette méthode de vérification n’est pas disponible pour ce compte.',
+
+  'auth.notice.created': 'Votre organisation est prête. Connectez-vous pour configurer votre deuxième étape.',
+  'auth.notice.joined': 'Vous avez rejoint l’organisation. Connectez-vous pour configurer votre deuxième étape.',
+  'auth.notice.enrolled': 'Cette étape est configurée. Connectez-vous avec elle maintenant.',
+  'auth.notice.recovered':
+    'Votre code de récupération a été accepté et votre ancienne deuxième étape a été supprimée. Connectez-vous pour en configurer une nouvelle.',
+  'auth.notice.ended.idle': 'Vous avez été déconnecté après une période d’inactivité.',
+  'auth.notice.ended.absolute': 'Votre session a atteint sa durée maximale et vous avez été déconnecté.',
+  'auth.notice.ended.revoked': 'Votre accès à ce compte a été modifié, vous avez donc été déconnecté.',
+
+  'auth.verify.title': 'Votre deuxième étape',
+  'auth.verify.lede': 'Saisissez le code actuel affiché par votre application d’authentification.',
+  'auth.verify.codeLabel': 'Code à six chiffres',
+  'auth.verify.codeHint': 'Les espaces ne posent pas de problème. Le collage non plus.',
+  'auth.verify.submit': 'Vérifier et se connecter',
+  'auth.verify.usePasskey': 'Utiliser plutôt une clé d’accès',
+  'auth.verify.useApp': 'Utiliser plutôt une application d’authentification',
+  'auth.verify.passkeyBody':
+    'Confirmez avec la clé d’accès enregistrée sur cet appareil. Dans cette version préliminaire, il n’y a pas de véritable invite système : la confirmation tient en un bouton.',
+  'auth.verify.passkeySubmit': 'Confirmer avec la clé d’accès',
+  'auth.verify.lost': 'Je n’ai pas ma deuxième étape',
+
+  'auth.enrol.title': 'Configurer votre deuxième étape',
+  'auth.enrol.lede':
+    'Deux façons d’entrer, pour que la perte d’un appareil ne vous bloque pas. Configurez d’abord une application d’authentification ; vous pourrez ajouter une clé d’accès ensuite.',
+  'auth.enrol.chooseTotp': 'Configurer une application d’authentification',
+  'auth.enrol.choosePasskey': 'Configurer une clé d’accès',
+  'auth.enrol.totpStep1':
+    'Ajoutez ce compte à votre application d’authentification, en scannant le code ou en saisissant la clé ci-dessous.',
+  'auth.enrol.totpManualLabel': 'Clé de configuration',
+  'auth.enrol.totpUriLabel': 'Lien de configuration complet',
+  'auth.enrol.totpStep2': 'Saisissez ensuite le code à six chiffres affiché par votre application.',
+  'auth.enrol.confirmLabel': 'Code à six chiffres',
+  'auth.enrol.confirm': 'Confirmer',
+  'auth.enrol.passkeyBody':
+    'Une clé d’accès utilise cet appareil pour prouver votre identité. Dans cette version préliminaire, l’invite du navigateur est remplacée par un bouton.',
+  'auth.enrol.passkeyConfirm': 'Créer la clé d’accès',
+  'auth.enrol.qrAlt':
+    'Code de configuration pour votre application d’authentification. La même clé est écrite en toutes lettres ci-dessous.',
+
+  'auth.recover.title': 'Utiliser un code de récupération',
+  'auth.recover.lede':
+    'Si vous n’avez plus votre application d’authentification ni votre clé d’accès, l’un des codes de récupération que vous avez conservés vous permettra d’en configurer une nouvelle. Chaque code ne sert qu’une fois.',
+  'auth.recover.emailLabel': 'Adresse courriel',
+  'auth.recover.codeLabel': 'Code de récupération',
+  'auth.recover.submit': 'Utiliser ce code',
+  'auth.recover.error.code': 'Ce code n’a pas été accepté.',
+  'auth.recover.error.locked':
+    'Trop de tentatives ont été faites avec cette adresse. Réessayez sous peu.',
+  'auth.recover.noCodes':
+    'Si vous n’avez pas non plus de code de récupération, un administrateur de votre organisation peut retirer votre accès puis vous réinviter.',
+
+  'auth.signOut': 'Se déconnecter',
+  'auth.signOutEverywhere': 'Se déconnecter partout',
+
+  'auth.timeout.heading': 'Vous allez bientôt être déconnecté',
+  'auth.timeout.body':
+    'Cette session est sur le point d’expirer pour inactivité. Rien de ce que vous avez enregistré ne sera perdu.',
+  'auth.timeout.extend': 'Garder ma session ouverte',
+
+  'account.title': 'Votre compte',
+  'account.lede': 'Votre connexion, vos deuxièmes étapes et les organisations dont vous faites partie.',
+  'account.organizations': 'Organisations',
+  'account.security.link': 'Connexion et sécurité',
+  'account.security.title': 'Connexion et sécurité',
+  'account.security.lede': 'Comment vous prouvez votre identité, et où vous êtes actuellement connecté.',
+  'account.factors.heading': 'Vos deuxièmes étapes',
+  'account.factors.none': 'Vous n’avez pas encore configuré de deuxième étape.',
+  'account.factors.one':
+    'Vous avez une deuxième étape. En ajouter une seconde évite qu’un appareil perdu vous bloque — c’est pourquoi nous en demandons deux.',
+  'account.factors.totp': 'Application d’authentification',
+  'account.factors.passkey': 'Clé d’accès',
+  'account.factors.enrolledAt': 'Ajoutée le',
+  'account.factors.lastUsed': 'Dernière utilisation',
+  'account.factors.neverUsed': 'Pas encore utilisée',
+  'account.recovery.heading': 'Codes de récupération',
+  'account.recovery.body':
+    'Dix codes à usage unique. Conservez-les à un endroit accessible sans cet appareil. Nous ne gardons que la date d’émission, jamais les codes eux-mêmes.',
+  'account.recovery.issue': 'Générer de nouveaux codes',
+  'account.recovery.issuedOn': 'Les codes ont été générés pour la dernière fois le {date}.',
+  'account.recovery.never': 'Vous n’avez pas encore généré de codes de récupération.',
+  'account.recovery.shownOnce':
+    'Ils ne sont affichés qu’une fois. Conservez-les maintenant : cette page ne pourra pas les réafficher, car nous ne les conservons pas.',
+  'account.sessions.heading': 'Où vous êtes connecté',
+  'account.sessions.current': 'Cet appareil',
+  'account.sessions.startedAt': 'Ouverte le',
+  'account.sessions.lastSeen': 'Dernière activité',
+  'account.sessions.unknownClient': 'Navigateur non reconnu',
+
+  'signUp.title': 'Créer une organisation',
+  'signUp.lede':
+    'Cette étape crée votre organisation et fait de vous son premier administrateur. Vous pourrez inviter vos collègues juste après.',
+  'signUp.orgSection': 'Votre organisation',
+  'signUp.personSection': 'Vous',
+  'signUp.orgName': 'Dénomination légale de l’organisation',
+  'signUp.orgNameHint': 'Le nom tel qu’il figure sur vos documents constitutifs ou d’enregistrement.',
+  'signUp.orgType': 'De quel type d’organisation s’agit-il ?',
+  'signUp.band': 'Combien d’employés ?',
+  'signUp.bandHint':
+    'Nous ne conservons qu’une tranche. Nous n’enregistrons jamais un effectif exact.',
+  'signUp.jurisdiction': 'Province ou territoire',
+  'signUp.yourName': 'Votre nom',
+  'signUp.email': 'Votre adresse courriel',
+  'signUp.password': 'Choisissez un mot de passe',
+  'signUp.passwordHint':
+    'Au moins douze caractères. Une courte phrase dont vous vous souviendrez vaut mieux qu’un mot de passe court que vous oublierez. Les gestionnaires de mots de passe sont les bienvenus.',
+  'signUp.marketing':
+    'M’envoyer occasionnellement des courriels au sujet de ce service. Facultatif, et distinct des courriels liés au compte.',
+  'signUp.submit': 'Créer l’organisation',
+  'signUp.haveAccount': 'Vous avez déjà un compte ?',
+  'signUp.error.details': 'Certains de ces renseignements n’ont pas été acceptés. Vérifiez les champs ci-dessous.',
+  'signUp.error.password_too_short': 'Ce mot de passe compte moins de douze caractères.',
+  'signUp.error.password_too_long': 'Ce mot de passe est plus long que ce que nous pouvons accepter.',
+  'signUp.error.password_contains_personal_detail':
+    'Ce mot de passe contient votre nom, votre adresse ou le nom de votre organisation, ce qui le rend facile à deviner.',
+  'signUp.check.title': 'Consultez votre courriel',
+  'signUp.check.body':
+    'Si cette adresse peut servir à créer une organisation, un message se trouve maintenant dans la boîte de réception et explique la suite.',
+
+  'orgType.private_school': 'École privée',
+  'orgType.childcare': 'Service de garde',
+  'orgType.care_provider': 'Prestataire de soins',
+  'orgType.nonprofit': 'Organisme sans but lucratif',
+  'orgType.association': 'Association',
+  'orgType.professional_services': 'Services professionnels',
+  'orgType.other': 'Autre',
+
+  'org.title': 'Organisation',
+  'org.lede': 'Ce que nous conservons au sujet de votre organisation, et qui peut le modifier.',
+  'org.save': 'Enregistrer les modifications',
+  'org.saved': 'Enregistré.',
+  'org.error.details': 'Certains de ces renseignements n’ont pas été acceptés.',
+  'org.teamLink': 'Personnes et accès',
+
+  'team.title': 'Personnes et accès',
+  'team.lede':
+    'Qui peut voir et faire quoi. Les changements prennent effet immédiatement — retirer une personne met fin aux sessions qu’elle a déjà.',
+  'team.invite.heading': 'Inviter une personne',
+  'team.invite.email': 'Son adresse courriel',
+  'team.invite.role': 'Que devrait-elle pouvoir faire ?',
+  'team.invite.submit': 'Envoyer l’invitation',
+  'team.invited': 'Invitation envoyée.',
+  'team.revoked': 'Invitation révoquée.',
+  'team.updated': 'Rôle mis à jour.',
+  'team.removed': 'Accès retiré, et ses sessions ont pris fin.',
+  'team.members.heading': 'Membres',
+  'team.members.role': 'Rôle',
+  'team.members.joined': 'Arrivée',
+  'team.members.change': 'Modifier',
+  'team.members.remove': 'Retirer de l’organisation',
+  'team.pending.heading': 'Invitations en attente',
+  'team.pending.none': 'Aucune invitation en attente.',
+  'team.pending.sent': 'Envoyée',
+  'team.pending.expires': 'Expire',
+  'team.pending.revoke': 'Révoquer',
+  'team.state.pending': 'En attente',
+  'team.state.expired': 'Expirée',
+  'team.state.revoked': 'Révoquée',
+  'team.state.accepted': 'Acceptée',
+  'team.error.last_admin':
+    'L’organisation se retrouverait sans administrateur, et personne ne pourrait en inviter un. Nommez d’abord un autre administrateur.',
+  'team.error.role': 'Vous ne pouvez pas attribuer un rôle que vous n’avez pas qualité pour attribuer.',
+  'team.error.details': 'Ces renseignements n’ont pas été acceptés.',
+  'team.localLink.heading': 'Lien d’invitation (version locale seulement)',
+  'team.localLink.body':
+    'Cette version n’a pas de serveur de courriel : rien n’a réellement été envoyé. Ouvrez ce lien, ou transmettez-le à la personne invitée, pour essayer le parcours d’acceptation.',
+
+  'role.client_admin': 'Administrateur',
+  'role.client_admin.description':
+    'Gère les personnes, les preuves et les renseignements de l’organisation.',
+  'role.client_contributor': 'Collaborateur',
+  'role.client_contributor.description':
+    'Téléverse des preuves et travaille sur les constats. Aucune facturation, aucune gestion des utilisateurs.',
+  'role.client_executive': 'Direction',
+  'role.client_executive.description':
+    'Voit les rapports publiés et approuve la portée. Pas le détail du travail en cours.',
+  'role.contractor': 'Spécialiste',
+  'role.internal_pm': 'Responsable de prestation',
+  'role.qualified_reviewer': 'Réviseur qualifié',
+  'role.platform_admin': 'Administrateur de la plateforme',
+
+  'join.title': 'Rejoindre {organization}',
+  'join.lede': 'Vous avez été invité à titre de {role}. Choisissez un mot de passe et vous y êtes.',
+  'join.existing':
+    'Cette adresse possède déjà un compte. Saisissez son mot de passe pour accepter l’invitation.',
+  'join.emailLabel': 'Adresse courriel',
+  'join.emailFixed':
+    'L’invitation a été envoyée à cette adresse et ne peut être acceptée qu’avec celle-ci.',
+  'join.nameLabel': 'Votre nom',
+  'join.passwordLabel': 'Choisissez un mot de passe',
+  'join.submit': 'Accepter l’invitation',
+  'join.invalid.title': 'Cette invitation ne peut pas être utilisée',
+  'join.invalid.unknown': 'Nous ne reconnaissons pas ce lien d’invitation.',
+  'join.invalid.expired': 'Cette invitation a expiré. Demandez à un administrateur d’en envoyer une nouvelle.',
+  'join.invalid.revoked': 'Cette invitation a été retirée.',
+  'join.invalid.accepted': 'Cette invitation a déjà été utilisée.',
+  'join.error.address': 'Cette invitation ne peut être acceptée que par l’adresse à laquelle elle a été envoyée.',
+  'join.error.invalid': 'Cette invitation ne peut plus être utilisée.',
+  'join.error.details': 'Ces renseignements n’ont pas été acceptés.',
+
+  'demo.heading': 'Comptes de démonstration (version locale seulement)',
+  'demo.body':
+    'Cette version fonctionne avec le fournisseur d’identité en mémoire : ces comptes n’existent que sur cette machine. Connectez-vous avec l’un d’eux et le mot de passe ci-dessous, puis configurez une application d’authentification.',
+  'demo.password': 'Mot de passe de tous les comptes de démonstration',
+  'demo.totpHint':
+    'Il n’y a pas non plus de véritable application d’authentification ici : l’écran de configuration affiche une clé que vous pouvez coller dans la vôtre, et le code actuel est indiqué à côté.',
+  'demo.currentCode': 'Code actuel',
 } satisfies Partial<Dictionary>;
 
 const DICTIONARIES: Record<Locale, Dictionary> = { en, fr };

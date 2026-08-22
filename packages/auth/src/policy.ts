@@ -106,6 +106,13 @@ function clientAdminPolicy(action: Action, resource: Resource): Decision {
         : deny('deliverable lifecycle is controlled internally');
     case 'audit_event':
       return action === 'read' ? allow('client admin has audit-log access (CLP-012)') : deny('audit log is append-only');
+    case 'invitation':
+      // Revoking is an update, never a delete: the record of who was invited and
+      // by whom outlives the invitation itself (CLP-013, SEC-006).
+      if (action === 'delete') return deny('invitations are revoked, not deleted');
+      return RELEASE_ACTIONS.has(action) || action === 'export'
+        ? deny('not an invitation action')
+        : allow('client admin manages the team (CLP-013)');
     case 'organization':
     case 'membership':
     case 'project':
@@ -136,6 +143,7 @@ function clientContributorPolicy(action: Action, resource: Resource): Decision {
       return action === 'read' ? allow('contributor read access') : deny('not permitted');
     case 'billing':
       return deny('contributors have no billing access');
+    case 'invitation':
     case 'assignment':
     case 'internal_note':
     case 'contractor_rate':
@@ -166,6 +174,7 @@ function clientExecutivePolicy(action: Action, resource: Resource): Decision {
     case 'membership':
     case 'evidence':
       return action === 'read' ? allow('executive read access') : deny('not permitted');
+    case 'invitation':
     case 'assignment':
     case 'internal_note':
     case 'contractor_rate':
@@ -205,6 +214,7 @@ function contractorPolicy(
       return action === 'read' ? allow('assignment context') : deny('not permitted');
     case 'organization':
     case 'membership':
+    case 'invitation':
     case 'billing':
     case 'contractor_rate':
     case 'internal_note':
@@ -225,6 +235,12 @@ function internalPmPolicy(action: Action, resource: Resource): Decision {
       return action === 'read' ? allow('internal oversight') : deny('audit log is append-only');
     case 'requirement':
       return action === 'read' ? allow('internal read') : deny('requirement versions are published by qualified review');
+    case 'invitation':
+      // Assisted onboarding (§9): staff seat a client organization's first users.
+      // The role they may name is constrained separately by `invitableRoles`.
+      return action === 'delete' || action === 'export'
+        ? deny('not an invitation action')
+        : allow('assisted onboarding');
     default:
       return action === 'delete' ? deny('deletion is not a routine internal action') : allow('internal project management');
   }
@@ -243,6 +259,9 @@ function qualifiedReviewerPolicy(actor: Actor, action: Action, resource: Resourc
     case 'contractor_rate':
     case 'billing':
       return deny('commercial detail is not part of qualified review');
+    case 'invitation':
+    case 'membership':
+      return deny('team administration is not part of qualified review');
     case 'audit_event':
       return action === 'read' ? allow('review oversight') : deny('audit log is append-only');
     default:

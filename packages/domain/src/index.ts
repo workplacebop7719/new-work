@@ -5,4 +5,5 @@ export * from './entities';
 export * from './content';
 export * from './qualifier';
 export * from './resource';
+export * from './identity';
 export * from './errors';

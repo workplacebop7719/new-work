@@ -2,7 +2,10 @@
 
 Ontario accessibility readiness: a public demand engine, a secure client workspace, a contractor delivery network and an internal operations console.
 
-**Current state: CC-01, CC-02 and the CC-02b marketing surface delivered, plus a hardening pass. CC-03 not started.**
+**Current state: CC-01, CC-02, the CC-02b marketing surface and CC-03a (identity
+and access) delivered, plus a hardening pass. CC-03b — booking, checkout,
+payment and the client agreement — is not started and waits on the payments and
+e-signature vendor decisions (Q-14, Q-19).**
 Source of truth is [`docs/PRD.md`](./docs/PRD.md). Requirement ids cited throughout the code are defined in [`docs/traceability.md`](./docs/traceability.md).
 
 ## Quick start
@@ -16,6 +19,12 @@ pnpm dev                       # http://localhost:3000
 ```
 
 Requires Node 22 (see `.nvmrc`) and PostgreSQL 16+.
+
+Sign in with any seeded account (they are listed on `/en/sign-in` in a local
+build) and the password `northstar demo passphrase`. Every account needs a
+second factor, so the first sign-in goes through enrolment — the page prints a
+setup key and, locally, the code an authenticator app would be showing.
+[`docs/runbook.md`](./docs/runbook.md) walks through it.
 
 ## Commands
 
@@ -103,7 +112,7 @@ One finding worth knowing up front: the brand palette in PRD §14 does not pass 
 | Document | What it is |
 |---|---|
 | [`docs/PRD.md`](./docs/PRD.md) | Source of truth. |
-| [`docs/traceability.md`](./docs/traceability.md) | Requirement matrix, per-slice state, CC-01 delivery record. |
+| [`docs/traceability.md`](./docs/traceability.md) | Requirement matrix, per-slice state, and a delivery record for each shipped slice — including what each one cut and why. |
 | [`docs/assumptions-register.md`](./docs/assumptions-register.md) | Open questions with severity and owner; working assumptions. |
 | [`docs/adr/`](./docs/adr/) | Eight accepted ADRs, with amendments made during the build. |
 | [`docs/delivery-plan.md`](./docs/delivery-plan.md) | CC-01 → CC-09. |

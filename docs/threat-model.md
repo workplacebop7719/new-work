@@ -93,6 +93,41 @@ compared notes — the buyers here are organizations, so many legitimate visitor
 share one NAT address. The limits were re-sized against that false-positive case
 instead. They still cost a script far more time than these endpoints are worth.
 
+## Added in CC-03a — identity and access
+
+The first authenticated surface. Sessions, second factors and invitations are
+all bearer credentials in one form or another, and the threats below are mostly
+about what happens when one is stolen, replayed or guessed.
+
+| # | Threat | Control | Verified by |
+|---|---|---|---|
+| T36 | A stolen session cookie is used indefinitely. | Two server-side clocks on every request: idle (12 h client, 2 h privileged) and absolute (7 d / 12 h). The cookie carries no expiry of its own, so the row is the only authority. | `packages/domain/src/identity.test.ts`; `packages/db/test/identity.test.ts`. |
+| T37 | A database disclosure yields working session cookies. | Only the SHA-256 hash of the token is stored, and no function in the module returns a token after creation. | `identity.test.ts` asserts the stored value is a hex digest and is not the cookie. |
+| T38 | A session is created without a second factor. | `SignInChallenge` has no `authenticated` outcome — the type cannot express it — and `mfa_satisfied_at` starts null with only `verifySecondFactor` able to move it. Marking it is guarded on `revoked_at IS NULL`, so an administrator revoking mid-sign-in wins the race. | `identity.test.ts`; `apps/web/e2e/identity.spec.ts`. |
+| T39 | A captured second-factor code is replayed. | The provider challenge is single-use: verifying deletes it, so a valid code with a spent challenge id fails. Challenges also expire after five minutes, reported distinctly so the interface says what to do. | `packages/integrations/src/identity.test.ts`. |
+| T40 | Credential stuffing against known addresses. | Per-address lockout (10 attempts / 15 minutes), checked **before** the provider is called, plus per-client rate limiting. Neither alone is sufficient: a botnet defeats the first, one noisy client defeats the second. | `packages/db/test/identity.test.ts`; `packages/domain/src/identity.test.ts`. |
+| T41 | The sign-in or sign-up form is used to enumerate accounts. | A wrong password, an unknown address and a disabled account produce the same page and the same words. Sign-up shows the neutral "check your email" page for an address that already exists. A failed sign-in records `actorId: null` even when the address matches a real user. | `apps/web/e2e/identity.spec.ts` compares the two rendered messages; `identity.test.ts` compares the two port outcomes. |
+| T42 | The throttle table becomes a record of who was targeted. | The key is an HMAC of the address with a server secret and the current UTC date — the same construction the rate limiter uses, and most keys in an attack belong to no user at all. | `identity.test.ts` asserts the stored key contains no part of the address. |
+| T43 | An invitation email is forwarded and accepted by someone else. | The accepting account's address must match the invitation's, re-checked inside the transaction that creates the membership. | `packages/db/test/identity.test.ts`. |
+| T44 | An invitation is replayed, or accepted after being revoked. | Single-use, and the row is re-read `FOR UPDATE` inside the acceptance transaction rather than trusted from the page that rendered the form. A partial unique index means only one live invitation per address per organization can exist. | Same file — including the revoked-while-the-form-was-open race. |
+| T45 | An invitation link is guessed. | 32 bytes of randomness, stored only as a SHA-256 hash. | Same file. |
+| T46 | A client administrator invites themselves internal staff. | Three layers: `invitableRoles` in the domain, the policy layer, and a database CHECK that accepts only client roles. No role may ever invite a contractor. | `packages/auth/src/policy.test.ts`; `packages/domain/src/identity.test.ts`; `identity.test.ts` (the raw insert is rejected). |
+| T47 | An organization is left with no administrator and cannot recover. | `wouldOrphanOrganization`, evaluated inside the same transaction as the write against rows read `FOR UPDATE`, so two administrators demoting each other concurrently cannot both succeed. | `packages/db/test/identity.test.ts`. |
+| T48 | Revoking access takes effect only at the person's next sign-in. | Removing a membership also revokes every session that person holds. Disabling an account and redeeming a recovery code do the same. | `identity.test.ts`; `apps/web/e2e/identity.spec.ts`. |
+| T49 | A recovery code becomes a permanent second factor. | Redeeming one signs nobody in: it clears the enrolled factors and returns the account to enrolment. Codes are single-use, a new set invalidates the old, and this platform stores only the date they were issued. | `packages/integrations/src/identity.test.ts`; `apps/web/e2e/identity.spec.ts`. |
+| T50 | An open redirect on the sign-in return path. | Same rule as the consent form and its own explicit copy: the path must match a locale route and contain no backslash or colon. | `apps/web/lib/return-to.test.ts` covers the shared rule; the sign-in copy is exercised by the end-to-end sign-in flow. |
+| T52 | A TOTP setup key or a set of recovery codes ends up in browser history or an access log. | Both travel from the action that created them to the page that renders them in a two-minute `httpOnly` hand-off cookie, never in the URL. The query string carries only a non-secret enrolment id, which must match the cookie. | `apps/web/e2e/identity.spec.ts` asserts the URL contains neither the setup key nor any recovery code. |
+| T51 | A local convenience leaks into a real environment. | The demo accounts panel, the demo TOTP hint and the printed invitation link all render only when the fake adapter is the object actually in use — a check on the instance, not on an environment variable. The demo bootstrap additionally touches only the reserved `.example` TLD. | Code review; the bootstrap's scope was added after an end-to-end test caught it resetting a real account's password. |
+
+### Gaps opened by this slice
+
+| Gap | Why it matters | Closes in |
+|---|---|---|
+| The authentication audit event is written **after** the provider call, not in the same transaction. | A crash between the two loses the record. A-11 asks for one transaction, and there is no local transaction that can enclose an HTTP call. Every audit event whose action *is* a database write — invitation, membership, organization — does commit in the same transaction. | Reviewed at CC-09 |
+| Sign-up is three writes, not one. | Provider subject, user row, organization. Ordered so the recoverable failure comes first, but a durable outbox is what makes it atomic. | CC-03b (arrives with payments) |
+| No passkey implementation. | The port and the policy both distinguish phishing-resistant factors, and privileged roles require one — but the fake stands in a fixed assertion for a WebAuthn signature. Internal staff therefore cannot yet satisfy their own requirement. | CC-03b / CC-07, with the Q-13 vendor |
+| Session `client_hash` is derived from `x-forwarded-for`. | Inherits the CC-02 deployment constraint above. Here it affects only the "signed in from somewhere new" display, not an access decision. | CC-09 / infra |
+
 ## Known gaps at CC-02
 
 | Gap | Why it matters | Closes in |
@@ -113,4 +148,4 @@ instead. They still cost a script far more time than these endpoints are worth.
 
 ## Not yet modelled
 
-Object storage and the malware pipeline (CC-04), identity and session handling (CC-03), the AI provider boundary (CC-08), and the internal console's cross-tenant read models (CC-07). Each requires a threat-model revision in its own slice, per PRD §16 — a revision, not an addendum.
+Object storage and the malware pipeline (CC-04), payments and the commerce path (CC-03b), the AI provider boundary (CC-08), and the internal console's cross-tenant read models (CC-07). Each requires a threat-model revision in its own slice, per PRD §16 — a revision, not an addendum.

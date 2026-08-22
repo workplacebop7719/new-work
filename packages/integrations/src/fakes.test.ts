@@ -53,7 +53,7 @@ describe('local development integrations', () => {
   it('provides a fake for every declared port (CMD-001 dev)', () => {
     const integrations = createFakeIntegrations();
     expect(Object.keys(integrations).sort()).toEqual(
-      ['crm', 'email', 'malwareScan', 'payment', 'signature', 'storage'].sort(),
+      ['crm', 'email', 'identity', 'malwareScan', 'payment', 'signature', 'storage'].sort(),
     );
   });
 });

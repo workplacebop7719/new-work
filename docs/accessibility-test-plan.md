@@ -36,7 +36,7 @@ Recorded per release in `docs/accessibility-evidence/<release>.md` with the test
 | Motor / touch | Target size and spacing; every gesture has a non-gesture alternative; no drag-only interaction; timeouts extendable. | — |
 | Cognitive | Plain-language review; consistent navigation; visible progress; recoverable errors. | — |
 | Documents | Tagged PDF/Office: reading order, language, headings, lists, tables, links, alt text. | From CC-05 |
-| Authentication | Accessible MFA, password-manager support, paste allowed, alternative verification, accessible recovery. | From CC-03 |
+| Authentication | Accessible MFA, password-manager support, paste allowed, alternative verification, accessible recovery. | **From CC-03a — now live and untested by a human.** See below. |
 
 ## Paid disability panel (ACC-010)
 
@@ -58,6 +58,37 @@ Before launch, by a qualified third party **not responsible for primary implemen
 | 4 | Cosmetic or minor inconsistency. | Backlog. |
 
 Every defect carries: severity, remediation owner, due date, retest evidence, and — where an exception is granted — the approver's name.
+
+## CC-03a status — the authentication surface
+
+Shipped, automated coverage only, and this is the slice where that gap costs the
+most: an authentication gate nobody has tested with a screen reader is a gate
+that may simply exclude people from the product.
+
+What has been verified automatically:
+
+- axe on sign-in, second factor, recovery, sign-up and the confirmation page, in
+  both languages, plus the four signed-in screens after a real sign-in.
+- Reflow at 320 CSS px (400% zoom equivalent) on all of the above.
+- The complete account journey — sign-up, sign-in, enrolment, verification,
+  invitation, sign-out — with **JavaScript disabled**.
+- A code field that accepts a pasted value with a space in it.
+- A setup key offered as text as well as an `otpauth:` link.
+
+**What a named tester must still do, before this surface is called done:**
+
+1. Complete **MFA enrolment** end to end with JAWS, NVDA and VoiceOver — ACC-009
+   names this specifically, and enrolment is the step where a person is moving
+   between two devices while a timer runs.
+2. Complete **recovery** with a screen reader, from a printed code sheet.
+3. Confirm the **timeout warning** is announced without stealing focus, and that
+   "keep me signed in" is reachable from wherever focus happens to be.
+4. Confirm a **password manager** fills and submits sign-in on each supported
+   pair, and that paste is not blocked anywhere.
+5. Sign in at **400% zoom** on a phone-sized viewport, keyboard only.
+
+Until that record exists in `docs/accessibility-evidence/`, ACC-009 is **not
+met**, and no amount of green CI changes that (ENG-005).
 
 ## CC-01 status
 

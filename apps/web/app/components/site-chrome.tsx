@@ -12,7 +12,7 @@ import { t, type Locale } from '@/lib/i18n';
  * legal position stated rather than buried.
  */
 
-export function SiteHeader({ locale }: { locale: Locale }) {
+export function SiteHeader({ locale, signedIn = false }: { locale: Locale; signedIn?: boolean }) {
   const other: Locale = locale === 'en' ? 'fr' : 'en';
 
   return (
@@ -46,6 +46,14 @@ export function SiteHeader({ locale }: { locale: Locale }) {
               {t(locale, other === 'fr' ? 'nav.switchToFrench' : 'nav.switchToEnglish')}
             </Link>
           </nav>
+          {/*
+            Presentation only. Which of these a person sees says nothing about
+            what they may do — every page behind them resolves the session again
+            and asks the policy layer (ENG-001).
+          */}
+          <Link className="ns-nav__link" href={`/${locale}/${signedIn ? 'account' : 'sign-in'}`}>
+            {t(locale, signedIn ? 'nav.account' : 'nav.signIn')}
+          </Link>
           <Link className="ns-button ns-button--primary ns-button--compact" href={`/${locale}/check`}>
             {t(locale, 'nav.checkReadiness')}
           </Link>

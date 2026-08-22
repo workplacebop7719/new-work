@@ -8,7 +8,7 @@ import { expect, test } from '@playwright/test';
  * between the manual keyboard, screen-reader and zoom passes recorded in
  * docs/accessibility-test-plan.md, which is where conformance is evidenced.
  */
-const PAGES = ['/en', '/fr', '/en/check', '/fr/check', '/en/contact', '/fr/contact', '/en/check/1', '/fr/check/1', '/en/too-many-requests', '/fr/too-many-requests', '/en/how-it-works', '/fr/how-it-works', '/en/resources', '/fr/resources', '/en/resources/evidence-checklist', '/fr/resources/liste-de-preuves'];
+const PAGES = ['/en', '/fr', '/en/check', '/fr/check', '/en/contact', '/fr/contact', '/en/check/1', '/fr/check/1', '/en/too-many-requests', '/fr/too-many-requests', '/en/how-it-works', '/fr/how-it-works', '/en/resources', '/fr/resources', '/en/resources/evidence-checklist', '/fr/resources/liste-de-preuves', '/en/sign-in', '/fr/sign-in', '/en/sign-in/verify', '/fr/sign-in/verify', '/en/sign-in/recover', '/fr/sign-in/recover', '/en/sign-up', '/fr/sign-up', '/en/sign-up/check-your-email', '/fr/sign-up/check-your-email'];
 
 for (const path of PAGES) {
   test(`${path} has no automatically detectable WCAG 2.2 AA violations @a11y`, async ({ page }) => {

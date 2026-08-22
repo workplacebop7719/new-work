@@ -181,6 +181,15 @@ export const TYPE = {
     "var(--font-sans), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
   'font-family-display':
     "var(--font-display), 'Newsreader', ui-serif, Georgia, 'Times New Roman', serif",
+  /**
+   * Not self-hosted, and deliberately so. A monospaced face is used only for
+   * values a person transcribes character by character — a TOTP setup key, a
+   * recovery code, a six-digit code — and the platform's own UI monospace is
+   * both the most legible option on each platform and one fewer font to load
+   * on a screen that is already a security-critical path.
+   */
+  'font-family-mono':
+    "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace",
 } as const;
 
 /**

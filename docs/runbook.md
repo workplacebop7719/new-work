@@ -1,6 +1,6 @@
 # Runbook
 
-- **Status:** v2 (CC-02 hardening) — local and CI operations only. Production runbooks are a CC-09 deliverable (SEC-010) and must be tested by someone who did not write them.
+- **Status:** v3 (CC-03a) — local and CI operations only. Production runbooks are a CC-09 deliverable (SEC-010) and must be tested by someone who did not write them.
 
 ## Local setup
 
@@ -38,7 +38,19 @@ proving nothing.
 
 ## Demo accounts
 
-`pnpm db:seed` creates fictional data only. There are no passwords: authentication arrives in CC-03.
+`pnpm db:seed` creates fictional data only.
+
+**The password for every demo account is `northstar demo passphrase`.**
+
+The seed cannot create credentials — those live with the identity provider
+(ADR-0002), and locally that provider is in-memory. The first time you open the
+sign-in page, the app provisions each seeded account at the fake provider and
+sets that password. The panel at the bottom of `/en/sign-in` lists them, and it
+appears only when the fake is the provider actually in use.
+
+The bootstrap touches **only** addresses in the reserved `.example` top-level
+domain, which is what the seed uses. An account you create yourself on a local
+build is never touched by it.
 
 | Role | Email |
 |---|---|
@@ -52,6 +64,22 @@ proving nothing.
 | Client admin, second tenant | `admin@riverside.example` |
 
 The second tenant exists so the tenant boundary is demonstrable rather than merely asserted, which is what PRD §27 asks the demo to make visible.
+
+### Signing in for the first time
+
+Every account needs a second factor (SEC-002), and none of the seeded ones has
+one yet. The first sign-in therefore lands on enrolment:
+
+1. Sign in with the address and the password above.
+2. Choose **Set up an authenticator app**.
+3. Either scan nothing and paste the printed setup key into a real authenticator
+   app, or use the **Current code** the page prints next to it — a local-only
+   convenience so you do not need a phone to try the product.
+4. Confirm, then sign in again with the factor you just enrolled.
+
+Enrolment does not itself create a session, and neither does signing up. That is
+deliberate: `verifySecondFactor` is the only place in the codebase that issues
+one.
 
 ## Things that will confuse you once
 
@@ -72,6 +100,22 @@ for the window, or clear it: `psql -c "TRUNCATE rate_limit_counters"`. Do not
 raise the limits to make a local annoyance go away — they are sized for a shared
 office address, and the values are a security decision (see the threat model).
 
+**Sign-in says "that email address and password did not match an account" for a
+seeded account.** Two likely causes. Either the app has not provisioned the demo
+accounts yet — open `/en/sign-in` once, which triggers it — or the database was
+reseeded while the server was running, in which case restart it. The fake
+provider derives its subject ids from the address precisely so a restart does not
+orphan the rows the database already holds.
+
+**An invitation "sends" but no email arrives.** There is no mail server locally.
+The team page prints the acceptance link once, on the page that created it,
+whenever the fake email adapter is in use.
+
+**Everyone gets signed out after a while.** By design (ACC-004): twelve hours
+idle for a client session, two for an internal one, with a warning and a
+"keep me signed in" button five minutes before. Both clocks are server-side, so
+clearing the cookie is not what ended the session — the row was.
+
 **A guard fails in `pnpm lint`.** The repository guards enforce PRD §27 constraints, not style. Read the message: each names the requirement and, where an exception is legitimate, the annotation that records it (`northstar-allow-claim:`, `northstar-allow-regulatory:`, `-- global:`). Annotations are reviewed in the pull request; that is the audit trail.
 
 **Playwright can't find a browser.** Set `CHROMIUM_PATH` to an existing Chromium, or run `pnpm --filter @northstar/web exec playwright install chromium`.
@@ -86,3 +130,7 @@ office address, and the values are a security decision (see the threat model).
 public, because CNV-001 commits to a retention schedule and an unrun sweep means
 that commitment is not being kept. Scheduling it is part of the CC-03
 infrastructure work.
+
+As of CC-03a it also sweeps auth sessions (90 days from last activity), closed
+invitations (30 days, which removes the stored address) and sign-in throttle
+counters (2 days). It is still dry-run by default; `--apply` deletes.

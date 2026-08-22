@@ -9,6 +9,7 @@
 export const RESOURCE_CLASSES = [
   'organization',
   'membership',
+  'invitation',
   'project',
   'requirement',
   'evidence',

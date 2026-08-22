@@ -233,7 +233,8 @@ These carry the same binding force as the PRD prose they come from; only the ide
 |---|---|---|
 | CC-01 Foundation | PUB-001*, PUB-004*, CNT-001/002/005/008, BRD-001–004, SEC-001/003*/004*/006*/008, ARC-001/002/008/009*, DAT-001*/002, ACC-012, ENG-001/007/008, CMD-001–003*, QAG-001 | 26 |
 | CC-02 Public conversion | PUB-001–006, CNV-001–004, CNT-003/004/006/007, ARC-005/006/007, ANL-001/002/005, SEC-012/014, ACC-007, BRD-005, CLP-017 | 25 |
-| CC-03 Commerce + identity | PUB-003, CLP-001/002/008*/013, SEC-002/011, ACC-009, DAT-003*, ARC-004, OPS-009*, ENG-003 | 13 |
+| CC-03a Identity + access | CLP-001/013, SEC-002/003/011/013*, ACC-004/009, DAT-003*, ARC-006, ENG-001/004 | 13 |
+| CC-03b Commerce | PUB-003, CLP-002/008*, ARC-004, OPS-009*, ENG-003 | 6 |
 | CC-04 Evidence + matrix | CLP-003/004/005/012*, OPS-005*, SEC-005/007/013*, ARC-003, DAT-006 | 10 |
 | CC-05 Findings + reports | CLP-006/009/010/014/015, OPS-006*/011/012, ACC-008, DAT-004, QAG-003* | 11 |
 | CC-06 Contractor delivery | CTR-001–007, CLP-007, SEC-003, DAT-001, QAG-003* | 11 |
@@ -457,3 +458,151 @@ would have bypassed the claim model exactly as one typed into JSX would. The
 guard now scans content sources too, exempting `lib/claims.ts` (which *is* the
 claim source). Negative-tested: planting a hard-coded deadline in an article body
 fails the build.
+
+---
+
+## 10. CC-03a delivery record — identity and access
+
+The first half of CC-03 from `docs/delivery-plan.md`. **Commerce (checkout,
+payment, agreement, project shell) is deliberately not in this slice — see
+"What was cut" below.**
+
+**Requirement IDs:** CLP-001, CLP-013, SEC-002, SEC-003, SEC-011, SEC-013*,
+ACC-004, ACC-009, DAT-003*, ARC-004, ARC-006, ENG-001, ENG-004.
+
+| Aspect | What landed |
+|---|---|
+| Interface | Sign-in, second factor, enrolment, recovery, sign-up, invitation acceptance, account, sign-in and security, organization profile, people and access. EN + FR. |
+| Authorization | `invitation` resource class with per-role policy; every mutating action calls `authorize()` before writing. |
+| Data | `auth_sessions`, `user_mfa_factors`, `sign_in_throttle`, `invitations`; `users` gains an identity link and a lifecycle. |
+| Audit | Sign-in succeeded/failed, account locked, MFA enrolled, MFA challenge failed, recovery codes issued/redeemed, signed out, sessions revoked, invitation sent/accepted/revoked, permission granted/revoked, organization created. |
+| Analytics | **None added.** §19's taxonomy is closed and contains no authentication events; a sign-in is an audit fact, not a product metric. |
+| Tests | 379 unit/integration (was 289), 15 identity end-to-end, a full no-JavaScript account journey, signed-in axe coverage. |
+
+### What each of these rests on
+
+- **SEC-002 (MFA everywhere).** `SignInChallenge` has no `authenticated`
+  outcome. The type cannot express a single-factor sign-in, and the runtime
+  agrees: `auth_sessions.mfa_satisfied_at` starts null and only
+  `verifySecondFactor` moves it. A forgotten check produces a session that fails
+  every request rather than one that works.
+- **SEC-003 (immediate revocation).** The `Actor` is assembled from database rows
+  on every request. Removing a membership also revokes that person's sessions, so
+  "immediately" means immediately rather than at their next sign-in. Proven
+  against live PostgreSQL.
+- **ACC-009 (accessible MFA).** One ordinary code field, not six boxes. Paste
+  works and whitespace is stripped server-side. The TOTP setup key is printed as
+  text as well as offered as an `otpauth:` link, because someone enrolling on the
+  device showing a QR code cannot scan it and someone who cannot see it cannot
+  either. Two factors are required before enrolment counts as finished, and
+  recovery is one form with one field.
+- **ACC-004 (timeouts).** Client sessions idle at twelve hours with a five-minute
+  warning and a plain-form "keep me signed in"; privileged internal sessions are
+  two hours. The warning sits in normal document flow — not a modal, no focus
+  trap, scrollable at 400% zoom.
+- **ARC-006 (progressive enhancement).** The entire journey — sign-up, sign-in,
+  enrolment, verification, invitation, sign-out — completes with JavaScript
+  disabled, asserted by the `identity-no-js` project on every run.
+- **ENG-001 (three enforcement layers).** Policy layer, then row-level security,
+  then a database CHECK. `invitations.role` accepts only client roles at the
+  storage boundary, so no future code path can write `platform_admin` there.
+
+### Privilege-escalation containment
+
+Three separate mechanisms, deliberately not one:
+
+1. `invitableRoles(inviterRole)` — a structural domain rule. A client
+   administrator may name client roles only, and **no role may ever invite a
+   contractor**, because contractor access is a per-assignment grant with an
+   expiry (CTR-004) and a membership would be a permanent version of it.
+2. The policy layer answers "may this actor invite at all?" separately.
+3. The database CHECK refuses anything outside the client roles.
+
+`wouldOrphanOrganization` is the fourth refusal and the least obvious: without
+it, the last administrator can demote themselves and nobody in the organization
+can invite anyone or restore the role. Recovery would mean a support request to
+a team that §21 says is fractional.
+
+### The identity provider is a port
+
+ADR-0002 rejected building authentication. `IdentityPort` in
+`packages/integrations` is what the platform talks to; `FakeIdentity` is what it
+talks to today. The fake is strict on purpose — it applies the password policy,
+expires challenges, refuses a replayed challenge id, and makes recovery codes
+single-use — because a permissive fake produces code that only works locally.
+
+Its TOTP is a real RFC 6238 implementation, verified against the published
+Appendix B vectors. That is what makes a genuine enrolment testable rather than
+only its failure branch, and it is what lets `pnpm dev` show a working
+authenticator flow with no vendor account.
+
+`packages/integrations/src/identity.test.ts` is written against the *port*, not
+the fake, so the adapter chosen under Q-13 must pass the same suite.
+
+### Decisions taken during the build
+
+| Decision | Why |
+|---|---|
+| Enrolment during sign-in does not create a session. | The person signs in again with the factor they just set up. One extra step, and `verifySecondFactor` stays the only place in the codebase that issues a session. |
+| Sign-up does not create a session either. | Same reason. An account cannot exist for even a moment with a session and no second factor. |
+| An address that already has an account gets the neutral "check your email" page. | Otherwise sign-up is an account-enumeration oracle. The wording is conditional — "if that address can be used" — rather than claiming a message was sent. |
+| A failed sign-in records `actorId: null` even when the address matches a real user. | Recording the user id would turn the audit log into a list of which addresses are real. |
+| The lockout is 10 attempts / 15 minutes per address, and there is no CAPTCHA. | ACC-005 and §27 make an inaccessible barrier the wrong answer to abuse. A permanent lock would be a denial of service anyone could trigger against a known address. |
+| Per-address throttling **and** per-client rate limiting. | A stuffing run spread across a botnet defeats the first; one client hammering one endpoint defeats the second. Neither alone is sufficient. |
+| Password rules are length plus a personal-detail check. Nothing else. | NIST SP 800-63B removed composition rules for good reason, and they are hostile to switch and voice input. Paste and password-manager support are the control that actually produces strong passwords. |
+| Session policy is the strictest any of a person's roles demands. | Someone who is both an internal reviewer and an administrator of their own organization gets the short session everywhere. A session cannot be partly short-lived. |
+| `auth_sessions`, `user_mfa_factors` and `sign_in_throttle` are global tables. | Each is a property of a person, not a tenant. An `organization_id` column would make a session look scoped when it is not. Declared and justified inline, per DAT-002. |
+
+### A finding in this slice's own diff
+
+The first version handed the TOTP setup key and the ten recovery codes to the
+page that renders them through the **query string**. It worked, and it was
+wrong: URLs are written to browser history, to server access logs and to every
+proxy in between, so a live authentication secret would have been recorded in
+several places nobody would think to clear. They now travel in a two-minute
+`httpOnly` hand-off cookie, and the end-to-end tests assert the URL contains
+neither.
+
+The same instinct that caught it — "where does this value end up?" — is what the
+`storage_key`, `client_hash` and `token_hash` decisions elsewhere come from.
+
+### A bug this slice found in itself
+
+The local demo bootstrap enumerated **every** user with a membership and set
+their password to the demo passphrase, so anyone who signed up on a local build
+was silently locked out a moment later. An end-to-end test that signs in
+immediately after signing up caught it. The fix scopes the bootstrap to the
+reserved `.example` top-level domain, which RFC 2606 guarantees can never belong
+to a real person.
+
+The general lesson, recorded because it will recur: convenience code that runs
+against the real database needs the same scepticism as the product code, and the
+test that catches it is the one that does the boring thing in the obvious order.
+
+### What was cut from CC-03, and why
+
+Stated rather than quietly narrowed, per the working rules:
+
+| Cut | Reason | Picked up by |
+|---|---|---|
+| Checkout and payment (PUB-003 commerce half) | `PaymentPort` exists with a fake, but the real flow needs the vendor decision (Q-14) and the transactional outbox ADR-0006 requires. Shipping a checkout whose failure mode is "payment taken, no project created" would be worse than shipping none. | CC-03b |
+| Client agreement and e-signature | Q-19 is unresolved: no e-sign vendor has passed accessibility review, and ACC-009 may force an in-product signing flow. That is a design decision, not a coding one. | CC-03b |
+| Project shell on purchase | It is the thing a purchase creates; without commerce there is nothing to create it. | CC-03b |
+| Organization switcher | Someone with two memberships currently acts in the first. Correct but incomplete. The tenant is read from memberships and never from a query parameter, so the missing switcher is a UX gap, not a security one. | CC-04 |
+| SSO / federation | Higher-tier clients only (§16); no client exists yet. | CC-07 |
+| A QR code on the enrolment screen | Requires a Reed–Solomon encoder written from scratch (no third-party script, PUB-006). The manual key and the `otpauth:` link are functionally complete and more accessible than a QR code alone, so this is a convenience, not a gap in the flow. | CC-03b |
+
+### Still open
+
+- **Manual accessibility evidence remains unmet**, and this slice raises the
+  stakes: ACC-009 names MFA enrolment specifically, and §15 asks for a
+  screen-reader user to complete enrolment. The automated coverage here is
+  regression coverage between manual passes (ENG-005). **Unmet exit criterion.**
+- **Q-13 (identity vendor)** is unanswered, so no real adapter exists. The port
+  contract test is what makes that a scheduling question rather than a rewrite.
+- **Sign-up is not yet atomic.** Provider subject, user row and organization are
+  three writes ordered so the failure modes are recoverable, but the durable
+  outbox ADR-0006 asks for arrives with the payment path. Recorded as a gap.
+- **Email delivery is a fake.** Invitations are not actually sent; a local build
+  prints the link on the page that created it, and only when the fake adapter is
+  the one in use.

@@ -1053,3 +1053,278 @@ h1, h2, h3 {
   padding: var(--space-4) 0 var(--space-4) var(--space-4);
   font-size: var(--font-size-base);
 }
+
+/* ============================================================
+   Accounts, security and team (CC-03a)
+   ============================================================
+   The same editorial system as everything else. A sign-in screen that looks
+   like a bootstrap form after a considered homepage tells a buyer exactly where
+   the care ran out — and this is the first screen a paying client sees twice a
+   week for a year.
+   ============================================================ */
+
+.ns-page--narrow { max-inline-size: 34rem; }
+
+.ns-page__lede {
+  margin-block: var(--space-4) var(--space-8);
+  max-inline-size: var(--measure);
+  font-size: var(--font-size-lg);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* ---- Forms ------------------------------------------------------------- */
+
+.ns-form { margin-block-start: var(--space-6); }
+
+.ns-field { margin-block-end: var(--space-6); }
+
+.ns-field__label {
+  display: block;
+  margin-block-end: var(--space-2);
+  font-weight: 500;
+}
+
+.ns-field__input,
+.ns-field__select {
+  inline-size: 100%;
+  max-inline-size: 30rem;
+  padding: var(--space-3) var(--space-4);
+  font: inherit;
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  background: var(--surface-page);
+  /* A 1px hairline reads as considered; the contrast requirement is met by the
+     boundary token, which is contrast-tested against the surface (ACC-002). */
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+
+.ns-field__input:focus-visible,
+.ns-field__select:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.ns-field__input[aria-invalid='true'] {
+  /* Never colour alone (ENG-004): the error text below carries the meaning and
+     the thicker rule is a second, non-colour signal. */
+  border-inline-start: 4px solid var(--status-critical);
+}
+
+/* A six-digit code and a recovery code are read back character by character.
+   A monospaced face with loosened tracking makes that possible without
+   turning the field into six separate inputs, which would break pasting. */
+.ns-field__input--code {
+  max-inline-size: 14rem;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xl);
+  letter-spacing: 0.18em;
+}
+
+.ns-field__select--inline { max-inline-size: 16rem; }
+
+.ns-field__static {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-lg);
+}
+
+.ns-field__error {
+  margin-block-start: var(--space-2);
+  color: var(--status-critical);
+  font-weight: 500;
+}
+
+.ns-form-error {
+  margin-block: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  border-inline-start: 4px solid var(--status-critical);
+  background: color-mix(in srgb, var(--status-critical) 6%, transparent);
+  max-inline-size: var(--measure);
+}
+
+.ns-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 var(--space-8);
+}
+.ns-fieldset__legend {
+  padding: 0;
+  margin-block-end: var(--space-5);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xl);
+  letter-spacing: var(--tracking-display);
+}
+
+.ns-checkbox {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-4);
+  align-items: start;
+  margin-block-start: var(--space-6);
+  max-inline-size: var(--measure);
+}
+.ns-checkbox input {
+  inline-size: 1.35rem;
+  block-size: 1.35rem;
+  margin: 0.15rem 0 0;
+  accent-color: var(--interactive);
+}
+.ns-checkbox label { line-height: 1.5; cursor: pointer; }
+
+/* ---- Panels and records ------------------------------------------------ */
+
+/* A rule above rather than a card: the page is a document, and boxes-within-
+   boxes is the dashboard chrome §14 warns against. */
+.ns-panel {
+  margin-block-start: var(--space-12);
+  padding-block-start: var(--space-5);
+  border-block-start: 2px solid var(--text-primary);
+}
+
+.ns-panel__heading {
+  margin: 0 0 var(--space-5);
+  font-size: var(--font-size-xl);
+  line-height: 1.25;
+}
+
+.ns-plain-list { list-style: none; margin: 0 0 var(--space-6); padding: 0; }
+
+.ns-record {
+  display: block;
+  padding-block: var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
+}
+.ns-record:first-child { border-block-start: 1px solid var(--border-subtle); }
+
+.ns-record--wide {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ns-record__primary { display: block; font-size: var(--font-size-lg); }
+.ns-record__secondary {
+  display: block;
+  margin-block-start: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.ns-record__actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ---- Enrolment --------------------------------------------------------- */
+
+.ns-enrol { margin-block-start: var(--space-6); }
+
+.ns-enrol__choices {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.ns-enrol__steps {
+  margin: 0;
+  padding-inline-start: var(--space-6);
+  max-inline-size: var(--measure);
+}
+.ns-enrol__steps > li { margin-block-end: var(--space-8); }
+
+.ns-enrol__secret {
+  margin-block: var(--space-4);
+  padding: var(--space-5);
+  background: var(--surface-raised);
+  border-inline-start: 3px solid var(--graphic-brand);
+}
+.ns-enrol__secret-label {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.ns-enrol__secret-value {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-lg);
+  /* Wraps rather than scrolls: a key that runs off the edge of a phone cannot
+     be transcribed, which is the whole point of offering it as text. */
+  word-break: break-all;
+}
+
+.ns-enrol__uri { margin-block: var(--space-3); }
+.ns-enrol__uri a { color: var(--interactive); }
+
+.ns-enrol__demo-code {
+  margin-block: var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* ---- Recovery codes ---------------------------------------------------- */
+
+.ns-recovery {
+  margin-block: var(--space-5);
+  padding: var(--space-5);
+  border-inline-start: 4px solid var(--emphasis);
+  background: var(--surface-raised);
+}
+.ns-recovery__warning { margin: 0 0 var(--space-4); font-weight: 500; }
+
+.ns-recovery__codes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2) var(--space-6);
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-lg);
+}
+
+/* ---- Session timeout warning (ACC-004) --------------------------------- */
+
+/* Sits under the masthead in normal document flow. Not fixed, not a modal:
+   it must never cover content or trap focus, and someone at 400% zoom must be
+   able to scroll past it. */
+.ns-timeout {
+  border-block-end: 3px solid var(--emphasis);
+  background: var(--surface-raised);
+  padding: var(--space-5) var(--gutter);
+}
+.ns-timeout__inner {
+  max-inline-size: var(--content-max);
+  margin-inline: auto;
+  display: flex;
+  gap: var(--space-5);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ns-timeout__heading { margin: 0; font-size: var(--font-size-lg); }
+.ns-timeout__body { margin: 0; flex: 1 1 20rem; color: var(--text-secondary); }
+
+/* ---- Demo accounts panel (local builds only) --------------------------- */
+
+.ns-demo {
+  margin-block-start: var(--space-12);
+  padding: var(--space-6);
+  border: 1px dashed var(--border);
+  background: var(--surface-raised);
+  font-size: var(--font-size-sm);
+}
+.ns-demo__heading { margin: 0 0 var(--space-3); font-size: var(--font-size-base); }
+.ns-demo__body { margin: 0 0 var(--space-4); color: var(--text-secondary); max-inline-size: var(--measure); }
+.ns-demo__list { margin: 0 0 var(--space-4); }
+.ns-demo__row { padding-block: var(--space-2); border-block-start: 1px solid var(--border-subtle); }
+.ns-demo__row dt { margin: 0; }
+.ns-demo__row dd { margin: var(--space-1) 0 0; color: var(--text-secondary); }
+.ns-demo__password { margin: 0 0 var(--space-4); }
+.ns-demo code {
+  font-family: var(--font-family-mono);
+}

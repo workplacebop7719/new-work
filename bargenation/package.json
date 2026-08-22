@@ -21,7 +21,8 @@
     "test:db": "vitest run src/db",
     "smoke": "node scripts/smoke-member-flow.mjs",
     "signals": "tsx scripts/run-signals.mts",
-    "ingest": "tsx scripts/run-ingest.mts"
+    "ingest": "tsx scripts/run-ingest.mts",
+    "legal": "node scripts/check-legal-claims.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

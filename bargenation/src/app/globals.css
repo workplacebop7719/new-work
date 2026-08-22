@@ -121,6 +121,46 @@ body {
 }
 .tabular { font-variant-numeric: tabular-nums lining-nums; }
 
+/* long-form legal and editorial prose */
+.legal-body h2 {
+  font-family: var(--font-display);
+  font-size: var(--step-4);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin-top: 3.5rem;
+  margin-bottom: 1rem;
+}
+.legal-body h2:first-child { margin-top: 0; }
+.legal-body h3 {
+  font-size: var(--step-1);
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+.legal-body p,
+.legal-body li {
+  max-width: 62ch;
+  line-height: 1.75;
+  color: var(--color-ink-70);
+}
+.legal-body p { margin-bottom: 1.125rem; }
+.legal-body ul { margin: 0 0 1.5rem 0; }
+.legal-body li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.legal-body li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.85em;
+  width: 0.75rem;
+  height: 1px;
+  background: var(--color-line-strong);
+}
+.legal-body strong { color: var(--color-ink); font-weight: 600; }
+
 /* measure caps for long-form reading */
 .measure     { max-width: 63ch; }
 .measure-tight { max-width: 48ch; }

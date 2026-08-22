@@ -16,17 +16,17 @@ const COLUMNS = [
     links: [
       { label: 'How it works', href: '/how-it-works', built: true },
       { label: 'Sign in', href: '/login', built: true },
-      { label: 'About', href: '/about', built: false },
+      { label: 'About', href: '/about', built: true },
       { label: 'The Edit', href: '/edit', built: false },
-      { label: 'Contact', href: '/contact', built: false },
+      { label: 'Contact', href: '/contact', built: true },
     ],
   },
   {
     title: 'Legal',
     links: [
-      { label: 'Privacy', href: '/privacy', built: false },
-      { label: 'Terms', href: '/terms', built: false },
-      { label: 'Disclosures', href: '/disclosures', built: false },
+      { label: 'Privacy', href: '/privacy', built: true },
+      { label: 'Terms', href: '/terms', built: true },
+      { label: 'Disclosures', href: '/disclosures', built: true },
     ],
   },
 ] as const;

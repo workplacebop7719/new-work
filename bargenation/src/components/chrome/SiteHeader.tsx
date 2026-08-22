@@ -20,6 +20,7 @@ const NAV = [
   { href: '/search', label: 'Search' },
   { href: '/categories', label: 'Categories' },
   { href: '/how-it-works', label: 'Method' },
+  { href: '/about', label: 'About' },
 ];
 
 const navLink =

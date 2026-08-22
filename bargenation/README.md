@@ -27,6 +27,7 @@ npm run contrast   # WCAG AA guard over the shipped tokens
 npm run smoke      # end-to-end member flow in a real browser (needs a dev server)
 npm run signals    # one Deal Signal sweep (connects as the jobs role)
 npm run ingest     # one ingestion pass from a local records file
+npm run legal      # guard: no compliance claims, no invented company details
 ```
 
 No database is required. Without `DATABASE_URL` the app serves the fictional
@@ -46,7 +47,8 @@ See [docs/DATABASE.md](docs/DATABASE.md) for what the schema guarantees and why,
 [docs/AUTH.md](docs/AUTH.md) for how authentication is layered, and
 [docs/DEAL-SIGNALS.md](docs/DEAL-SIGNALS.md) for why the signal engine stays quiet, and
 [docs/INGESTION.md](docs/INGESTION.md) for how feed data becomes history, and
-[docs/ADMIN.md](docs/ADMIN.md) for the operations surface.
+[docs/ADMIN.md](docs/ADMIN.md) for the operations surface, and
+[docs/LEGAL.md](docs/LEGAL.md) for how the legal pages handle what we do not know.
 
 ## The rules that are actually enforced
 
@@ -73,6 +75,8 @@ These are not conventions. Each one has a test or a guard that fails the build.
 | A customer cannot promote themselves | column-level grant on `profiles.role`; RLS scopes rows, not columns |
 | Staff cannot read customer personal data | enumerated grants; households and watchlists are not among them |
 | Operator decisions cannot be erased | `admin_actions` is append-only and its actor cannot be deleted |
+| We never claim legal compliance | `LAWYER_REVIEWED` is a literal false the environment cannot set |
+| A missing company detail is never invented | guard rejects plausible placeholders; gaps are stated once, deliberately |
 | Ambiguous feed data is refused, not guessed | extraction returns a reason; `"1,234"` is rejected outright |
 | A doubtful price never enters the permanent record | quarantined until a **different** source agrees |
 | Two products are never silently merged | matching asks for review instead of picking a winner |
@@ -100,6 +104,7 @@ src/data/        repository (the only module that knows where deals come from),
                  fixture + postgres adapters behind one contract
 src/auth/        typed port, dev + supabase adapters, return-url allowlist
 src/ingest/      source port, normalisation, product matching, watchdog, pipeline
+src/content/     legal document metadata and the details we do not yet have
 src/app/app/     the member portal, behind a real session check
 src/db/          pooled client, schema, parity and signal-job tests
 db/migrations/   … 0007 adds the narrowly-granted signal job role
@@ -119,6 +124,8 @@ shot.mjs         visual QA — screenshots every page at 375 / 768 / 1440
 
 **Operations** — `/admin` · `/admin/review` · `/admin/quarantine`
 
+**Legal** — `/privacy` · `/terms` · `/disclosures` · `/contact` · `/about`
+
 ## Not built yet
 
 Deliberately absent rather than faked (PRD §01). Controls for these render
@@ -131,4 +138,4 @@ visibly disabled with the reason, and no navigation links to them.
 | The Bargenation Edit + newsletter | an email provider credential |
 | Affiliate `/go/[offer]` redirects | an affiliate account |
 | Admin platform | depends on authentication |
-| Legal pages | content that needs a lawyer, not invention |
+| Legal review of the drafted pages | a lawyer, not more writing |

@@ -1,6 +1,6 @@
 # ADR-0001 — Stack, monorepo tooling and package management
 
-- **Status:** Proposed
+- **Status:** Accepted (CC-01)
 - **Date:** 2026-08-18
 - **Deciders:** Engineering lead (accountable), product lead, security/privacy lead
 - **Blocks:** CC-01
@@ -22,16 +22,18 @@ Three PRD constraints narrow the choice more than they first appear:
 
 | Concern | Choice | Rationale |
 |---|---|---|
-| Language | TypeScript, `strict` plus `noUncheckedIndexedAccess` | PRD §27 mandates TypeScript; strict settings are chosen now because retrofitting them across a monorepo is expensive. |
+| Language | TypeScript 5.9.3, `strict` plus `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` | PRD §27 mandates TypeScript; strict settings are chosen now because retrofitting them across a monorepo is expensive. **Amended at CC-01:** TypeScript 7.0.2 (the native port) is `latest`, but the framework and lint toolchain do not yet target it. Pinned to 5.9.3; re-evaluate at CC-02. |
 | Framework | Next.js App Router, server components by default | Named in the PRD; satisfies ARC-006 and ENG-001 posture. |
 | Package manager | pnpm with workspaces, committed lockfile, pinned exact versions | Deterministic install (CMD-001 `install`); strict node_modules prevents phantom dependencies between packages. |
 | Task runner | Turborepo | Caching for `lint`/`typecheck`/`test` across nine packages; no lock-in — its config is replaceable. |
-| Database access | Postgres via a typed query builder/ORM chosen in ADR-0003 alongside the isolation model | Isolation strategy and data-access layer are one decision, not two. |
+| Database access | Postgres via `pg` with hand-written SQL migrations | **Amended at CC-01:** no ORM. Row-level security policies, `SET LOCAL` tenant context and the append-only audit grants are all things an ORM abstracts away or fights; the isolation model (ADR-0003) is the reason to keep SQL visible and reviewable. Revisit if query volume makes hand-written SQL a bottleneck. |
 | Validation | One schema library (Zod or equivalent) shared across API boundaries, forms and integration adapters | ARC-004 requires schema validation at every boundary; a single library keeps error envelopes uniform. |
 | Testing | Vitest (unit/integration), Playwright (`test:e2e`, `test:a11y`), axe-core, Storybook interaction tests | Directly maps to the §27 testing row and CMD-001. |
 | Node runtime | Current active LTS at kickoff, pinned in `.nvmrc` and CI | — |
 
-**Repository layout** follows PRD §27 exactly: `/apps/web`, `/packages/{ui,domain,db,auth,integrations,observability,testing}`, `/docs`, `/infra`. Dependency rule enforced in CI: `domain` may not import from `apps`, `ui`, `db` or `integrations`.
+**Repository layout** follows PRD §27 exactly: `/apps/web`, `/packages/{ui,domain,db,auth,integrations,observability,testing}`, `/docs`, `/infra`. Dependency rule enforced in CI by `scripts/guards/domain-purity.mjs`: `domain` may not import from `apps`, `ui`, `db` or `integrations`.
+
+**Amended at CC-01 — internal packages, not built packages.** Library packages ship TypeScript source and are compiled by the consuming app via Next's `transpilePackages` (Turborepo's "internal package" pattern). They have no `build` script and emit no `dist`, because nothing consumes one: the app bundles from source, tests run from source, and the database CLIs run under `tsx`. This also settled the module-resolution question — the workspace uses `moduleResolution: "bundler"` with extensionless relative imports, because Turbopack does not remap NodeNext-style `./x.js` specifiers to `./x.ts`.
 
 ## Alternatives considered
 

@@ -1,6 +1,6 @@
 # ADR-0002 — Identity, authentication and access enforcement
 
-- **Status:** Proposed
+- **Status:** Accepted (CC-01)
 - **Date:** 2026-08-18
 - **Deciders:** Engineering lead, security/privacy lead (accountable for risk acceptance), accessibility lead (stop-ship on MFA accessibility)
 - **Blocks:** CC-01 (skeleton), CC-03 (delivery)

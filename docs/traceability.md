@@ -1,6 +1,6 @@
 # Requirement traceability matrix
 
-**Status:** Draft for approval — no application code exists yet.
+**Status:** CC-01, CC-02 and the CC-02b marketing surface delivered, plus a hardening pass. CC-03 not started.
 **Source of truth:** [`/docs/PRD.md`](./PRD.md) (Project Northstar PRD v1.0, 2026-08-18).
 **Maintained under:** PRD §27 "Build mode" — this file is updated at the end of every CC slice.
 
@@ -13,7 +13,7 @@
 | Requirement | Condensed statement. The PRD text governs where this summary is thinner. |
 | Slice | Delivery slice that first satisfies it (PRD §27 sequence; detail in [delivery plan](./delivery-plan.md)). |
 | Verification | How acceptance is evidenced. `A` automated test, `M` manual test with named tester, `R` documented human review, `X` external/independent party. |
-| State | `Not started` until code lands. Slices update this column and link evidence. |
+| State | `Done` = satisfied and evidenced. `Partial` = the CC-01 share is done, later slices complete it. `Not started` = no code yet. |
 
 **Rule (PRD §27):** a requirement may not be marked satisfied on automated evidence alone where an `M`, `R` or `X` is listed.
 
@@ -23,21 +23,21 @@
 
 | ID | PRD | Requirement | Acceptance criterion (PRD verbatim intent) | Slice | Verification | State |
 |---|---|---|---|---|---|---|
-| **PUB-001** | §7 | Responsive, bilingual, CMS-managed marketing experience. | All core pages publishable EN + FR without developer intervention; missing-translation states explicit. | CC-01 → CC-02 | A (route/lang tests), R (content desk) | Not started |
-| **PUB-002** | §7 | Sector and employee-band personalization. | Profile persists with consent, changes copy/content/CTA, never hides the general site. | CC-02 | A, M (keyboard + SR), R | Not started |
+| **PUB-001** | §7 | Responsive, bilingual, CMS-managed marketing experience. | All core pages publishable EN + FR without developer intervention; missing-translation states explicit. | CC-01 → CC-02 | A (route/lang tests), R (content desk) | Done |
+| **PUB-002** | §7 | Sector and employee-band personalization. | Profile persists with consent, changes copy/content/CTA, never hides the general site. | CC-02 | A, M (keyboard + SR), R | Done |
 | **PUB-003** | §7 | Accessible booking and checkout. | Keyboard and screen-reader users complete service, time and payment selection with no third-party a11y blocker. | CC-03 | A (axe), M (JAWS/NVDA/VO), X (vendor a11y review) | Not started |
-| **PUB-004** | §7 | Evidence-backed content. | Every regulatory claim renders source URL, effective date, jurisdiction, reviewer review-date. | CC-01 (model) → CC-02 (surface) | A (schema test), R (two-person review §20) | Not started |
-| **PUB-005** | §7 | Fast path to human help. | Visitor can request phone, email or relay-friendly contact without completing the qualifier. | CC-02 | A (journey), M | Not started |
-| **PUB-006** | §7 | Consent-aware analytics. | No non-essential analytics before valid consent; opt-out persistent; service equivalent after opt-out. | CC-02 | A (network assertion in E2E), R (privacy lead) | Not started |
+| **PUB-004** | §7 | Evidence-backed content. | Every regulatory claim renders source URL, effective date, jurisdiction, reviewer review-date. | CC-01 (model) → CC-02 (surface) | A (schema test), R (two-person review §20) | Partial |
+| **PUB-005** | §7 | Fast path to human help. | Visitor can request phone, email or relay-friendly contact without completing the qualifier. | CC-02 | A (journey), M | Done |
+| **PUB-006** | §7 | Consent-aware analytics. | No non-essential analytics before valid consent; opt-out persistent; service equivalent after opt-out. | CC-02 | A (network assertion in E2E), R (privacy lead) | Done |
 
 ### Qualification and conversion — PRD §8
 
 | ID | PRD | Requirement | Acceptance criterion | Slice | Verification | State |
 |---|---|---|---|---|---|---|
-| **CNV-001** | §8 | Save-and-resume without mandatory account creation at question one. | Secure magic link only after explicit consent; abandoned data on a short retention schedule. | CC-02 | A (link expiry + retention job), R (privacy) | Not started |
-| **CNV-002** | §8 | Result explainability. | Result shows inputs, rule category and an uncertainty notice. | CC-02 | A (snapshot of rule trace), M (SR reading order), R | Not started |
-| **CNV-003** | §8 | No dark patterns. | No preselected paid add-ons, false scarcity, disguised advertising, shame copy or inaccessible urgency timers. | CC-02, re-checked CC-03 | R (design + content review, per-release checklist) | Not started |
-| **CNV-004** | §8 | Sales handoff context. | CRM receives consent status, profile, result, source, content history, accommodation request — and nothing unneeded. | CC-02 | A (adapter payload allowlist test), R (privacy) | Not started |
+| **CNV-001** | §8 | Save-and-resume without mandatory account creation at question one. | Secure magic link only after explicit consent; abandoned data on a short retention schedule. | CC-02 | A (link expiry + retention job), R (privacy) | Done |
+| **CNV-002** | §8 | Result explainability. | Result shows inputs, rule category and an uncertainty notice. | CC-02 | A (snapshot of rule trace), M (SR reading order), R | Done |
+| **CNV-003** | §8 | No dark patterns. | No preselected paid add-ons, false scarcity, disguised advertising, shame copy or inaccessible urgency timers. | CC-02, re-checked CC-03 | R (design + content review, per-release checklist) | Done |
+| **CNV-004** | §8 | Sales handoff context. | CRM receives consent status, profile, result, source, content history, accommodation request — and nothing unneeded. | CC-02 | A (adapter payload allowlist test), R (privacy) | Partial |
 
 ### Contractor portal — PRD §10
 
@@ -46,7 +46,7 @@
 | **CTR-001** | §10 | Credential and practice profile. | Stores credential type, verification source/date, sample-report review, domains, languages, insurance expiry, conflicts. | CC-06 | A, R (contractor success) | Not started |
 | **CTR-002** | §10 | Capacity and availability. | Contractor declares weekly capacity, blackout dates, turnaround, max concurrent work. | CC-06 | A | Not started |
 | **CTR-003** | §10 | Structured assignment brief. | Brief carries scope, inputs, exclusions, deliverables, dates, rate, revision allowance, acceptance rubric. | CC-06 | A, R | Not started |
-| **CTR-004** | §10 | Scoped data access. | Contractor sees only assigned clients/files/issues/messages; access expires automatically at closure. | CC-06 | A (**authz matrix + expiry clock test**), R | Not started |
+| **CTR-004** | §10 | Scoped data access. | Contractor sees only assigned clients/files/issues/messages; access expires automatically at closure. | CC-06 | A (**authz matrix + expiry clock test**), R | Partial |
 | **CTR-005** | §10 | QA and revision workflow. | Submission cannot be completed until required checks, peer review and client-facing language QA pass. | CC-06 | A (state machine), R (QA centre) | Not started |
 | **CTR-006** | §10 | Financial visibility. | Contractor sees approved fee, invoice status, payment date, disputed items — never client retail pricing unless contractually required. | CC-06 | A (field-level authz test) | Not started |
 | **CTR-007** | §10 | Performance record. | Internal scorecard tracks on-time delivery, first-pass acceptance, revision rate, substantiated feedback. | CC-06 → CC-07 | A, R | Not started |
@@ -75,7 +75,7 @@ These carry the same binding force as the PRD prose they come from; only the ide
 | CLP-014 | Every finding traces to evidence, reviewer, requirement version and retest state. | MVP acceptance | CC-05 | A, R | Not started |
 | CLP-015 | Client self-serves an accessible executive package with no staff assembly. | MVP acceptance | CC-05 | A, M | Not started |
 | CLP-016 | All core tasks completable keyboard-only, at 400% zoom, on supported screen readers. | MVP acceptance | every slice | M (per release candidate), X | Not started |
-| CLP-017 | Product never labels an organization "compliant" from automated checks or incomplete evidence. | MVP acceptance | CC-02 onward | R (content review), A (prohibited-phrase lint) | Not started |
+| CLP-017 | Product never labels an organization "compliant" from automated checks or incomplete evidence. | MVP acceptance | CC-02 onward | R (content review), A (prohibited-phrase lint) | Done |
 
 ### Internal operations console — PRD §11
 
@@ -91,7 +91,7 @@ These carry the same binding force as the PRD prose they come from; only the ide
 | OPS-008 | Risk & incident: privacy incidents, complaints, conflicts, overdue credentials, security alerts, corrective actions. | CC-07 | A, R | Not started |
 | OPS-009 | Automation: project shell, standard tasks and evidence checklist created after payment + agreement. | CC-03 → CC-04 | A | Not started |
 | OPS-010 | Automation: alert on client-input timeline threat and on contractor capacity below threshold. | CC-07 | A | Not started |
-| OPS-011 | Automation: block client release while critical QA exceptions, missing reviewer identity or expired sources remain. | CC-05 | A (**negative test required**), R | Not started |
+| OPS-011 | Automation: block client release while critical QA exceptions, missing reviewer identity or expired sources remain. | CC-05 | A (**negative test required**), R | Partial |
 | OPS-012 | Automation: accessible status digests in the client's preferred language and channel. | CC-05 | A, M | Not started |
 | OPS-013 | Automation: flag margin leakage when time, revisions or contractor cost exceed scope assumptions. | CC-07 | A | Not started |
 
@@ -112,33 +112,33 @@ These carry the same binding force as the PRD prose they come from; only the ide
 
 | ID | Requirement | Slice | Verification | State |
 |---|---|---|---|---|
-| CNT-001 | Regulatory content object stores jurisdiction, source URL, effective date, last-verified date, reviewer, next-review date. | CC-01 | A (schema), R | Not started |
-| CNT-002 | Bilingual page stores translation status, translator/reviewer, source-language version, sync state. | CC-01 | A | Not started |
-| CNT-003 | Case narrative stores context, constraint, scope, method, result, evidence, permission state. | CC-02 | A, R | Not started |
-| CNT-004 | Downloadable resources have an HTML equivalent where practical plus an accessibility QA record. | CC-02 | M, R | Not started |
-| CNT-005 | Expired/disputed regulatory content shows internal hold and cannot republish without review. | CC-01 → CC-07 | A (**negative test**), R | Not started |
-| CNT-006 | SEO: canonical URLs, hreflang, accessible structured data, semantic headings, XML sitemaps, SSR critical content. | CC-02 | A | Not started |
-| CNT-007 | Personalized result pages are not indexed; client information never appears in URLs. | CC-02 | A (robots + URL-shape test) | Not started |
-| CNT-008 | Mandatory wording enforced; prohibited claims ("certified compliant", "government approved", "guaranteed protection") blocked. | CC-01 | A (content lint in CI), R | Not started |
+| CNT-001 | Regulatory content object stores jurisdiction, source URL, effective date, last-verified date, reviewer, next-review date. | CC-01 | A (schema), R | Done |
+| CNT-002 | Bilingual page stores translation status, translator/reviewer, source-language version, sync state. | CC-01 | A | Done |
+| CNT-003 | Case narrative stores context, constraint, scope, method, result, evidence, permission state. | CC-02 | A, R | Done |
+| CNT-004 | Downloadable resources have an HTML equivalent where practical plus an accessibility QA record. | CC-02 | M, R | Done |
+| CNT-005 | Expired/disputed regulatory content shows internal hold and cannot republish without review. | CC-01 → CC-07 | A (**negative test**), R | Done |
+| CNT-006 | SEO: canonical URLs, hreflang, accessible structured data, semantic headings, XML sitemaps, SSR critical content. | CC-02 | A | Done |
+| CNT-007 | Personalized result pages are not indexed; client information never appears in URLs. | CC-02 | A (robots + URL-shape test) | Done |
+| CNT-008 | Mandatory wording enforced; prohibited claims ("certified compliant", "government approved", "guaranteed protection") blocked. | CC-01 | A (content lint in CI), R | Done |
 
 ### Design system and motion — PRD §14
 
 | ID | Requirement | Slice | Verification | State |
 |---|---|---|---|---|
-| BRD-001 | Design tokens: colour (ink #0B2239, teal #00A6A6, gold #F0B44D accent), type scale, spacing, elevation, grid. | CC-01 | A (token contrast tests) | Not started |
-| BRD-002 | 16px minimum body, ~70ch measure, no colour-only status. | CC-01 | A, M | Not started |
-| BRD-003 | Motion: 120–240 ms transitions, `prefers-reduced-motion` equivalents, pause controls, no auto-advance/parallax/flash. | CC-01 | A, M | Not started |
-| BRD-004 | No component reaches production before documented keyboard, focus, SR, zoom and contrast behaviours pass. | every slice | A (Storybook interaction), M | Not started |
+| BRD-001 | Design tokens: colour (ink #0B2239, teal #00A6A6, gold #F0B44D accent), type scale, spacing, elevation, grid. | CC-01 | A (token contrast tests) | Done |
+| BRD-002 | 16px minimum body, ~70ch measure, no colour-only status. | CC-01 | A, M | Done |
+| BRD-003 | Motion: 120–240 ms transitions, `prefers-reduced-motion` equivalents, pause controls, no auto-advance/parallax/flash. | CC-01 | A, M | Done |
+| BRD-004 | No component reaches production before documented keyboard, focus, SR, zoom and contrast behaviours pass. | every slice | A (Storybook interaction), M | Done |
 | BRD-005 | Imagery consent and descriptive alt text recorded per asset. | CC-02 | R | Not started |
 
 ### Accessibility — PRD §15
 
 | ID | Requirement | Slice | Verification | State |
 |---|---|---|---|---|
-| ACC-001 | WCAG 2.2 AA across public site, portals and generated client artefacts. | every slice | A (axe), M, X (independent audit CC-09) | Not started |
-| ACC-002 | Keyboard: full operation, visible focus, logical order, no trap, skip links, predictable shortcuts. | every slice | A, M | Not started |
+| ACC-001 | WCAG 2.2 AA across public site, portals and generated client artefacts. | every slice | A (axe), M, X (independent audit CC-09) | Partial |
+| ACC-002 | Keyboard: full operation, visible focus, logical order, no trap, skip links, predictable shortcuts. | every slice | A, M | Partial |
 | ACC-003 | Screen readers: JAWS+Chrome/Edge, NVDA+Firefox/Chrome, VoiceOver+Safari, TalkBack+Chrome on agreed versions. | every slice | M (named tester, versions logged) | Not started |
-| ACC-004 | Visual: text and non-text contrast, 200% resize, 400% zoom/reflow, Windows High Contrast. | every slice | A, M | Not started |
+| ACC-004 | Visual: text and non-text contrast, 200% resize, 400% zoom/reflow, Windows High Contrast. | every slice | A, M | Partial |
 | ACC-005 | Motor/touch: target size and spacing, gesture alternatives, no drag-only interaction, generous extendable timeouts. | every slice | A, M | Not started |
 | ACC-006 | Cognitive: plain language, consistent navigation, visible progress, recoverable errors, calm notifications. | every slice | R, M (panel) | Not started |
 | ACC-007 | Media: captions, transcripts, audio-description strategy, no surprise playback, accessible controls. | CC-02 | M | Not started |
@@ -146,25 +146,25 @@ These carry the same binding force as the PRD prose they come from; only the ide
 | ACC-009 | Authentication: accessible MFA, password-manager support, paste allowed, alternative verification, accessible recovery. | CC-03 | M | Not started |
 | ACC-010 | Paid disability-panel sessions at discovery, prototype, beta and pre-launch. | Phase 0, CC-02, CC-05, CC-09 | X (panel sessions, compensated) | Not started |
 | ACC-011 | Independent pre-launch audit by a party not responsible for implementation. | CC-09 | X | Not started |
-| ACC-012 | Severity model, remediation owner, due date, retest evidence, exception approval documented. | CC-01 | R | Not started |
+| ACC-012 | Severity model, remediation owner, due date, retest evidence, exception approval documented. | CC-01 | R | Done |
 | ACC-013 | **Launch blocker:** zero open severity-1 a11y defects; severity-2 requires executive-approved time-bound plan and a tested accessible alternative. | CC-09 | R (accessibility lead stop-ship), X | Not started |
 
 ### Security, privacy and resilience — PRD §16
 
 | ID | Requirement | Slice | Verification | State |
 |---|---|---|---|---|
-| SEC-001 | Design and verify against OWASP ASVS 5.0 Level 2; OWASP Top 10 for training/awareness. | CC-01 baseline, CC-09 verify | R, X (pen test) | Not started |
+| SEC-001 | Design and verify against OWASP ASVS 5.0 Level 2; OWASP Top 10 for training/awareness. | CC-01 baseline, CC-09 verify | R, X (pen test) | Partial |
 | SEC-002 | MFA for clients, contractors and staff; phishing-resistant option for privileged roles; SSO for higher tiers; device/session management. | CC-03 | A, X | Not started |
-| SEC-003 | Tenant isolation, RBAC, scoped project permissions, deny-by-default contractor access, periodic access review, immediate revocation. | CC-01 skeleton → CC-06 | A (`test:authz`, cross-tenant suite) | Not started |
-| SEC-004 | TLS in transit, strong encryption at rest, managed keys/secrets, signed expiring download URLs, encrypted backups, data-residency review. | CC-01 → CC-04 | A, R | Not started |
+| SEC-003 | Tenant isolation, RBAC, scoped project permissions, deny-by-default contractor access, periodic access review, immediate revocation. | CC-01 skeleton → CC-06 | A (`test:authz`, cross-tenant suite) | Partial |
+| SEC-004 | TLS in transit, strong encryption at rest, managed keys/secrets, signed expiring download URLs, encrypted backups, data-residency review. | CC-01 → CC-04 | A, R | Partial |
 | SEC-005 | Uploads: malware scan, type/size validation, quarantine, safe preview, content-disposition controls, no executables. | CC-04 | A (EICAR-style fixture), R | Not started |
-| SEC-006 | Immutable audit log for sign-in, access, download, export, permission change, report release, AI use, deletion. | CC-01 skeleton, extended per slice | A | Not started |
-| SEC-007 | Privacy: purpose limitation, minimization, consent records, retention/deletion schedules, subprocessor register, PIA, request workflow. | CC-02 → CC-04 | R (privacy lead), A (retention jobs) | Not started |
-| SEC-008 | Assurance: threat model, code review, dependency scanning, secret scanning, annual independent pen test, remediation verification. | CC-01 (CI) → CC-09 | A (CI gates), X | Not started |
+| SEC-006 | Immutable audit log for sign-in, access, download, export, permission change, report release, AI use, deletion. | CC-01 skeleton, extended per slice | A | Done |
+| SEC-007 | Privacy: purpose limitation, minimization, consent records, retention/deletion schedules, subprocessor register, PIA, request workflow. | CC-02 → CC-04 | R (privacy lead), A (retention jobs) | Partial |
+| SEC-008 | Assurance: threat model, code review, dependency scanning, secret scanning, annual independent pen test, remediation verification. | CC-01 (CI) → CC-09 | A (CI gates), X | Partial |
 | SEC-009 | Resilience: 99.95% portal availability, RPO ≤15 min, RTO ≤4 h, tested restore and annual incident exercise. | CC-09 | A (SLO alerts), X (DR exercise) | Not started |
 | SEC-010 | Incident response: severity model, 24/7 critical escalation, evidence preservation, client comms templates, contractual notification. | CC-09 | R | Not started |
 | SEC-011 | Disability/accommodation data collected only when needed, access-restricted, shorter retention. | CC-03 | A, R | Not started |
-| SEC-012 | Marketing consent separated from service communications; non-essential consent never a purchase condition. | CC-02 → CC-03 | A, R | Not started |
+| SEC-012 | Marketing consent separated from service communications; non-essential consent never a purchase condition. | CC-02 → CC-03 | A, R | Done |
 | SEC-013 | Organization-level export, offboarding and verified deletion with legal-hold handling. | CC-04 → CC-07 | A (E2E scenario §24), R | Not started |
 | SEC-014 | Plain-language privacy summary + detailed policy, both naming subprocessors and contact routes. | CC-02 | R | Not started |
 
@@ -172,42 +172,42 @@ These carry the same binding force as the PRD prose they come from; only the ide
 
 | ID | Requirement | Slice | Verification | State |
 |---|---|---|---|---|
-| ARC-001 | TypeScript monorepo, server-rendered React framework, PostgreSQL, S3-compatible storage, managed standards-based IdP, structured headless CMS, event-driven adapters; versions pinned in a committed lockfile. | CC-01 | A (build), R (ADR-0001) | Not started |
-| ARC-002 | Vendor choices replaceable behind domain interfaces; documented exit plan per vendor. | CC-01 onward | R (ADR review) | Not started |
+| ARC-001 | TypeScript monorepo, server-rendered React framework, PostgreSQL, S3-compatible storage, managed standards-based IdP, structured headless CMS, event-driven adapters; versions pinned in a committed lockfile. | CC-01 | A (build), R (ADR-0001) | Done |
+| ARC-002 | Vendor choices replaceable behind domain interfaces; documented exit plan per vendor. | CC-01 onward | R (ADR review) | Done |
 | ARC-003 | Durable job queue for scanning, report generation, integration sync, notifications, retention, AI; retries and dead-letter review. | CC-04 | A | Not started |
-| ARC-004 | Idempotency for external writes; predictable error envelopes; schema validation at every boundary. | CC-03 | A | Not started |
-| ARC-005 | Core Web Vitals at p75: LCP ≤2.5 s, INP ≤200 ms, CLS ≤0.1, mobile and desktop populations separately. | CC-02 budget, CC-09 verify | A (CI budget + field RUM) | Not started |
-| ARC-006 | Critical public pages render useful primary content without client-side JavaScript. | CC-02 | A (JS-disabled journey test) | Not started |
-| ARC-007 | Every third-party script has a documented owner, purpose, consent category and performance budget. | CC-02 | R, A (script allowlist) | Not started |
-| ARC-008 | Deployment: preview environments, protected production, migration checks, staged rollout, rollback path, IaC. | CC-01 | A (pipeline), R | Not started |
-| ARC-009 | Observability: structured redacted logs, traces, metrics, audit events, SLO alerts, support-visible correlation IDs. | CC-01 → CC-07 | A, R | Not started |
+| ARC-004 | Idempotency for external writes; predictable error envelopes; schema validation at every boundary. | CC-03 | A | Done |
+| ARC-005 | Core Web Vitals at p75: LCP ≤2.5 s, INP ≤200 ms, CLS ≤0.1, mobile and desktop populations separately. | CC-02 budget, CC-09 verify | A (CI budget + field RUM) | Partial |
+| ARC-006 | Critical public pages render useful primary content without client-side JavaScript. | CC-02 | A (JS-disabled journey test) | Done |
+| ARC-007 | Every third-party script has a documented owner, purpose, consent category and performance budget. | CC-02 | R, A (script allowlist) | Done |
+| ARC-008 | Deployment: preview environments, protected production, migration checks, staged rollout, rollback path, IaC. | CC-01 | A (pipeline), R | Partial |
+| ARC-009 | Observability: structured redacted logs, traces, metrics, audit events, SLO alerts, support-visible correlation IDs. | CC-01 → CC-07 | A, R | Partial |
 
 ### Data model and permissions — PRD §18
 
 | ID | Requirement | Slice | Verification | State |
 |---|---|---|---|---|
-| DAT-001 | Entities: Organization, User, Project, Requirement, Evidence, Finding, Assignment, Deliverable, Audit event. | CC-01 (skeleton) → CC-06 | A (migrations + factories) | Not started |
-| DAT-002 | Tenant ID on all tenant-owned data with database-level enforcement where practical. | CC-01 | A (cross-tenant tests) | Not started |
-| DAT-003 | Role model enforced with its restrictions: client admin, client contributor, client executive, contractor, internal PM, qualified reviewer, platform admin. | CC-03 → CC-07 | A (role matrix test per protected resource class) | Not started |
-| DAT-004 | Qualified reviewer cannot approve their own high-risk work where segregation is required. | CC-05 | A (**negative test**), R | Not started |
-| DAT-005 | Platform admin break-glass access is time-bound, logged and reviewed; no routine client-content access. | CC-07 | A, R | Not started |
+| DAT-001 | Entities: Organization, User, Project, Requirement, Evidence, Finding, Assignment, Deliverable, Audit event. | CC-01 (skeleton) → CC-06 | A (migrations + factories) | Partial |
+| DAT-002 | Tenant ID on all tenant-owned data with database-level enforcement where practical. | CC-01 | A (cross-tenant tests) | Done |
+| DAT-003 | Role model enforced with its restrictions: client admin, client contributor, client executive, contractor, internal PM, qualified reviewer, platform admin. | CC-03 → CC-07 | A (role matrix test per protected resource class) | Partial |
+| DAT-004 | Qualified reviewer cannot approve their own high-risk work where segregation is required. | CC-05 | A (**negative test**), R | Done |
+| DAT-005 | Platform admin break-glass access is time-bound, logged and reviewed; no routine client-content access. | CC-07 | A, R | Done |
 | DAT-006 | Soft delete only where retention requires it. | CC-04 | R (data dictionary) | Not started |
 
 ### Analytics and experimentation — PRD §19
 
 | ID | Requirement | Slice | Verification | State |
 |---|---|---|---|---|
-| ANL-001 | Event taxonomy implemented exactly as listed in §19 (source_viewed … support_contacted). | CC-02 onward | A (event contract tests) | Not started |
-| ANL-002 | Events carry no raw document content and no unnecessary personal data. | CC-02 | A (payload allowlist), R (privacy) | Not started |
-| ANL-003 | KPI instrumentation for the §19 metric layers (activation, revenue, expansion, economics, delivery, quality, customer, accessibility, retention). | CC-02 → CC-08 | A, R | Not started |
+| ANL-001 | Event taxonomy implemented exactly as listed in §19 (source_viewed … support_contacted). | CC-02 onward | A (event contract tests) | Done |
+| ANL-002 | Events carry no raw document content and no unnecessary personal data. | CC-02 | A (payload allowlist), R (privacy) | Done |
+| ANL-003 | KPI instrumentation for the §19 metric layers (activation, revenue, expansion, economics, delivery, quality, customer, accessibility, retention). | CC-02 → CC-08 | A, R | Partial |
 | ANL-004 | Experiment guardrails: no fear/shame/misleading-deadline/inaccessible/hidden-cost variants; primary + harm metrics and stopping rules pre-declared. | CC-08 | R (experiment intake review) | Not started |
-| ANL-005 | No personalization of legal/regulatory claims without source-backed rule logic and qualified review. | CC-02 | A, R | Not started |
+| ANL-005 | No personalization of legal/regulatory claims without source-backed rule logic and qualified review. | CC-02 | A, R | Done |
 
 ### Quality gates and definition of done — PRD §24
 
 | ID | Requirement | Slice | Verification | State |
 |---|---|---|---|---|
-| QAG-001 | Six acceptance gates with their stop-ship conditions (discovery, design system, feature, content, release candidate, client deliverable). | CC-01 (documented) → CC-09 | R | Not started |
+| QAG-001 | Six acceptance gates with their stop-ship conditions (discovery, design system, feature, content, release candidate, client deliverable). | CC-01 (documented) → CC-09 | R | Done |
 | QAG-002 | Definition of done applied per PR: acceptance criteria, a11y checks, threat/privacy update, bilingual state, analytics accuracy, docs + rollback. | every PR | R (PR evidence template §27) | Not started |
 | QAG-003 | Five representative end-to-end scenarios pass (keyboard HR lead; blind executive; scoped contractor; PM handling expired source; tenant export/deletion). | CC-05, CC-06, CC-07, CC-09 | A (`test:e2e`), M | Not started |
 
@@ -215,17 +215,17 @@ These carry the same binding force as the PRD prose they come from; only the ide
 
 | ID | Requirement | Slice | Verification | State |
 |---|---|---|---|---|
-| ENG-001 | Authorization never lives only in UI components; enforced at server/domain and storage boundaries. | CC-01 onward | A (`test:authz`), R (code review) | Not started |
-| ENG-002 | Evidence-file contents never sent to an AI provider by default; requires approved task, minimal payload, client policy check, logged provenance. | CC-08 | A (guard test), R | Not started |
-| ENG-003 | No storage keys, sequential tenant IDs, internal margins or private audit notes in client URLs or analytics. | CC-03 onward | A (URL/payload lint) | Not started |
-| ENG-004 | No interaction dependent on hover, drag, colour, animation or pointer precision alone. | every slice | A, M | Not started |
+| ENG-001 | Authorization never lives only in UI components; enforced at server/domain and storage boundaries. | CC-01 onward | A (`test:authz`), R (code review) | Done |
+| ENG-002 | Evidence-file contents never sent to an AI provider by default; requires approved task, minimal payload, client policy check, logged provenance. | CC-08 | A (guard test), R | Partial |
+| ENG-003 | No storage keys, sequential tenant IDs, internal margins or private audit notes in client URLs or analytics. | CC-03 onward | A (URL/payload lint) | Done |
+| ENG-004 | No interaction dependent on hover, drag, colour, animation or pointer precision alone. | every slice | A, M | Done |
 | ENG-005 | Accessibility work never closed on automated tooling alone; manual evidence and named reviewer linked. | every slice | R | Not started |
-| ENG-006 | No production migration without rollback/roll-forward notes, backup impact and a test on representative data. | every migration | R (PR gate) | Not started |
-| ENG-007 | Regulatory claims never hard-coded in components; rendered from versioned content objects with sources and review dates. | CC-01 | A (component lint), R | Not started |
-| ENG-008 | Never claim "AODA certified", "government approved" or substitute for client certification/legal advice. | CC-01 | A (content lint), R (counsel) | Not started |
-| CMD-001 | Commands exist and exit non-zero on failure: `install`, `dev`, `lint`, `typecheck`, `test`, `test:e2e`, `test:a11y`, `test:authz`, `db:migrate`, `db:seed`, `db:reset-safe`, `build`, `start`. | CC-01 | A (CI runs each) | Not started |
-| CMD-002 | Root README documents exact commands and seed accounts. | CC-01 | R | Not started |
-| CMD-003 | Seed scenario is fictional: "Maple Grove Learning Group", 86 employees, two sites, Dec 2026 project, 5 evidence objects, 4 mixed-severity findings, 1 approved change order, 1 assigned auditor, all seven role users; tenant/role boundaries visible; no real certifications. | CC-01 → CC-06 | A (seed test), R | Not started |
+| ENG-006 | No production migration without rollback/roll-forward notes, backup impact and a test on representative data. | every migration | R (PR gate) | Done |
+| ENG-007 | Regulatory claims never hard-coded in components; rendered from versioned content objects with sources and review dates. | CC-01 | A (component lint), R | Done |
+| ENG-008 | Never claim "AODA certified", "government approved" or substitute for client certification/legal advice. | CC-01 | A (content lint), R (counsel) | Done |
+| CMD-001 | Commands exist and exit non-zero on failure: `install`, `dev`, `lint`, `typecheck`, `test`, `test:e2e`, `test:a11y`, `test:authz`, `db:migrate`, `db:seed`, `db:reset-safe`, `build`, `start`. | CC-01 | A (CI runs each) | Done |
+| CMD-002 | Root README documents exact commands and seed accounts. | CC-01 | R | Done |
+| CMD-003 | Seed scenario is fictional: "Maple Grove Learning Group", 86 employees, two sites, Dec 2026 project, 5 evidence objects, 4 mixed-severity findings, 1 approved change order, 1 assigned auditor, all seven role users; tenant/role boundaries visible; no real certifications. | CC-01 → CC-06 | A (seed test), R | Partial |
 
 ## 3. Coverage summary by slice
 
@@ -233,7 +233,8 @@ These carry the same binding force as the PRD prose they come from; only the ide
 |---|---|---|
 | CC-01 Foundation | PUB-001*, PUB-004*, CNT-001/002/005/008, BRD-001–004, SEC-001/003*/004*/006*/008, ARC-001/002/008/009*, DAT-001*/002, ACC-012, ENG-001/007/008, CMD-001–003*, QAG-001 | 26 |
 | CC-02 Public conversion | PUB-001–006, CNV-001–004, CNT-003/004/006/007, ARC-005/006/007, ANL-001/002/005, SEC-012/014, ACC-007, BRD-005, CLP-017 | 25 |
-| CC-03 Commerce + identity | PUB-003, CLP-001/002/008*/013, SEC-002/011, ACC-009, DAT-003*, ARC-004, OPS-009*, ENG-003 | 13 |
+| CC-03a Identity + access | CLP-001/013, SEC-002/003/011/013*, ACC-004/009, DAT-003*, ARC-006, ENG-001/004 | 13 |
+| CC-03b Commerce | PUB-003, CLP-002/008*, ARC-004, OPS-009*, ENG-003 | 6 |
 | CC-04 Evidence + matrix | CLP-003/004/005/012*, OPS-005*, SEC-005/007/013*, ARC-003, DAT-006 | 10 |
 | CC-05 Findings + reports | CLP-006/009/010/014/015, OPS-006*/011/012, ACC-008, DAT-004, QAG-003* | 11 |
 | CC-06 Contractor delivery | CTR-001–007, CLP-007, SEC-003, DAT-001, QAG-003* | 11 |
@@ -255,3 +256,451 @@ These are PRD obligations that are organizational rather than code, tracked here
 | ORG-004 | Two-person review process for regulatory content changes (§20). | AODA specialist | CC-01 (process), CC-07 (tooling) |
 | ORG-005 | Trademark, domain, language and cultural review of "Project Northstar" before public use (§26). | Founder | Before CC-02 public launch |
 | ORG-006 | Professional, cyber and general liability insurance secured (§25). | COO | Phase 0 |
+
+---
+
+## 5. CC-01 delivery record
+
+**Delivered:** the foundation slice. **Evidence:** 214 unit/integration tests, 37 Playwright tests, 6 repository guards — all green. Commands in the PRD §27 contract all exist and exit non-zero on failure.
+
+### What each `Done` above actually rests on
+
+| Requirement | Evidence |
+|---|---|
+| DAT-002, SEC-003 (storage layer) | `packages/db/test/tenant-isolation.test.ts` — a `SELECT` with no `WHERE` returns only the current tenant; a foreign-tenant `INSERT` is rejected; no tenant context returns zero rows. Run against live PostgreSQL as a `NOBYPASSRLS` role. |
+| ENG-001, DAT-003, DAT-004, DAT-005, CTR-004 | `packages/auth/src/policy.test.ts` — 106 assertions, including a completeness test that fails when a resource class has no cross-tenant coverage. |
+| SEC-006 | Append-only proven twice: no UPDATE/DELETE grant, plus a trigger. Both paths tested. |
+| BRD-001, BRD-002, ACC-004 (tokens) | `tokens.contrast.test.ts` — 20 token pairs computed against WCAG thresholds, plus negative tests pinning the brand-colour restrictions. |
+| BRD-003, BRD-004, ACC-002 | 10 primitives with axe and keyboard tests; `apps/web/e2e/shell.spec.ts` asserts a visible focus indicator on every interactive element. |
+| ARC-006 | A dedicated Playwright project runs with JavaScript disabled at browser level. |
+| CNT-001, CNT-005, ENG-007 | `packages/domain/src/content.test.ts` — a claim past its review date cannot render; the hold branch has no `text` field. Confirmed end-to-end in the browser. |
+| ANL-001, ANL-002 | Closed event taxonomy matching PRD §19 exactly; strict per-event schemas; global forbidden-property denylist; consent gate in the dispatcher. |
+| ENG-006, ENG-008, DAT-002, ARC-002, BRD-001 (drift) | Six guards in `scripts/guards/`, run by `pnpm lint` and in CI. Each was negative-tested — confirmed to fail on a real violation, not just to pass. |
+
+### Deliberately not done in CC-01, and why
+
+| Item | Reason | Lands in |
+|---|---|---|
+| Storybook harness | The accessibility *contracts* are tested (axe + keyboard + semantics per component). Storybook is developer experience and is retrofittable; it was cut to keep the slice from sprawling. **This is a scope reduction from the CC-01 plan and is called out rather than quietly dropped.** | CC-02 |
+| One approved change order in the demo seed (CMD-003) | Commercial tables do not exist until CC-03/CC-07. Every other element of the §27 demo scenario is seeded. | CC-03 |
+| Manual screen-reader / zoom pass, panel session | CC-01 has no user-facing task to test. ENG-005 means the automated passes above do **not** count as accessibility sign-off. | CC-02 exit |
+| Content-Security-Policy beyond baseline headers | A nonce-based policy needs a real page to be measured against. | CC-02 |
+| Rate limiting | No public form or auth endpoint exists yet. | CC-02 |
+| Real integration adapters | Vendor questions Q-14/Q-15/Q-16 are open. Ports and fakes are complete, so adapters drop in behind them. | CC-03 |
+
+### Decisions taken during the build that need review
+
+1. **The PRD's palette does not pass WCAG as specified.** Brand teal `#00A6A6` is 2.998:1 on white — it fails AA for text *and* misses the 3:1 non-text bar by 0.002. Warm gold `#F0B44D` is 1.85:1, so it cannot even carry its own edge against a white page. The tokens therefore restrict brand teal to decoration, introduce `interactive` `#00706F` (5.92:1) for links, buttons and focus, add `graphic-brand` `#00A0A0` (3.21:1) for meaningful graphics, and require an ink border on any gold surface. Visually near-identical; needs the design lead's sign-off (**new question Q-24**).
+2. **TypeScript pinned to 5.9.3, not the 7.0.2 `latest`.** The native port is current but the framework and lint toolchain do not yet target it. Recorded in ADR-0001 with a CC-02 review trigger.
+3. **No ORM.** Hand-written SQL migrations, because RLS policies, `SET LOCAL` tenant context and append-only grants are exactly what an ORM hides. Recorded in ADR-0001.
+4. **Library packages emit no build output.** They ship TypeScript source compiled by the app (Turborepo internal-package pattern). Recorded in ADR-0001.
+
+---
+
+## 6. CC-02 delivery record
+
+**Delivered:** the public conversion slice — bilingual qualifier, explainable result, consent-aware analytics and a human-contact fallback.
+**Evidence:** 241 unit/integration tests, 107 Playwright tests, 7 repository guards — all green.
+
+### What each `Done` rests on
+
+| Requirement | Evidence |
+|---|---|
+| PUB-006 consent | Consent is enforced in the dispatcher, not a script tag. A Playwright test fails the build if **any** request to a non-local host occurs before a decision. `readConsent` treats "no decision" as refusal — the absence of a cookie is never consent. |
+| CNV-003 no dark patterns | Accept and decline are the same control with the same classes; a test asserts the class strings are identical, so visually demoting "decline" fails CI. No answer is preselected; the email-consent box is never pre-ticked; there is no timer anywhere. |
+| CNV-002 explainability | The result page recomputes from stored answers and renders the inputs, the reason each mattered, the rule version, and an uncertainty notice — on every category, not only the uncertain one. |
+| CNV-001 save and resume | No account. Resume token is 32 random bytes; only its SHA-256 hash is stored, so a database disclosure yields no working links. Email capture requires its own ticked consent, enforced by a database constraint as well as by the form. |
+| PUB-005 human path | `/[locale]/contact` is linked from the qualifier start page, every question page, and the header. It asks for nothing before showing phone, email, relay and accommodation routes. |
+| ARC-006 no-JavaScript | A dedicated Playwright project completes the **entire eight-question qualifier** and records a consent decision with scripting disabled. Every step is a plain form POST. |
+| PUB-001 bilingual | Full EN/FR for the qualifier, result and contact pages. A unit test fails if any product string lacks a French translation. |
+| Q-21 no conclusions | `assertNoConclusion` rejects compliance vocabulary, and a unit test runs all 144 reachable rule permutations through it. An end-to-end test asserts the rendered result page contains none of the forbidden phrases. |
+
+### Decisions taken during the build
+
+1. **The qualifier prefers caution over a sales-ready category.** Any "not sure" answer routes to a human, even when every other signal points to a good assessment lead. Routing an uncertain case to an automated recommendation is the §25 regulatory-misstatement risk; routing a good lead to a conversation costs a phone call.
+2. **`official_source_opened` is a headline metric, not a leak.** The result page offers the free official route as a first-class link and measures the click. Hiding it would be a dark pattern and would also destroy the Gate 0 signal that tests the core commercial hypothesis.
+3. **The redirect to the official source resolves its URL from the claim, never from the form.** A caller-supplied redirect target is an open redirect, which on a trust-selling site is worse than the usual phishing risk.
+4. **`@northstar/db` was split into `.` and `./admin`.** The migration runner reads the filesystem and the reset drops schemas; neither belongs in a bundle that serves requests, and neither should be reachable by autocomplete from application code.
+5. **A seventh guard was added** (`analytics-consent`): no third-party script host anywhere in the app, no analytics globals, and `Analytics` constructible in exactly one file — the consent wrapper. Negative-tested in both directions.
+
+### Deliberately not done in CC-02, and why
+
+| Item | Reason | Lands in |
+|---|---|---|
+| Homepage marketing modules (hero, offers, method, trust layer, case narratives, resources) | CC-02's requirement focus is the conversion *system*. The marketing surface needs brand, commissioned photography and counsel-reviewed copy (Q-04, ORG-005), none of which exist. | CC-02b / Phase 1 |
+| Sector and employee-band **content** personalization (PUB-002 beyond the qualifier) | The band is captured and persisted; there is no sector content to switch between yet. | With the marketing pages |
+| Actually sending the resume email | The email adapter is a fake until Q-14 picks a vendor. The consented address is recorded and the screen says so rather than claiming a send that did not happen. | CC-03 |
+| Checkout and booking (PUB-003) | CC-03's slice. | CC-03 |
+| Manual screen-reader pass and the prototype panel session (ACC-010) | Now overdue: CC-02 is the first slice with a real user task. **This is a CC-02 exit criterion that has not been met**, and no accessibility claim should be made until it is. | Before CC-03 |
+| Core Web Vitals field measurement (ARC-005) | Lab budgets only so far; there is no traffic to measure. | CC-09 |
+
+---
+
+## 7. CC-02 hardening pass
+
+Not a new slice — closing the gaps the CC-02 record itself declared, before
+adding more surface. **270 unit/integration tests, 129 Playwright tests, 7 guards.**
+
+| Item | Requirement | What landed |
+|---|---|---|
+| Rate limiting | Q-27, §16 Assurance | Fixed-window limiter on all four anonymous actions, failing closed. Keys are a daily-rotating HMAC of the client address, so no raw address is stored and counters cannot be correlated across days. Pruned by the retention sweep. |
+| Accessible refusal | ACC-005, ACC-006 | An ordinary page with a heading, a wait time and a link to a person. An `@a11y` test fails if the word "captcha" ever appears on it. |
+| Content-Security-Policy | SEC-001, ARC-007 | Nonce-based with `strict-dynamic`; `connect-src 'self'` means no third-party origin is reachable at all. Tested for the header *and* for the absence of violations while using the qualifier. |
+| Open-redirect fix | SEC-001 | The consent form's return path is validated as a locale route with no backslash or colon, not merely prefix-checked. |
+
+### What this pass taught us
+
+The first rate limits were wrong in a way that testing caught and code review
+would not have: they were sized for one person, and the buyers here are
+organizations whose staff share one NAT address. A limit that locks out a client
+because two colleagues compared notes is worse than no limit — it fails exactly
+the users the product is trying to serve. The limits are now sized against the
+false-positive case.
+
+The same lesson applied to the tests themselves: rate-limit counters persist in
+hourly windows, so a second suite run inside the same hour inherited the first
+run's consumed budget and failed in a way that looked like a product bug. Both
+the database tests and the Playwright projects now use per-run client
+identifiers.
+
+---
+
+## 8. CC-02b — public marketing surface
+
+The homepage §7 asks for, and a visual system to carry it. **283 unit/integration
+tests, 159 Playwright tests, 7 guards.**
+
+| Module (PRD §7) | State |
+|---|---|
+| Source-stamped notice band | Done — renders the regulatory claim through the content model, dismissible, no motion. Shows the hold state, because the seeded claim is unreviewed (Q-04). |
+| Hero | Done — one promise, one primary CTA, one secondary, plus three control facts that are each an enforced policy rather than a marketing claim. |
+| Employee-size selector | Done (PUB-002) — persists as a functional preference, annotates rather than hides, works without JavaScript. |
+| Offer architecture | Done — outcome, inclusions, indicative price, timing, required inputs **and exclusions** for all five offers. |
+| Method | Done — four stages as an ordered list, no motion at all. |
+| Trust layer | Done, as *policies*. See below. |
+| Case narratives | **Deliberately empty.** |
+| Editorial resources | Not built — needs real articles. |
+| Final CTA | Done, with the human path at equal weight. |
+
+### Two things not faked, on purpose
+
+§7 asks for named leadership, credential policy, sample report excerpts and
+before/after case narratives. None of those people or engagements exist yet.
+
+- The **trust layer** states the policies the PRD commits to — every conclusion
+  signed by a named reviewer, specialists verified and calibrated, evidence
+  scanned and scope-limited, a paid disability panel, and an explicit statement
+  of what the service is not. Each is enforced somewhere in this codebase, which
+  is why it can be asserted publicly.
+- The **proof section** is an honest empty state saying case narratives are not
+  published yet and offering a redacted sample on request. Inventing testimonials
+  on a site whose entire proposition is trustworthiness would have destroyed the
+  only asset the business has. An e2e test asserts the empty state is present.
+
+Likewise no photography: §14 warns against tokenistic stock and AI-perfect
+imagery, so the art direction is typographic — a display serif, a faint
+structural grid behind the hero, hairline rules instead of cards. Real
+commissioned photography replaces it.
+
+### Design system
+
+- Display serif (Newsreader) paired with a grotesque (Inter), both **self-hosted
+  at build time** via `next/font`. No font-CDN request at runtime, so `font-src`
+  stays `'self'`, the no-third-party guard stays honest, and a visitor's address
+  is never disclosed to a font host before they consent to anything.
+- Every new colour pair is contrast-tested. The token set grew from 20 asserted
+  pairs to 27.
+- One correction found by the tests: `border-subtle` was listed as a meaningful
+  boundary and fails 3:1. It is a decorative hairline; a test now pins that and
+  says so, so it can never become the only marker of a control.
+
+---
+
+## 9. Editorial resources (CNT-003, CNT-004)
+
+The last outstanding §7 homepage module. **289 unit/integration tests, 165
+Playwright tests, 7 guards.**
+
+Three articles in English and French — an evidence checklist, a guide to
+briefing a website audit, and questions to ask any accessibility supplier
+(including us). §13 warns against mass-produced keyword pages, so the index is
+deliberately short and says so.
+
+### The design decision that matters
+
+`Resource` is a **separate content type from `RegulatoryClaim`**, and the split
+is the point:
+
+- A resource is our own method and opinion. We can write it and revise it.
+- A claim is a statement about the law, and carries two reviewers, an effective
+  date and an automatic hold.
+
+An article may **cite** a claim by key, but never restate one in its prose. The
+body is a closed set of block types with no free-HTML escape hatch — which is
+both an XSS decision and an ENG-007 one. When a cited claim goes on hold, the
+article renders the hold notice in its place, so an article cannot outlive the
+accuracy of the law it cites. Proven end to end: the audit-briefing guide cites
+the unreviewed deadline claim, and a test asserts the claim's own wording appears
+nowhere on the page.
+
+### CNT-004
+
+Every resource is HTML; there are no PDFs, which satisfies the "HTML equivalent"
+half by construction. The accessibility QA record is nullable, and where it is
+absent the page **says so** — an unstated absence reads as a completed check.
+All three currently say so, because no named reviewer has checked them.
+
+### Guard widened
+
+`regulatory-hardcoding` previously scanned only components. Editorial content is
+rendered to the same reader, so a regulatory sentence typed into an article body
+would have bypassed the claim model exactly as one typed into JSX would. The
+guard now scans content sources too, exempting `lib/claims.ts` (which *is* the
+claim source). Negative-tested: planting a hard-coded deadline in an article body
+fails the build.
+
+---
+
+## 10. CC-03a delivery record — identity and access
+
+The first half of CC-03 from `docs/delivery-plan.md`. **Commerce (checkout,
+payment, agreement, project shell) is deliberately not in this slice — see
+"What was cut" below.**
+
+**Requirement IDs:** CLP-001, CLP-013, SEC-002, SEC-003, SEC-011, SEC-013*,
+ACC-004, ACC-009, DAT-003*, ARC-004, ARC-006, ENG-001, ENG-004.
+
+| Aspect | What landed |
+|---|---|
+| Interface | Sign-in, second factor, enrolment, recovery, sign-up, invitation acceptance, account, sign-in and security, organization profile, people and access. EN + FR. |
+| Authorization | `invitation` resource class with per-role policy; every mutating action calls `authorize()` before writing. |
+| Data | `auth_sessions`, `user_mfa_factors`, `sign_in_throttle`, `invitations`; `users` gains an identity link and a lifecycle. |
+| Audit | Sign-in succeeded/failed, account locked, MFA enrolled, MFA challenge failed, recovery codes issued/redeemed, signed out, sessions revoked, invitation sent/accepted/revoked, permission granted/revoked, organization created. |
+| Analytics | **None added.** §19's taxonomy is closed and contains no authentication events; a sign-in is an audit fact, not a product metric. |
+| Tests | 379 unit/integration (was 289), 15 identity end-to-end, a full no-JavaScript account journey, signed-in axe coverage. |
+
+### What each of these rests on
+
+- **SEC-002 (MFA everywhere).** `SignInChallenge` has no `authenticated`
+  outcome. The type cannot express a single-factor sign-in, and the runtime
+  agrees: `auth_sessions.mfa_satisfied_at` starts null and only
+  `verifySecondFactor` moves it. A forgotten check produces a session that fails
+  every request rather than one that works.
+- **SEC-003 (immediate revocation).** The `Actor` is assembled from database rows
+  on every request. Removing a membership also revokes that person's sessions, so
+  "immediately" means immediately rather than at their next sign-in. Proven
+  against live PostgreSQL.
+- **ACC-009 (accessible MFA).** One ordinary code field, not six boxes. Paste
+  works and whitespace is stripped server-side. The TOTP setup key is printed as
+  text as well as offered as an `otpauth:` link, because someone enrolling on the
+  device showing a QR code cannot scan it and someone who cannot see it cannot
+  either. Two factors are required before enrolment counts as finished, and
+  recovery is one form with one field.
+- **ACC-004 (timeouts).** Client sessions idle at twelve hours with a five-minute
+  warning and a plain-form "keep me signed in"; privileged internal sessions are
+  two hours. The warning sits in normal document flow — not a modal, no focus
+  trap, scrollable at 400% zoom.
+- **ARC-006 (progressive enhancement).** The entire journey — sign-up, sign-in,
+  enrolment, verification, invitation, sign-out — completes with JavaScript
+  disabled, asserted by the `identity-no-js` project on every run.
+- **ENG-001 (three enforcement layers).** Policy layer, then row-level security,
+  then a database CHECK. `invitations.role` accepts only client roles at the
+  storage boundary, so no future code path can write `platform_admin` there.
+
+### Privilege-escalation containment
+
+Three separate mechanisms, deliberately not one:
+
+1. `invitableRoles(inviterRole)` — a structural domain rule. A client
+   administrator may name client roles only, and **no role may ever invite a
+   contractor**, because contractor access is a per-assignment grant with an
+   expiry (CTR-004) and a membership would be a permanent version of it.
+2. The policy layer answers "may this actor invite at all?" separately.
+3. The database CHECK refuses anything outside the client roles.
+
+`wouldOrphanOrganization` is the fourth refusal and the least obvious: without
+it, the last administrator can demote themselves and nobody in the organization
+can invite anyone or restore the role. Recovery would mean a support request to
+a team that §21 says is fractional.
+
+### The identity provider is a port
+
+ADR-0002 rejected building authentication. `IdentityPort` in
+`packages/integrations` is what the platform talks to; `FakeIdentity` is what it
+talks to today. The fake is strict on purpose — it applies the password policy,
+expires challenges, refuses a replayed challenge id, and makes recovery codes
+single-use — because a permissive fake produces code that only works locally.
+
+Its TOTP is a real RFC 6238 implementation, verified against the published
+Appendix B vectors. That is what makes a genuine enrolment testable rather than
+only its failure branch, and it is what lets `pnpm dev` show a working
+authenticator flow with no vendor account.
+
+`packages/integrations/src/identity.test.ts` is written against the *port*, not
+the fake, so the adapter chosen under Q-13 must pass the same suite.
+
+### Decisions taken during the build
+
+| Decision | Why |
+|---|---|
+| Enrolment during sign-in does not create a session. | The person signs in again with the factor they just set up. One extra step, and `verifySecondFactor` stays the only place in the codebase that issues a session. |
+| Sign-up does not create a session either. | Same reason. An account cannot exist for even a moment with a session and no second factor. |
+| An address that already has an account gets the neutral "check your email" page. | Otherwise sign-up is an account-enumeration oracle. The wording is conditional — "if that address can be used" — rather than claiming a message was sent. |
+| A failed sign-in records `actorId: null` even when the address matches a real user. | Recording the user id would turn the audit log into a list of which addresses are real. |
+| The lockout is 10 attempts / 15 minutes per address, and there is no CAPTCHA. | ACC-005 and §27 make an inaccessible barrier the wrong answer to abuse. A permanent lock would be a denial of service anyone could trigger against a known address. |
+| Per-address throttling **and** per-client rate limiting. | A stuffing run spread across a botnet defeats the first; one client hammering one endpoint defeats the second. Neither alone is sufficient. |
+| Password rules are length plus a personal-detail check. Nothing else. | NIST SP 800-63B removed composition rules for good reason, and they are hostile to switch and voice input. Paste and password-manager support are the control that actually produces strong passwords. |
+| Session policy is the strictest any of a person's roles demands. | Someone who is both an internal reviewer and an administrator of their own organization gets the short session everywhere. A session cannot be partly short-lived. |
+| `auth_sessions`, `user_mfa_factors` and `sign_in_throttle` are global tables. | Each is a property of a person, not a tenant. An `organization_id` column would make a session look scoped when it is not. Declared and justified inline, per DAT-002. |
+
+### A finding in this slice's own diff
+
+The first version handed the TOTP setup key and the ten recovery codes to the
+page that renders them through the **query string**. It worked, and it was
+wrong: URLs are written to browser history, to server access logs and to every
+proxy in between, so a live authentication secret would have been recorded in
+several places nobody would think to clear. They now travel in a two-minute
+`httpOnly` hand-off cookie, and the end-to-end tests assert the URL contains
+neither.
+
+The same instinct that caught it — "where does this value end up?" — is what the
+`storage_key`, `client_hash` and `token_hash` decisions elsewhere come from.
+
+### A bug this slice found in itself
+
+The local demo bootstrap enumerated **every** user with a membership and set
+their password to the demo passphrase, so anyone who signed up on a local build
+was silently locked out a moment later. An end-to-end test that signs in
+immediately after signing up caught it. The fix scopes the bootstrap to the
+reserved `.example` top-level domain, which RFC 2606 guarantees can never belong
+to a real person.
+
+The general lesson, recorded because it will recur: convenience code that runs
+against the real database needs the same scepticism as the product code, and the
+test that catches it is the one that does the boring thing in the obvious order.
+
+### What was cut from CC-03, and why
+
+Stated rather than quietly narrowed, per the working rules:
+
+| Cut | Reason | Picked up by |
+|---|---|---|
+| Checkout and payment (PUB-003 commerce half) | `PaymentPort` exists with a fake, but the real flow needs the vendor decision (Q-14) and the transactional outbox ADR-0006 requires. Shipping a checkout whose failure mode is "payment taken, no project created" would be worse than shipping none. | CC-03b |
+| Client agreement and e-signature | Q-19 is unresolved: no e-sign vendor has passed accessibility review, and ACC-009 may force an in-product signing flow. That is a design decision, not a coding one. | CC-03b |
+| Project shell on purchase | It is the thing a purchase creates; without commerce there is nothing to create it. | CC-03b |
+| Organization switcher | Someone with two memberships currently acts in the first. Correct but incomplete. The tenant is read from memberships and never from a query parameter, so the missing switcher is a UX gap, not a security one. | CC-04 |
+| SSO / federation | Higher-tier clients only (§16); no client exists yet. | CC-07 |
+| A QR code on the enrolment screen | Requires a Reed–Solomon encoder written from scratch (no third-party script, PUB-006). The manual key and the `otpauth:` link are functionally complete and more accessible than a QR code alone, so this is a convenience, not a gap in the flow. | CC-03b |
+
+### Still open
+
+- **Manual accessibility evidence remains unmet**, and this slice raises the
+  stakes: ACC-009 names MFA enrolment specifically, and §15 asks for a
+  screen-reader user to complete enrolment. The automated coverage here is
+  regression coverage between manual passes (ENG-005). **Unmet exit criterion.**
+- **Q-13 (identity vendor)** is unanswered, so no real adapter exists. The port
+  contract test is what makes that a scheduling question rather than a rewrite.
+- **Sign-up is not yet atomic.** Provider subject, user row and organization are
+  three writes ordered so the failure modes are recoverable, but the durable
+  outbox ADR-0006 asks for arrives with the payment path. Recorded as a gap.
+- **Email delivery is a fake.** Invitations are not actually sent; a local build
+  prints the link on the page that created it, and only when the fake adapter is
+  the one in use.
+
+---
+
+## 11. The transactional outbox (ADR-0006, ARC-003, ARC-004, CNV-004)
+
+Not a new slice — the mechanism CC-03a shipped without and CC-03b cannot be
+built on top of. It closes a gap this repository had already written down.
+
+**Requirement IDs:** ARC-003, ARC-004, CNV-004, SEC-011, SEC-012, ENG-003,
+OPS-009*.
+
+### The problem, in one sentence
+
+An outbound side effect and the domain change that caused it must either both
+happen or neither, and an HTTP call cannot join a database transaction.
+
+Call the vendor first and the write may fail, leaving them holding a record of
+something that did not happen. Write first and the call may fail, leaving the
+platform ahead of the world. OPS-009 names the case that matters commercially: a
+payment succeeds and the project shell is never created.
+
+Writing the *intent* transactionally removes the choice. The worker then has one
+job — deliver, retry, or give up loudly.
+
+### What landed
+
+| Piece | Where |
+|---|---|
+| The allowlist of what may leave the platform | `packages/domain/src/outbound.ts` |
+| The delivery mapping (message type → port call) | `packages/integrations/src/delivery.ts` |
+| The queue, the worker, backoff and the dead-letter state | `packages/db/src/outbox.ts` |
+| The marketing consent register | `migrations/0005_outbox.sql`, same module |
+| `pnpm db:outbox` and `pnpm db:outbox --dead` | `packages/db/src/cli/outbox.ts` |
+
+### The allowlist is in the domain, not with the adapters
+
+ADR-0006 says each adapter declares what may leave. On writing it, the better
+home turned out to be the domain: it is a policy about *data*, it would read the
+same if every vendor were replaced, and putting it there means the check runs
+where a message is **written** rather than where it is finally sent — so a
+disallowed field is refused in the request that caused it, next to the code that
+made the mistake.
+
+It rejects rather than strips. Silently dropping an undeclared field would leave
+a caller believing it was sent, and a vendor missing data nobody realizes was
+never delivered is much harder to find than a loud failure.
+
+### Consent is a precondition, not a filter
+
+`enqueue` refuses a `crm.contact_upserted` without `marketingConsent === true`,
+so there is no state in which the platform holds a queued message it is not
+permitted to send. `'false'` is truthy in JavaScript, so the check is against the
+boolean, and a test asserts exactly that — a consent check that accepted the
+string would look correct in review.
+
+`marketing_consents` is append-only by trigger *and* by grant. A withdrawal is a
+new row, because the question a regulator asks is "what had they agreed to on
+this date?", and an editable row cannot answer it.
+
+### A gap in CC-03a, closed
+
+CC-03a's sign-up was three transactions ordered so the recoverable failure came
+first. That was a mitigation, and the delivery record said so. It is now one
+transaction — user, organization, membership, consent record and the outbound
+message together — because with the outbox in place the only thing that could
+not join a transaction is a row rather than a call.
+
+A test proves it: a second sign-up with the same address is rejected by the
+unique index, and leaves no organization and no extra queued message behind.
+
+### The checkbox that did nothing
+
+`signUp` parsed `marketingConsent` and discarded it. The control on the form was,
+in effect, decorative — a worse failure than not offering it, because someone
+ticking it was told something untrue. It now reaches a consent register and,
+only when ticked, an outbound message.
+
+Found by reading the diff for where each field ends up, which is the same habit
+that produced the `storage_key`, `client_hash` and `token_hash` decisions.
+
+### A new guard, negative-tested
+
+`domain-purity` now forbids `packages/db` from importing an adapter, exempting
+`src/cli` as a composition root. The outbox worker takes its deliverer as a
+parameter; without the guard that injection would erode the first time somebody
+found it inconvenient, and a data-layer package that performs HTTP cannot be
+tested without a network.
+
+Confirmed to fail on a planted import and pass again once removed.
+
+### Deliberately not done
+
+| Cut | Reason |
+|---|---|
+| A scheduled worker | `pnpm db:outbox` is a command. Scheduling belongs with the deployment work, and the runbook says plainly that nothing is running it yet rather than implying something is. |
+| Automatic retry of dead letters | A message that failed eight times over four hours failed for a reason waiting does not fix. Reviving one should be a decision somebody makes about that message. |
+| `signature` destination messages | The port exists; Q-19 has not been answered, and there is nothing to send yet. |
+| Webhook ingestion | ADR-0006 decision 6. Inbound is a separate surface with its own signature-verification and replay concerns, and it arrives with the payment adapter. |

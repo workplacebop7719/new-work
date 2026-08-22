@@ -1,6 +1,6 @@
 # ADR-0003 — Tenancy model and data isolation
 
-- **Status:** Proposed
+- **Status:** Accepted (CC-01)
 - **Date:** 2026-08-18
 - **Deciders:** Engineering lead, security/privacy lead
 - **Blocks:** CC-01
@@ -42,6 +42,18 @@ Note that isolation here is two-dimensional: tenant (organization) *and* scope-w
 - **Negative:** RLS has a real query-planning cost and a real footgun — a forgotten `SET LOCAL` yields *zero* rows, which surfaces as a confusing empty state rather than an error. Mitigation: the data-access layer refuses to open a transaction without a tenant context (or an explicit `systemContext()` escape hatch that is itself audited).
 - **Negative:** connection poolers must not multiplex sessions in a way that leaks `SET LOCAL` across transactions. Mitigation: transaction-scoped pooling only; this is a documented deployment constraint in `/infra`.
 - **Negative:** "not-found instead of forbidden" complicates support diagnostics. Mitigation: correlation IDs in structured logs (ARC-009) let support explain a denial without leaking existence to the caller.
+
+## Verified at CC-01
+
+The decision is not merely written down; `packages/db/test/tenant-isolation.test.ts` proves each claim against a live PostgreSQL:
+
+- a bare `SELECT * FROM projects` with no `WHERE` clause returns only the current tenant;
+- a query naming another tenant's id explicitly returns nothing;
+- an `INSERT` carrying a foreign `organization_id` is rejected by `WITH CHECK`;
+- with no tenant context set, every tenant-owned table returns zero rows;
+- the audited `withSystemContext` path does cross tenants, and refuses to run without a stated reason.
+
+One implementation detail turned out to matter more than expected: a PostgreSQL **superuser bypasses row-level security regardless of `FORCE`**. The tests therefore drop into the `northstar_app` role (`NOBYPASSRLS`) inside each transaction. A test suite connecting as the owner would have passed while proving nothing — worth knowing before someone "simplifies" the connection setup.
 
 ## Requirements satisfied
 

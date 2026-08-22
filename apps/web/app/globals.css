@@ -1,0 +1,1330 @@
+/* Page-level styles. Component styles live in @northstar/ui. */
+@import '@northstar/ui/components.css';
+@import '@northstar/ui/layout.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-body);
+}
+
+/* Focus is visible on the main landmark when reached via the skip link. */
+main:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+}
+
+.ns-header,
+.ns-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.ns-footer {
+  border-block: 1px solid var(--border-subtle) none;
+  border-block-start: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.ns-footer p,
+.ns-page {
+  max-inline-size: var(--measure);
+}
+
+.ns-header__brand {
+  margin: 0;
+  font-weight: 700;
+}
+
+.ns-header a {
+  color: var(--interactive);
+  min-block-size: var(--target-comfortable);
+  display: inline-flex;
+  align-items: center;
+}
+
+.ns-page {
+  padding: var(--space-8) var(--space-6);
+}
+
+.ns-page h1 {
+  font-size: var(--font-size-3xl);
+  line-height: var(--line-height-tight);
+  margin-block-start: 0;
+}
+
+.ns-lede {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+}
+
+.ns-claim {
+  border: 1px solid var(--border-subtle);
+  padding: var(--space-4);
+  margin-block-start: var(--space-8);
+}
+
+/* A held claim is visually distinct AND says so in words (ENG-004). */
+.ns-claim--hold {
+  border-inline-start: 6px solid var(--status-warning);
+}
+
+.ns-claim__provenance {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.ns-translation-gap {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  padding: var(--space-3);
+  margin-block-end: var(--space-4);
+}
+
+.ns-translation-gap h3 {
+  margin-block-start: 0;
+  font-size: var(--font-size-base);
+}
+
+/* ---- CC-02: qualifier, result, consent ---- */
+
+.ns-header nav {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.ns-header__brand a {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.ns-plain-list {
+  padding-inline-start: var(--space-6);
+}
+
+.ns-plain-list li {
+  margin-block-end: var(--space-2);
+}
+
+.ns-question {
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-tight);
+  margin: 0;
+}
+
+.ns-step-actions {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-block-start: var(--space-4);
+}
+
+/* Link styled as a button still needs its own target size and focus ring. */
+a.ns-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.ns-alt-path {
+  margin-block-start: var(--space-8);
+}
+
+.ns-alt-path a:not(.ns-button) {
+  color: var(--interactive);
+}
+
+.ns-resume {
+  margin-block-start: var(--space-8);
+}
+
+.ns-trace {
+  margin: 0;
+}
+
+.ns-trace__row {
+  border-block-start: 1px solid var(--border-subtle);
+  padding-block: var(--space-3);
+}
+
+.ns-trace dt {
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.ns-trace dd {
+  margin: var(--space-1) 0 0;
+}
+
+.ns-trace__because {
+  color: var(--text-secondary);
+}
+
+.ns-contact dt {
+  font-weight: 600;
+  margin-block-start: var(--space-4);
+}
+
+.ns-contact dd {
+  margin: var(--space-1) 0 0;
+}
+
+.ns-contact a {
+  color: var(--interactive);
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-comfortable);
+}
+
+/*
+ * The consent banner sits in normal flow at the end of the page rather than
+ * fixed over it: an overlay that covers content is the thing PUB-006 and
+ * CNV-003 are written against.
+ */
+.ns-consent {
+  border-block-start: 2px solid var(--emphasis-border);
+  background: var(--surface-raised);
+  padding: var(--space-4) var(--space-6);
+}
+
+.ns-consent h2 {
+  margin-block-start: 0;
+  font-size: var(--font-size-lg);
+}
+
+.ns-consent p {
+  max-inline-size: var(--measure);
+}
+
+/* Both choices are the same control, same size, same weight (CNV-003). */
+.ns-consent__actions {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   Marketing surface
+   ============================================================
+   PRD §14 asks for "premium Canadian trust with editorial restraint" and warns
+   against "floating glass cards everywhere, excessive gradients, dense dashboard
+   chrome". The devices used here are therefore typographic and spatial rather
+   than decorative: a display serif at large sizes, hairline rules instead of
+   card borders, an asymmetric grid, oversized numerals, and a lot of air.
+   ============================================================ */
+
+body {
+  font-family: var(--font-family-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-family-display);
+  font-weight: 500;
+  letter-spacing: var(--tracking-display);
+}
+
+/* Numerals in prices and stage markers align in columns. */
+.ns-offer__amount,
+.ns-method__number {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ---- Masthead ---------------------------------------------------------- */
+
+.ns-masthead {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--surface-page) 92%, transparent);
+  backdrop-filter: saturate(1.4) blur(8px);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.ns-masthead__inner {
+  max-inline-size: var(--content-max);
+  margin-inline: auto;
+  padding: var(--space-4) var(--gutter);
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.ns-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.ns-wordmark__mark { display: inline-flex; color: var(--graphic-brand); }
+
+.ns-wordmark__text {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.ns-nav {
+  display: flex;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  margin-inline-end: auto;
+}
+
+/*
+ * The underline grows from the baseline instead of the colour changing. It reads
+ * as considered, and — more usefully — it survives Windows High Contrast Mode,
+ * where a colour-only hover state disappears entirely.
+ */
+.ns-nav__link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--target-comfortable);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: var(--font-size-base);
+}
+.ns-nav__link::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0.6em;
+  block-size: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--duration-base) var(--easing-standard);
+}
+.ns-nav__link:hover::after { transform: scaleX(1); }
+
+.ns-masthead__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.ns-button--compact {
+  min-block-size: 2.5rem;
+  padding-inline: var(--space-5);
+}
+
+/* ---- Hero -------------------------------------------------------------- */
+
+.ns-hero {
+  position: relative;
+  padding-block: clamp(3.5rem, 2rem + 6vw, 7rem) clamp(3rem, 2rem + 4vw, 5.5rem);
+  overflow: hidden;
+}
+
+/*
+ * A single hairline field behind the hero. Not a gradient wash and not a stock
+ * photograph: a faint grid that suggests structured evidence, fading out before
+ * it reaches the text so it never competes with it.
+ */
+.ns-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
+  background-size: 5.5rem 5.5rem;
+  mask-image: radial-gradient(120% 90% at 85% 10%, #000 0%, transparent 68%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.ns-hero > .ns-container { position: relative; }
+
+.ns-hero__grid {
+  display: grid;
+  gap: var(--space-12);
+  grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
+  align-items: start;
+}
+
+.ns-hero__title {
+  margin: 0 0 var(--space-6);
+  font-size: var(--font-size-display);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  max-inline-size: 15ch;
+  text-wrap: balance;
+}
+
+/* One clause of the promise set in italic display — the single typographic
+   flourish on the page, which is why it can carry weight. */
+.ns-hero__title em {
+  font-style: italic;
+  color: var(--interactive);
+}
+
+.ns-hero__lede {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  line-height: 1.5;
+  color: var(--text-secondary);
+  max-inline-size: 46ch;
+}
+
+.ns-hero__reassurance {
+  margin-block-start: var(--space-5);
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+}
+
+.ns-hero__personalized {
+  margin-block-start: var(--space-6);
+  padding-inline-start: var(--space-4);
+  border-inline-start: 3px solid var(--graphic-brand);
+  max-inline-size: 46ch;
+  color: var(--text-secondary);
+}
+
+/* The aside beside the hero: what actually happens, stated as facts. */
+.ns-hero__aside {
+  border-block-start: 3px solid var(--text-primary);
+  padding-block-start: var(--space-5);
+}
+
+.ns-facts { margin: 0; }
+.ns-facts div + div { margin-block-start: var(--space-5); }
+.ns-facts dt {
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.ns-facts dd {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xl);
+  line-height: 1.2;
+}
+
+/* ---- Sections ---------------------------------------------------------- */
+
+.ns-section__title {
+  font-size: var(--font-size-3xl);
+  line-height: 1.15;
+  max-inline-size: 22ch;
+  text-wrap: balance;
+}
+
+.ns-section__lede { max-inline-size: 52ch; }
+
+.ns-section--muted { background: var(--surface-muted); }
+
+/* ---- Band selector ----------------------------------------------------- */
+
+.ns-band-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+  border-block-start: 1px solid var(--border);
+}
+
+.ns-band {
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: var(--target-comfortable);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+  text-align: start;
+  padding: var(--space-6) var(--space-5);
+  font: inherit;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-primary);
+  border: 0;
+  border-block-end: 1px solid var(--border);
+  border-inline-end: 1px solid var(--border);
+  border-radius: 0;
+  transition:
+    background-color var(--duration-base) var(--easing-standard),
+    box-shadow var(--duration-base) var(--easing-standard);
+}
+.ns-band:last-child { border-inline-end: 0; }
+.ns-band:hover { background: color-mix(in srgb, var(--interactive) 6%, transparent); }
+
+/*
+ * Selected state carries three signals, none of them colour alone (ENG-004):
+ * an inset rule along the top edge, a weight change on the label, and
+ * aria-pressed. The confirmation line below the list says it in words as well.
+ */
+.ns-band--selected {
+  background: var(--surface-page);
+  box-shadow: inset 0 4px 0 0 var(--interactive);
+}
+.ns-band--selected .ns-band__label { font-weight: 700; }
+
+.ns-band__label {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  line-height: 1.2;
+}
+.ns-band__note {
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.01em;
+}
+
+.ns-band__confirmation {
+  margin-block-start: var(--space-6);
+  color: var(--text-secondary);
+  max-inline-size: var(--measure);
+}
+
+/* ---- Offers ------------------------------------------------------------ */
+
+.ns-offers {
+  display: grid;
+  gap: var(--space-10) var(--space-8);
+  grid-template-columns: repeat(auto-fit, minmax(min(19rem, 100%), 1fr));
+}
+
+.ns-offer {
+  padding-block-start: var(--space-5);
+  border-block-start: 2px solid var(--text-primary);
+}
+
+/* The lead offer is marked by a gold rule, the one place gold appears on a
+   light surface — as a rule, never as text or a fill (see tokens.ts). */
+.ns-offer:first-child { border-block-start-color: var(--emphasis); border-block-start-width: 4px; }
+
+.ns-offer__name {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-xl);
+  line-height: 1.2;
+}
+
+.ns-offer__price {
+  margin: 0 0 var(--space-4);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.ns-offer__amount {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-2xl);
+  font-weight: 500;
+}
+.ns-offer__qualifier {
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.ns-offer__outcome {
+  margin: 0 0 var(--space-5);
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+  line-height: 1.45;
+}
+
+.ns-offer__detail { margin: 0; font-size: var(--font-size-base); }
+.ns-offer__detail dt {
+  margin-block-start: var(--space-4);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--border-subtle);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.ns-offer__detail dd { margin: var(--space-2) 0 0; color: var(--text-secondary); }
+
+/* The exclusions row gets the same weight as the inclusions — it is the part
+   that prevents mismatched leads (PRD §7). */
+.ns-offer__detail dt:last-of-type { color: var(--text-primary); }
+.ns-offer__detail dd:last-of-type { color: var(--text-primary); }
+
+.ns-note {
+  margin-block-start: var(--space-12);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  max-inline-size: var(--measure);
+}
+
+/* ---- Method (inverse) -------------------------------------------------- */
+
+.ns-section--inverse { background: var(--surface-inverse); color: var(--text-on-inverse); }
+.ns-section--inverse .ns-eyebrow { color: var(--accent-on-inverse); }
+.ns-section--inverse .ns-section__lede { color: var(--text-secondary-on-inverse); }
+
+.ns-method {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
+}
+
+.ns-method__stage {
+  padding: var(--space-8) var(--space-6) var(--space-8) 0;
+  border-block-start: 1px solid color-mix(in srgb, var(--text-on-inverse) 22%, transparent);
+}
+
+.ns-method__number {
+  display: block;
+  margin-block-end: var(--space-4);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-2xl);
+  font-weight: 400;
+  font-style: italic;
+  color: var(--accent-on-inverse);
+}
+
+.ns-method__name { margin: 0 0 var(--space-3); font-size: var(--font-size-lg); }
+.ns-method__body { margin: 0; color: var(--text-secondary-on-inverse); line-height: 1.6; }
+
+/* ---- Trust ------------------------------------------------------------- */
+
+.ns-trust {
+  padding-block-start: var(--space-5);
+  border-block-start: 1px solid var(--border);
+}
+.ns-trust__name {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-lg);
+  line-height: 1.3;
+}
+.ns-trust__body { margin: 0; color: var(--text-secondary); line-height: 1.6; }
+
+/* ---- Proof (empty state) ----------------------------------------------- */
+
+.ns-empty-state {
+  padding: var(--space-6) 0 var(--space-6) var(--space-6);
+  border-inline-start: 4px solid var(--emphasis);
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+  line-height: 1.55;
+}
+.ns-empty-state a { color: var(--interactive); }
+
+/* ---- How it works ------------------------------------------------------ */
+
+.ns-how > article { padding-block: var(--space-8); }
+.ns-how__heading {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-xl);
+  line-height: 1.25;
+  max-inline-size: 28ch;
+}
+.ns-how .ns-prose { color: var(--text-secondary); line-height: 1.65; }
+
+/* ---- Colophon ---------------------------------------------------------- */
+
+.ns-colophon {
+  background: var(--surface-inverse);
+  color: var(--text-on-inverse);
+  padding-block: var(--section-y) var(--space-8);
+  padding-inline: var(--gutter);
+}
+
+.ns-colophon__inner {
+  max-inline-size: var(--content-max);
+  margin-inline: auto;
+  display: grid;
+  gap: var(--space-12);
+  grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+}
+
+.ns-colophon__wordmark {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-2xl);
+  font-weight: 500;
+}
+.ns-colophon__tagline {
+  margin: 0;
+  color: var(--text-secondary-on-inverse);
+  max-inline-size: 34ch;
+}
+
+.ns-colophon__columns {
+  display: grid;
+  gap: var(--space-8);
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+}
+
+.ns-colophon__heading {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--accent-on-inverse);
+}
+
+.ns-colophon ul { list-style: none; margin: 0; padding: 0; }
+.ns-colophon li + li { margin-block-start: var(--space-2); }
+.ns-colophon a {
+  color: var(--text-on-inverse);
+  text-decoration-color: color-mix(in srgb, var(--text-on-inverse) 45%, transparent);
+  text-underline-offset: 0.25em;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.25rem;
+}
+.ns-colophon__note {
+  margin: 0;
+  color: var(--text-secondary-on-inverse);
+  line-height: 1.6;
+  max-inline-size: 42ch;
+}
+
+.ns-colophon__baseline {
+  max-inline-size: var(--content-max);
+  margin: var(--space-12) auto 0;
+  padding-block-start: var(--space-5);
+  border-block-start: 1px solid color-mix(in srgb, var(--text-on-inverse) 22%, transparent);
+}
+.ns-colophon__baseline p {
+  margin: 0;
+  color: var(--text-secondary-on-inverse);
+  font-size: var(--font-size-xs);
+}
+
+/* ---- Inner pages ------------------------------------------------------- */
+
+.ns-page {
+  padding: var(--section-y) var(--gutter);
+  margin-inline: auto;
+  max-inline-size: var(--content-max);
+}
+.ns-page h1 { font-size: var(--font-size-3xl); line-height: 1.15; }
+
+/* Focus indicator on the dark surface needs the light token to stay visible. */
+.ns-section--inverse :where(a, button):focus-visible,
+.ns-colophon :where(a, button):focus-visible {
+  outline-color: var(--focus-inverse);
+}
+
+/* ============================================================
+   Qualifier, result and contact
+   ============================================================
+   These carry the same typographic system as the marketing pages. A form that
+   looks unfinished after a considered homepage tells the visitor exactly where
+   the care stopped.
+   ============================================================ */
+
+.ns-page--form { max-inline-size: 56rem; }
+
+/* ---- Progress ---------------------------------------------------------- */
+
+.ns-progress { margin-block-end: var(--space-10); }
+
+.ns-progress__label {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.ns-progress__track {
+  block-size: 3px;
+  background: var(--border-subtle);
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+}
+.ns-progress__fill { background: var(--interactive); }
+
+/* ---- Question ---------------------------------------------------------- */
+
+.ns-question {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-3xl);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: var(--tracking-display);
+  max-inline-size: 20ch;
+  text-wrap: balance;
+}
+
+/* The fieldset is a layout container, not a box: the legend is the page's
+   heading, so a border around it would draw a frame around the whole page. */
+.ns-radio-group {
+  border: 0;
+  padding: 0;
+  margin: 0 0 var(--space-8);
+  max-inline-size: none;
+}
+.ns-radio-group__legend { padding: 0; }
+
+.ns-field__hint {
+  margin-block: var(--space-4) 0;
+  max-inline-size: var(--measure);
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+}
+
+/*
+ * Each option is a full-width row with a generous hit area — the whole row is
+ * the label, so a shaky pointer or a large finger cannot miss it (ACC-005).
+ */
+.ns-radio {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-5) var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
+  transition: background-color var(--duration-fast) var(--easing-standard);
+}
+.ns-radio:first-of-type { border-block-start: 1px solid var(--border-subtle); }
+.ns-radio:hover { background: color-mix(in srgb, var(--interactive) 5%, transparent); }
+.ns-radio:has(input:checked) {
+  background: color-mix(in srgb, var(--interactive) 7%, transparent);
+  box-shadow: inset 3px 0 0 0 var(--interactive);
+}
+
+.ns-radio input {
+  inline-size: 1.35rem;
+  block-size: 1.35rem;
+  accent-color: var(--interactive);
+  margin: 0;
+}
+
+.ns-radio label {
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  /* The label fills the row so the whole width is clickable. */
+  padding-block: var(--space-1);
+}
+
+.ns-radio__description { grid-column: 2; margin: 0; color: var(--text-secondary); }
+
+.ns-step-actions {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-block-start: var(--space-8);
+}
+
+.ns-resume {
+  margin-block-start: var(--space-12);
+  border-block: 1px solid var(--border-subtle);
+}
+.ns-resume .ns-disclosure__summary { font-size: var(--font-size-base); }
+
+.ns-alt-path { margin-block-start: var(--space-10); }
+.ns-alt-path a:not(.ns-button) {
+  color: var(--interactive);
+  text-underline-offset: 0.25em;
+}
+
+/* ---- Result ------------------------------------------------------------ */
+
+.ns-result__verdict {
+  margin-block: var(--space-6) var(--space-4);
+  font-size: var(--font-size-lg);
+}
+
+.ns-claim {
+  border: 0;
+  border-block-start: 2px solid var(--text-primary);
+  padding: var(--space-6) 0 0;
+  margin-block-start: var(--space-10);
+}
+.ns-claim h2 {
+  margin-block-start: 0;
+  font-size: var(--font-size-xl);
+  line-height: 1.25;
+}
+
+/* The uncertainty block is deliberately the one thing on the result page with a
+   gold rule: it is the statement the product most needs a reader to notice. */
+.ns-claim--hold {
+  border-block-start-color: var(--emphasis);
+  border-block-start-width: 4px;
+  border-inline-start: 0;
+}
+
+.ns-trace { margin: 0; }
+.ns-trace__row {
+  border-block-start: 1px solid var(--border-subtle);
+  padding-block: var(--space-5);
+}
+.ns-trace__row:first-child { border-block-start: 0; }
+.ns-trace dt {
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+.ns-trace dd { margin: var(--space-2) 0 0; font-size: var(--font-size-lg); line-height: 1.5; }
+.ns-trace__because { color: var(--text-secondary); }
+
+.ns-claim__provenance {
+  margin-block-start: var(--space-5);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+/* ---- Contact ----------------------------------------------------------- */
+
+.ns-contact {
+  margin-block-start: var(--space-10);
+  display: grid;
+  gap: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+}
+.ns-contact div { border-block-start: 1px solid var(--border-subtle); padding-block: var(--space-6); }
+.ns-contact dt {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.ns-contact dd { margin: 0; max-inline-size: 34ch; color: var(--text-secondary); }
+.ns-contact dd a {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xl);
+  color: var(--interactive);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+/* ---- Consent banner ---------------------------------------------------- */
+
+.ns-consent {
+  border-block-start: 3px solid var(--emphasis);
+  background: var(--surface-inverse);
+  color: var(--text-on-inverse);
+  padding: var(--space-6) var(--gutter);
+}
+.ns-consent > * { max-inline-size: var(--content-max); margin-inline: auto; }
+.ns-consent h2 {
+  margin-block: 0 var(--space-2);
+  font-size: var(--font-size-lg);
+}
+.ns-consent p { color: var(--text-secondary-on-inverse); max-inline-size: 60ch; }
+.ns-consent__actions { margin-block-start: var(--space-5); }
+.ns-consent .ns-button--secondary {
+  background: transparent;
+  color: var(--text-on-inverse);
+  border-color: var(--text-on-inverse);
+}
+
+/* ---- Buttons ----------------------------------------------------------- */
+
+.ns-button {
+  font-family: var(--font-family-sans);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  border-radius: 2px;
+  padding-inline: var(--space-6);
+}
+.ns-button--primary:hover { background: var(--interactive-hover); }
+
+/* ---- Resources --------------------------------------------------------- */
+
+.ns-resource-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-8);
+  grid-template-columns: repeat(auto-fit, minmax(min(19rem, 100%), 1fr));
+}
+
+.ns-resource {
+  padding-block-start: var(--space-5);
+  border-block-start: 2px solid var(--text-primary);
+  block-size: 100%;
+}
+
+.ns-resource__meta {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.ns-resource__title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-xl);
+  line-height: 1.25;
+}
+.ns-resource__title a {
+  color: var(--text-primary);
+  text-decoration-color: var(--border-subtle);
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--duration-base) var(--easing-standard);
+}
+.ns-resource__title a:hover { text-decoration-color: var(--interactive); }
+
+.ns-resource__summary { margin: 0; color: var(--text-secondary); line-height: 1.6; }
+
+/* ---- Article ----------------------------------------------------------- */
+
+.ns-page--article { max-inline-size: 46rem; }
+
+.ns-article { margin-block-start: var(--space-10); }
+
+.ns-article__heading {
+  margin: var(--space-10) 0 var(--space-4);
+  font-size: var(--font-size-xl);
+  line-height: 1.25;
+  max-inline-size: 28ch;
+}
+.ns-article__heading:first-child { margin-block-start: 0; }
+
+/* Article prose runs slightly longer and looser than UI text: it is read, not
+   scanned. */
+.ns-article__paragraph {
+  margin: 0 0 var(--space-5);
+  max-inline-size: 62ch;
+  font-size: var(--font-size-lg);
+  line-height: 1.7;
+}
+
+.ns-article__list {
+  margin: 0 0 var(--space-5);
+  padding-inline-start: var(--space-6);
+  max-inline-size: 62ch;
+  font-size: var(--font-size-lg);
+  line-height: 1.7;
+}
+.ns-article__list li { margin-block-end: var(--space-3); }
+
+.ns-article__claim { margin-block: var(--space-8); }
+
+.ns-article__qa {
+  margin-block-start: var(--space-12);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  max-inline-size: 62ch;
+}
+
+/* A missing accessibility record is stated, not hidden — and marked with the
+   same gold rule the product uses everywhere else for "unreviewed". */
+.ns-article__qa--missing {
+  border-block-start: 0;
+  border-inline-start: 4px solid var(--emphasis);
+  padding: var(--space-4) 0 var(--space-4) var(--space-4);
+  font-size: var(--font-size-base);
+}
+
+/* ============================================================
+   Accounts, security and team (CC-03a)
+   ============================================================
+   The same editorial system as everything else. A sign-in screen that looks
+   like a bootstrap form after a considered homepage tells a buyer exactly where
+   the care ran out — and this is the first screen a paying client sees twice a
+   week for a year.
+   ============================================================ */
+
+.ns-page--narrow { max-inline-size: 34rem; }
+
+.ns-page__lede {
+  margin-block: var(--space-4) var(--space-8);
+  max-inline-size: var(--measure);
+  font-size: var(--font-size-lg);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* ---- Forms ------------------------------------------------------------- */
+
+.ns-form { margin-block-start: var(--space-6); }
+
+.ns-field { margin-block-end: var(--space-6); }
+
+.ns-field__label {
+  display: block;
+  margin-block-end: var(--space-2);
+  font-weight: 500;
+}
+
+.ns-field__input,
+.ns-field__select {
+  inline-size: 100%;
+  max-inline-size: 30rem;
+  padding: var(--space-3) var(--space-4);
+  font: inherit;
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  background: var(--surface-page);
+  /* A 1px hairline reads as considered; the contrast requirement is met by the
+     boundary token, which is contrast-tested against the surface (ACC-002). */
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+
+.ns-field__input:focus-visible,
+.ns-field__select:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.ns-field__input[aria-invalid='true'] {
+  /* Never colour alone (ENG-004): the error text below carries the meaning and
+     the thicker rule is a second, non-colour signal. */
+  border-inline-start: 4px solid var(--status-critical);
+}
+
+/* A six-digit code and a recovery code are read back character by character.
+   A monospaced face with loosened tracking makes that possible without
+   turning the field into six separate inputs, which would break pasting. */
+.ns-field__input--code {
+  max-inline-size: 14rem;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xl);
+  letter-spacing: 0.18em;
+}
+
+.ns-field__select--inline { max-inline-size: 16rem; }
+
+.ns-field__static {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-lg);
+}
+
+.ns-field__error {
+  margin-block-start: var(--space-2);
+  color: var(--status-critical);
+  font-weight: 500;
+}
+
+.ns-form-error {
+  margin-block: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  border-inline-start: 4px solid var(--status-critical);
+  background: color-mix(in srgb, var(--status-critical) 6%, transparent);
+  max-inline-size: var(--measure);
+}
+
+.ns-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 var(--space-8);
+}
+.ns-fieldset__legend {
+  padding: 0;
+  margin-block-end: var(--space-5);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xl);
+  letter-spacing: var(--tracking-display);
+}
+
+.ns-checkbox {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-4);
+  align-items: start;
+  margin-block-start: var(--space-6);
+  max-inline-size: var(--measure);
+}
+.ns-checkbox input {
+  inline-size: 1.35rem;
+  block-size: 1.35rem;
+  margin: 0.15rem 0 0;
+  accent-color: var(--interactive);
+}
+.ns-checkbox label { line-height: 1.5; cursor: pointer; }
+
+/* ---- Panels and records ------------------------------------------------ */
+
+/* A rule above rather than a card: the page is a document, and boxes-within-
+   boxes is the dashboard chrome §14 warns against. */
+.ns-panel {
+  margin-block-start: var(--space-12);
+  padding-block-start: var(--space-5);
+  border-block-start: 2px solid var(--text-primary);
+}
+
+.ns-panel__heading {
+  margin: 0 0 var(--space-5);
+  font-size: var(--font-size-xl);
+  line-height: 1.25;
+}
+
+.ns-plain-list { list-style: none; margin: 0 0 var(--space-6); padding: 0; }
+
+.ns-record {
+  display: block;
+  padding-block: var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
+}
+.ns-record:first-child { border-block-start: 1px solid var(--border-subtle); }
+
+.ns-record--wide {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ns-record__primary { display: block; font-size: var(--font-size-lg); }
+.ns-record__secondary {
+  display: block;
+  margin-block-start: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.ns-record__actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ---- Enrolment --------------------------------------------------------- */
+
+.ns-enrol { margin-block-start: var(--space-6); }
+
+.ns-enrol__choices {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.ns-enrol__steps {
+  margin: 0;
+  padding-inline-start: var(--space-6);
+  max-inline-size: var(--measure);
+}
+.ns-enrol__steps > li { margin-block-end: var(--space-8); }
+
+.ns-enrol__secret {
+  margin-block: var(--space-4);
+  padding: var(--space-5);
+  background: var(--surface-raised);
+  border-inline-start: 3px solid var(--graphic-brand);
+}
+.ns-enrol__secret-label {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.ns-enrol__secret-value {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-lg);
+  /* Wraps rather than scrolls: a key that runs off the edge of a phone cannot
+     be transcribed, which is the whole point of offering it as text. */
+  word-break: break-all;
+}
+
+.ns-enrol__uri { margin-block: var(--space-3); }
+.ns-enrol__uri a { color: var(--interactive); }
+
+.ns-enrol__demo-code {
+  margin-block: var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* ---- Recovery codes ---------------------------------------------------- */
+
+.ns-recovery {
+  margin-block: var(--space-5);
+  padding: var(--space-5);
+  border-inline-start: 4px solid var(--emphasis);
+  background: var(--surface-raised);
+}
+.ns-recovery__warning { margin: 0 0 var(--space-4); font-weight: 500; }
+
+.ns-recovery__codes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2) var(--space-6);
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-lg);
+}
+
+/* ---- Session timeout warning (ACC-004) --------------------------------- */
+
+/* Sits under the masthead in normal document flow. Not fixed, not a modal:
+   it must never cover content or trap focus, and someone at 400% zoom must be
+   able to scroll past it. */
+.ns-timeout {
+  border-block-end: 3px solid var(--emphasis);
+  background: var(--surface-raised);
+  padding: var(--space-5) var(--gutter);
+}
+.ns-timeout__inner {
+  max-inline-size: var(--content-max);
+  margin-inline: auto;
+  display: flex;
+  gap: var(--space-5);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ns-timeout__heading { margin: 0; font-size: var(--font-size-lg); }
+.ns-timeout__body { margin: 0; flex: 1 1 20rem; color: var(--text-secondary); }
+
+/* ---- Demo accounts panel (local builds only) --------------------------- */
+
+.ns-demo {
+  margin-block-start: var(--space-12);
+  padding: var(--space-6);
+  border: 1px dashed var(--border);
+  background: var(--surface-raised);
+  font-size: var(--font-size-sm);
+}
+.ns-demo__heading { margin: 0 0 var(--space-3); font-size: var(--font-size-base); }
+.ns-demo__body { margin: 0 0 var(--space-4); color: var(--text-secondary); max-inline-size: var(--measure); }
+.ns-demo__list { margin: 0 0 var(--space-4); }
+.ns-demo__row { padding-block: var(--space-2); border-block-start: 1px solid var(--border-subtle); }
+.ns-demo__row dt { margin: 0; }
+.ns-demo__row dd { margin: var(--space-1) 0 0; color: var(--text-secondary); }
+.ns-demo__password { margin: 0 0 var(--space-4); }
+.ns-demo code {
+  font-family: var(--font-family-mono);
+}

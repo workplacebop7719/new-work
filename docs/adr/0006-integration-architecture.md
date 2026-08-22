@@ -1,6 +1,6 @@
 # ADR-0006 — Integration architecture
 
-- **Status:** Proposed
+- **Status:** Accepted (CC-01)
 - **Date:** 2026-08-18
 - **Deciders:** Engineering lead, COO (system-of-record ownership), privacy lead (consent propagation)
 - **Blocks:** CC-03

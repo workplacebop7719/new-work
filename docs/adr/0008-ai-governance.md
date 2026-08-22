@@ -1,6 +1,6 @@
 # ADR-0008 — AI capabilities, provenance and safeguards
 
-- **Status:** Proposed
+- **Status:** Accepted (CC-01)
 - **Date:** 2026-08-18
 - **Deciders:** Product lead (accountable), accessibility lead, security/privacy lead, AODA specialist
 - **Blocks:** CC-08 (and constrains every earlier slice by prohibition)

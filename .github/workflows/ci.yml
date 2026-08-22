@@ -1,0 +1,161 @@
+name: CI
+
+# Runs every command in the PRD §27 environment and command contract. Each one
+# exits non-zero on failure, which is the requirement — a check that cannot fail
+# is not a check.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_ENV: test
+  DATABASE_URL: postgres://postgres:postgres@localhost:5432/northstar_test
+  DB_APP_ROLE: northstar_app
+  # Salt for rate-limit keys (Q-27). A CI-only value: it exists so counters are
+  # not correlatable, and rotating it only resets counters.
+  RATE_LIMIT_SECRET: ci-only-not-a-production-secret
+
+jobs:
+  quality:
+    name: lint, typecheck, unit tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: northstar_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+        ports: ['5432:5432']
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      # CMD-001 `install` — deterministic, from the committed lockfile.
+      - name: install
+        run: pnpm install --frozen-lockfile
+
+      # CMD-001 `lint` — includes the §27 repository guards.
+      - name: lint
+        run: pnpm lint
+
+      - name: typecheck
+        run: pnpm typecheck
+
+      - name: db:migrate
+        run: pnpm db:migrate
+
+      - name: db:seed
+        run: pnpm db:seed
+
+      # Includes the row-level-security isolation tests, which need the database.
+      - name: test
+        run: pnpm test
+
+      # CMD-001 `test:authz` — cross-tenant and role matrix, every protected
+      # resource class covered.
+      - name: test:authz
+        run: pnpm test:authz
+
+  end-to-end:
+    name: build, e2e and accessibility
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: northstar_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+        ports: ['5432:5432']
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: install
+        run: pnpm install --frozen-lockfile
+
+      - name: install browsers
+        run: pnpm --filter @northstar/web exec playwright install --with-deps chromium
+
+      # The qualifier persists sessions, so the journeys need a real schema.
+      # Running migrate here also means a missing migration fails CI rather than
+      # showing up as an unexplained server error in a test run.
+      - name: db:migrate
+        run: pnpm db:migrate
+
+      - name: build
+        run: pnpm build
+
+      # CMD-001 `test:e2e` — role-based journeys, plus the no-JavaScript project
+      # that proves ARC-006.
+      - name: test:e2e
+        run: pnpm test:e2e
+
+      # CMD-001 `test:a11y` — automated coverage only. ENG-005: this never closes
+      # an accessibility item; manual evidence lives in
+      # docs/accessibility-test-plan.md with a named reviewer.
+      - name: test:a11y
+        run: pnpm test:a11y
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
+
+  supply-chain:
+    name: dependency and secret scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: install
+        run: pnpm install --frozen-lockfile
+
+      # SEC-008: dependency scanning on every pull request.
+      - name: audit dependencies
+        run: pnpm audit --audit-level moderate
+
+      # SEC-008: secret scanning. GitHub's own push protection covers the
+      # default branch; this catches a secret before it reaches it.
+      - name: scan for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

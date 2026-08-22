@@ -1,62 +1,134 @@
 # Project Northstar — AODA Readiness Platform
 
-**Repository state: planning only. No application code exists yet, by instruction.**
+Ontario accessibility readiness: a public demand engine, a secure client workspace, a contractor delivery network and an internal operations console.
 
-PRD §27 ("First Claude Code prompt") directs: *"Read /docs/PRD.md in full. Do not write application code yet. Produce: (1) a requirement traceability matrix; (2) an assumptions/questions register; (3) proposed ADRs for stack, identity, tenancy, files, CMS, integrations, analytics and AI; (4) a Phase 0 prototype and validation plan; (5) an incremental delivery plan for CC-01 through CC-09; and (6) the risks that could invalidate the CA$5M programme. Cite PRD requirement IDs. **Wait for approval before scaffolding.***
+**Current state: CC-01, CC-02, the CC-02b marketing surface and CC-03a (identity
+and access) delivered, plus a hardening pass. CC-03b — booking, checkout,
+payment and the client agreement — is not started and waits on the payments and
+e-signature vendor decisions (Q-14, Q-19).**
+Source of truth is [`docs/PRD.md`](./docs/PRD.md). Requirement ids cited throughout the code are defined in [`docs/traceability.md`](./docs/traceability.md).
 
-Those six deliverables are complete and are listed below. Scaffolding of CC-01 has **not** started and will not start until approval and Gate 0.
+## Quick start
 
-## Documents
+```bash
+pnpm install
+cp .env.example .env.local     # edit DATABASE_URL if your Postgres differs
+pnpm db:migrate
+pnpm db:seed
+pnpm dev                       # http://localhost:3000
+```
 
-| # | Deliverable | File |
-|---|---|---|
-| — | Source of truth (PRD v1.0) | [`docs/PRD.md`](./docs/PRD.md) |
-| 1 | Requirement traceability matrix | [`docs/traceability.md`](./docs/traceability.md) |
-| 2 | Assumptions and open-questions register | [`docs/assumptions-register.md`](./docs/assumptions-register.md) |
-| 3 | Proposed ADRs (0001–0008) | [`docs/adr/`](./docs/adr/) |
-| 4 | Phase 0 prototype and validation plan | [`docs/phase-0-validation-plan.md`](./docs/phase-0-validation-plan.md) |
-| 5 | CC-01 → CC-09 delivery plan | [`docs/delivery-plan.md`](./docs/delivery-plan.md) |
-| 6 | Programme-invalidating risks | [`docs/programme-risks.md`](./docs/programme-risks.md) |
+Requires Node 22 (see `.nvmrc`) and PostgreSQL 16+.
 
-## What needs a decision before any code is written
-
-Ordered by what they block. Full detail in the [assumptions register](./docs/assumptions-register.md).
-
-| Blocks | Question |
-|---|---|
-| **CC-01** | Q-01 accept the derived requirement-ID namespaces · Q-05 roadmap vs. the December 2026 deadline · Q-09–Q-13 accept ADRs 0001, 0002, 0003, 0005 · Q-17 data-residency posture |
-| **CC-02** | Q-04 counsel-reviewed regulatory claim wording · Q-06 price fixed or configurable · Q-21 the "routing vs. conclusion" rule · Q-15 analytics vendor |
-| **CC-03** | Q-14 integration vendors · Q-19 e-signature accessibility |
-| **CC-05** | Q-02 named stop-ship authorities · Q-22 accessible-PDF approach |
-| **CC-06/07** | Q-07 wholesale rate card · Q-08 contractor payment rails |
-| **CC-08** | Q-16 AI provider and terms |
-
-The three programme-level questions for the steering committee are summarized at the end of [`docs/programme-risks.md`](./docs/programme-risks.md).
+Sign in with any seeded account (they are listed on `/en/sign-in` in a local
+build) and the password `northstar demo passphrase`. Every account needs a
+second factor, so the first sign-in goes through enrolment — the page prints a
+setup key and, locally, the code an authenticator app would be showing.
+[`docs/runbook.md`](./docs/runbook.md) walks through it.
 
 ## Commands
 
-None yet. The command contract from PRD §27 (`install`, `dev`, `lint`, `typecheck`, `test`, `test:e2e`, `test:a11y`, `test:authz`, `db:migrate`, `db:seed`, `db:reset-safe`, `build`, `start`) is tracked as CMD-001 and is delivered in **CC-01**. This README is replaced with the exact commands and documented seed accounts at that point (CMD-002).
+The full PRD §27 contract. Every one exits non-zero on failure.
 
-## Planned repository shape (CC-01, per PRD §27)
+| Command | Purpose |
+|---|---|
+| `pnpm install` | Deterministic install from the committed lockfile. |
+| `pnpm dev` | Full local experience with safe fake integrations. |
+| `pnpm db:outbox` | Drains the outbound queue (`--apply`), or reviews the dead-letter queue (`--dead`). |
+| `pnpm lint` | ESLint across the workspace **plus** the repository guards below. |
+| `pnpm typecheck` | `tsc --noEmit` in every package. |
+| `pnpm test` | Unit and integration tests, including row-level-security isolation (needs a database). |
+| `pnpm test:e2e` | Playwright journeys: desktop, mobile, and a no-JavaScript project. |
+| `pnpm test:a11y` | Automated accessibility checks. Coverage only — see below. |
+| `pnpm test:authz` | Cross-tenant and role matrix across every protected resource class. |
+| `pnpm db:migrate` | Applies pending migrations, each in its own transaction. |
+| `pnpm db:seed` | Loads the fictional Maple Grove and Riverside demo tenants. |
+| `pnpm db:reset-safe` | Drop, migrate, reseed. Refuses unless `APP_ENV` is non-production **and** the host is local. |
+| `pnpm db:retention` | Retention sweep. Dry-run by default; `--apply` to delete. |
+| `pnpm build` / `pnpm start` | Production build and serve. |
+
+Demo accounts and the things that will confuse you once are in [`docs/runbook.md`](./docs/runbook.md).
+
+## Repository
 
 ```
-apps/web                 public site, qualifier, portals, internal console
-packages/ui              accessible design-system primitives and tokens
-packages/domain          framework-independent business rules
-packages/db              schema, migrations, tenant controls, seed factories
-packages/auth            roles, permissions, policy checks, break-glass
-packages/integrations    typed adapters (CRM, payment, storage, email, …)
-packages/observability   structured events, redaction, analytics, tracing
-packages/testing         a11y fixtures, journey helpers, tenant-isolation tests
-docs/                    PRD, ADRs, data dictionary, threat model, runbooks
-infra/                   environments, deployment policy, backups, identities
+apps/web                 public site, portals, internal console (Next.js App Router)
+packages/ui              design tokens and accessible primitives
+packages/domain          framework-independent entities, roles and content rules
+packages/db              migrations, tenant isolation, seed factories
+packages/auth            policy layer: deny-by-default authorization
+packages/integrations    typed ports + fakes (CRM, payments, storage, email, …)
+packages/observability   event taxonomy, consent gate, redaction, audit writer
+packages/testing         shared a11y and tenancy fixtures
+scripts/guards           CI enforcement of the PRD's engineering constraints
+docs                     PRD, ADRs, traceability, threat model, runbook
 ```
 
-## Scope boundaries carried from the PRD
+## How the constraints are enforced
 
-Restated here because they constrain every future change, not just the first one:
+The PRD's non-negotiable constraints (§27) are build failures, not review conventions. `pnpm lint` runs six guards:
 
-- No claim of government authorization, certification or guaranteed legal compliance.
+| Guard | Enforces |
+|---|---|
+| `prohibited-claims` | Blocks the phrases PRD §5 and §27 forbid, in English and French (CNT-008, ENG-008). |
+| `regulatory-hardcoding` | Regulatory statements come from versioned content objects, never string literals in components (ENG-007). |
+| `migration-notes` | Every migration has paired rollback / roll-forward / backup-impact notes (ENG-006). |
+| `tenant-columns` | Every new table has `organization_id` with RLS enabled **and** forced **and** a policy — or an explicit `-- global:` declaration with a reason (DAT-002). |
+| `domain-purity` | `packages/domain` imports no framework, driver or app; `packages/auth` stays testable without a database (ARC-002, ENG-001). |
+| `tokens-drift` | The committed `tokens.css` is exactly what `tokens.ts` renders, so a hand-edit cannot escape the contrast tests (BRD-001). |
+| `analytics-consent` | No third-party script host anywhere in the app, no analytics globals, and `Analytics` constructible only in the consent wrapper (PUB-006, ARC-007, ANL-001). |
+
+Where an exception is legitimate it is annotated in the code (`northstar-allow-claim:`, `northstar-allow-regulatory:`, `-- global:`) and reviewed in the pull request. The annotation is the audit trail.
+
+Authorization is enforced at three layers, all required: the policy layer (`packages/auth`), row-level security in PostgreSQL, and — from CC-04 — per-request signed URLs for files. A check in a UI component is presentation, never a gate.
+
+## What works today
+
+`pnpm dev` gives you the public conversion journey, in English and French:
+
+- an eight-question readiness qualifier, one question per page, with progress, save-and-resume and accessible validation;
+- a result that shows the inputs behind it, the reason each one mattered, the rule version and an uncertainty notice;
+- the free official route offered as a first-class link rather than buried;
+- a contact page reachable from everywhere that asks for nothing first;
+- a consent banner where accepting and declining are the same control, and nothing third-party loads either way.
+
+The whole journey works with JavaScript disabled — a Playwright project completes it that way on every run.
+
+The anonymous endpoints are rate limited, and the refusal is an ordinary page with a route to a person rather than a challenge: an abuse control must not become an accessibility barrier.
+
+The homepage carries the PRD §7 modules: a source-stamped notice band, hero, employee-size selector, the full offer ladder with exclusions stated, the four-stage method, and a trust layer.
+
+There is also a small resources section — three articles in both languages about how the work is actually done. An article may cite a versioned regulatory claim, but never restate one: when the cited claim goes on hold, the article shows the hold notice in its place.
+
+Two sections are deliberately empty rather than invented. There are no case narratives and no named leadership, because there are no engagements and no hired team yet — fabricating either on a site whose proposition is trustworthiness would destroy the only asset the business has. There is no photography either: §14 warns against tokenistic stock and AI-perfect imagery, so the art direction is typographic until real commissioned photography exists.
+
+## Accessibility
+
+Target is WCAG 2.2 AA across the public site, both portals and generated client artefacts. **Automated checks never close an accessibility item** (ENG-005) — they are regression coverage between manual passes. Manual method, supported assistive-technology combinations, the paid disability panel and the severity model are in [`docs/accessibility-test-plan.md`](./docs/accessibility-test-plan.md).
+
+One finding worth knowing up front: the brand palette in PRD §14 does not pass WCAG as literally specified. Brand teal is 2.998:1 on white and warm gold is 1.85:1. The token system keeps both as brand colours but restricts where they may appear, and adds AA-passing tokens for text and interaction. The reasoning is in `packages/ui/src/tokens/tokens.ts` and it needs the design lead's sign-off (question Q-24).
+
+## Documents
+
+| Document | What it is |
+|---|---|
+| [`docs/PRD.md`](./docs/PRD.md) | Source of truth. |
+| [`docs/traceability.md`](./docs/traceability.md) | Requirement matrix, per-slice state, and a delivery record for each shipped slice — including what each one cut and why. |
+| [`docs/assumptions-register.md`](./docs/assumptions-register.md) | Open questions with severity and owner; working assumptions. |
+| [`docs/adr/`](./docs/adr/) | Eight accepted ADRs, with amendments made during the build. |
+| [`docs/delivery-plan.md`](./docs/delivery-plan.md) | CC-01 → CC-09. |
+| [`docs/phase-0-validation-plan.md`](./docs/phase-0-validation-plan.md) | Six-week paid validation and Gate 0. |
+| [`docs/programme-risks.md`](./docs/programme-risks.md) | Risks that could invalidate the CA$5M programme, each with a kill criterion. |
+| [`docs/threat-model.md`](./docs/threat-model.md) | Assets, threats, controls, and what is not yet modelled. |
+| [`docs/data-dictionary.md`](./docs/data-dictionary.md) | Tables, classification, retention. |
+| [`docs/accessibility-test-plan.md`](./docs/accessibility-test-plan.md) | Automated and manual coverage, panel, severity model. |
+| [`docs/runbook.md`](./docs/runbook.md) | Setup, commands, demo accounts, common confusions. |
+
+## Scope boundaries
+
+Carried from the PRD, because they constrain every future change:
+
+- No claim of government authorization, certification or guaranteed legal compliance. <!-- northstar-allow-claim: restating the prohibition itself -->
 - No accessibility overlay or widget presented as a substitute for accessible source and content.
 - No automated submission to government in the first release.
 - No general-purpose legal-advice chatbot.
@@ -66,4 +138,4 @@ Restated here because they constrain every future change, not just the first one
 
 ---
 
-*This repository is a commercial and product specification workspace. The PRD is not legal advice; see `docs/PRD.md` §26.*
+*This repository is a product and commercial specification workspace. The PRD is not legal advice; see `docs/PRD.md` §26.*

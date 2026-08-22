@@ -1,6 +1,6 @@
 # ADR-0005 — Content platform and regulatory content governance
 
-- **Status:** Proposed
+- **Status:** Accepted (CC-01)
 - **Date:** 2026-08-18
 - **Deciders:** Design lead + content design (accountable), AODA specialist, engineering lead
 - **Blocks:** CC-01, CC-02
@@ -47,6 +47,12 @@ That is a workflow requirement most headless CMS products only partly satisfy, a
 - **Negative:** the regulatory-phrase lint will produce false positives and annoy developers. Mitigation: an explicit allowlist annotation with a required reason, reviewed in PR.
 - **Negative:** two content classes and an export-to-repo step is more machinery than a marketing site needs. Justified by §25 "Regulatory misstatement".
 - **Risk:** CMS authoring-UI accessibility is a real vendor risk with no good mitigation short of replacement (§27). Evaluate *before* signing, with a paid panel participant, not after.
+
+## Status at CC-01
+
+The claim schema, the automatic-hold rule and the render-by-id path are built and tested (`packages/domain/src/content.ts`). The CMS **vendor** is still open (Q-13), so CC-01 reads claims from a reviewed local file behind the same accessor the CMS will use.
+
+`resolveClaim` returns a discriminated union rather than a string. On the `hold` branch there is no `text` field at all, so a component structurally cannot render a stale regulatory statement by ignoring a boolean — which is a stronger guarantee than the "displays an internal hold" wording in CNT-005 strictly required.
 
 ## Requirements satisfied
 

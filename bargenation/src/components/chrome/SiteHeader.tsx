@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AccountLink } from './AccountLink';
 
 /**
  * Site header (PRD §05, §33).
@@ -53,11 +54,9 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        {/* right — the sign-in route now exists, so it is a real link */}
+        {/* right — reflects the session without making every page dynamic */}
         <div className="flex items-center justify-end">
-          <Link href="/login" className={navLink}>
-            Sign in
-          </Link>
+          <AccountLink className={navLink} />
         </div>
       </div>
     </header>

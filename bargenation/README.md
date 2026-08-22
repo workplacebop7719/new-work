@@ -24,6 +24,7 @@ npm run lint
 npm test
 npm run build
 npm run contrast   # WCAG AA guard over the shipped tokens
+npm run smoke      # end-to-end member flow in a real browser (needs a dev server)
 ```
 
 No database is required. Without `DATABASE_URL` the app serves the fictional
@@ -61,6 +62,7 @@ These are not conventions. Each one has a test or a guard that fails the build.
 | A fake auth provider cannot reach production | production without credentials degrades to a port that refuses everything |
 | `returnTo` cannot become an open redirect | allowlist validation, 40 tests of hostile payloads |
 | Provider errors never reach a customer | closed error set, our own copy |
+| One customer cannot touch another's Saved, Watchlist or Signals | every member query runs *as the customer*; RLS is the enforcement |
 | Brand pink is a surface, never type on white | `scripts/check-contrast.mjs` fails the build if it ever clears AA |
 
 ### The palette problem, and why it is solved this way
@@ -84,6 +86,7 @@ src/domain/      value-index, confidence, urgency, buy-hold, price-history — f
 src/data/        repository (the only module that knows where deals come from),
                  fixture + postgres adapters behind one contract
 src/auth/        typed port, dev + supabase adapters, return-url allowlist
+src/app/app/     the member portal, behind a real session check
 src/db/          pooled client, schema and parity tests
 db/migrations/   catalog, append-only, accounts+RLS, newsletter, commerce isolation
 src/components/  chrome, deal, ui
@@ -94,8 +97,11 @@ shot.mjs         visual QA — screenshots every page at 375 / 768 / 1440
 
 ## Built
 
-`/` · `/today` · `/search` · `/categories` · `/categories/[slug]` ·
-`/deals/[slug]` · `/how-it-works` · `404`
+**Public** — `/` · `/today` · `/search` · `/categories` · `/categories/[slug]` ·
+`/deals/[slug]` · `/how-it-works` · `/login` · `/signup` · `404`
+
+**Member portal** — `/app/watchlist` · `/app/saved` · `/app/deal-signals` ·
+`/app/account`
 
 ## Not built yet
 
@@ -104,8 +110,8 @@ visibly disabled with the reason, and no navigation links to them.
 
 | Area | Blocked on |
 |---|---|
-| Real sign-in (architecture built, forms disabled) | Supabase Auth credentials |
-| The `/app` member portal, forgot/reset/verify pages | the next slice |
+| Real sign-in (architecture and portal built, forms disabled) | Supabase Auth credentials |
+| Forgot / reset / verify-email pages | the next slice |
 | The Bargenation Edit + newsletter | an email provider credential |
 | Affiliate `/go/[offer]` redirects | an affiliate account |
 | Admin platform | depends on authentication |

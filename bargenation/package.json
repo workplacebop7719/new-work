@@ -2,7 +2,7 @@
   "name": "bargenation",
   "version": "0.1.0",
   "private": true,
-  "description": "BARGENATION — shopping intelligence. Is this actually a good price?",
+  "description": "BARGENATION \u2014 shopping intelligence. Is this actually a good price?",
   "engines": {
     "node": ">=22"
   },
@@ -18,7 +18,8 @@
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed": "tsx scripts/seed.mts",
     "db:reset": "node scripts/reset-db.mjs && node scripts/migrate.mjs && tsx scripts/seed.mts",
-    "test:db": "vitest run src/db"
+    "test:db": "vitest run src/db",
+    "smoke": "node scripts/smoke-member-flow.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

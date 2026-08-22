@@ -29,7 +29,14 @@ export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   if (!pathname.startsWith(PROTECTED_PREFIX)) return NextResponse.next();
-  if (request.cookies.has(SESSION_COOKIE)) return NextResponse.next();
+
+  if (request.cookies.has(SESSION_COOKIE)) {
+    // Forward the path so the layout can build an accurate returnTo when the
+    // cookie turns out to be forged or expired — a layout cannot see the URL.
+    const headers = new Headers(request.headers);
+    headers.set('x-pathname', `${pathname}${search}`);
+    return NextResponse.next({ request: { headers } });
+  }
 
   const destination = `${pathname}${search}`;
   const url = request.nextUrl.clone();

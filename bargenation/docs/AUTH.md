@@ -79,8 +79,22 @@ succeeds whether or not the address exists.
 A password reset invalidates every existing session: reset is how someone
 recovers a compromised account, so the attacker's session must not survive it.
 
+## Profile provisioning
+
+A customer who has authenticated has an identity but no `profiles` row, and
+everything they own hangs off that row. Provisioning therefore happens in the
+**sign-in and sign-up actions**, not on entry to the portal.
+
+An earlier version provisioned only in the `/app` layout, which meant somebody
+who signed up and immediately pressed Save on a deal hit a foreign-key
+violation. It was found by driving the real flow in a browser
+(`npm run smoke`); no unit test would have caught it, because each piece
+worked correctly on its own.
+
+The insert runs as the customer, so the RLS `WITH CHECK (id = auth.uid())`
+means you can only ever create your own — asserted by a test.
+
 ## Not built yet
 
-`/forgot-password`, `/reset-password`, `/verify-email` and the `/app` member
-portal have no pages. The port supports all of them and `middleware.ts` already
-guards `/app/*`; the surfaces are the next slice.
+`/forgot-password`, `/reset-password` and `/verify-email` have no pages. The
+port supports all three.

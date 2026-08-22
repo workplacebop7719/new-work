@@ -7,6 +7,7 @@ import { ValueIndexMark } from '@/components/deal/ValueIndexMark';
 import { RecommendationMark, RecommendationLine } from '@/components/deal/RecommendationMark';
 import { PriceHistoryChart } from '@/components/deal/PriceHistoryChart';
 import { DealCard } from '@/components/deal/DealCard';
+import { DealActions } from '@/components/deal/DealActions';
 
 export async function generateStaticParams() {
   return (await getDeals()).map((d) => ({ slug: d.offer.product.slug }));
@@ -71,6 +72,12 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
           <div className="mt-6 max-w-[46ch]">
             <RecommendationLine deal={deal} />
           </div>
+
+          <DealActions
+            offerId={offer.id}
+            productSlug={offer.product.slug}
+            returnTo={`/deals/${offer.product.slug}`}
+          />
 
           {/* Outbound commerce is not built: no affiliate account, no /go route.
               A live-looking button that did nothing would breach §01. */}

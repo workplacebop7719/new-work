@@ -5,6 +5,7 @@ import { auth } from './index';
 import { AuthError, AUTH_MESSAGE, isPlausibleEmail } from './types';
 import { safeReturnTo } from './return-url';
 import { writeSessionCookie, clearSessionCookie } from './session';
+import { ensureProfile, memberFeaturesAvailable } from '@/data/member-repository';
 import { SESSION_COOKIE } from './cookie-name';
 import { cookies } from 'next/headers';
 
@@ -19,6 +20,20 @@ import { cookies } from 'next/headers';
 
 export interface FormState {
   error: string | null;
+}
+
+/**
+ * Give the authenticated customer a profiles row.
+ *
+ * This belongs to authentication, not to visiting the portal. An earlier
+ * version provisioned only in the /app layout, so someone who signed up and
+ * immediately pressed Save on a deal hit a foreign-key violation — they had an
+ * identity but nothing for their saved item to hang off. Found by driving the
+ * real flow in a browser; no unit test would have caught it.
+ */
+async function provision(user: Parameters<typeof ensureProfile>[0]): Promise<void> {
+  if (!memberFeaturesAvailable) return;
+  await ensureProfile(user);
 }
 
 function messageFor(err: unknown): string {
@@ -36,8 +51,9 @@ export async function signInAction(_prev: FormState, formData: FormData): Promis
   }
 
   try {
-    const { token } = await auth().signIn({ email, password });
+    const { token, session } = await auth().signIn({ email, password });
     await writeSessionCookie(token);
+    await provision(session.user);
   } catch (err) {
     return { error: messageFor(err) };
   }
@@ -52,8 +68,9 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
   const returnTo = safeReturnTo(formData.get('returnTo'));
 
   try {
-    const { token } = await auth().signUp({ email, password, displayName });
+    const { token, session } = await auth().signUp({ email, password, displayName });
     await writeSessionCookie(token);
+    await provision(session.user);
   } catch (err) {
     return { error: messageFor(err) };
   }

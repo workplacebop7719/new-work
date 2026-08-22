@@ -45,7 +45,8 @@ npm run test:db     # the database guarantees, against a real database
 See [docs/DATABASE.md](docs/DATABASE.md) for what the schema guarantees and why,
 [docs/AUTH.md](docs/AUTH.md) for how authentication is layered, and
 [docs/DEAL-SIGNALS.md](docs/DEAL-SIGNALS.md) for why the signal engine stays quiet, and
-[docs/INGESTION.md](docs/INGESTION.md) for how feed data becomes history.
+[docs/INGESTION.md](docs/INGESTION.md) for how feed data becomes history, and
+[docs/ADMIN.md](docs/ADMIN.md) for the operations surface.
 
 ## The rules that are actually enforced
 
@@ -69,6 +70,9 @@ These are not conventions. Each one has a test or a guard that fails the build.
 | One customer cannot touch another's Saved, Watchlist or Signals | every member query runs *as the customer*; RLS is the enforcement |
 | Signals cannot become spam | edge-triggered rules, one signal per watch per sweep, 24h quiet period |
 | The signal job cannot roam | narrow role-scoped grants, `nobypassrls`, asserted by tests |
+| A customer cannot promote themselves | column-level grant on `profiles.role`; RLS scopes rows, not columns |
+| Staff cannot read customer personal data | enumerated grants; households and watchlists are not among them |
+| Operator decisions cannot be erased | `admin_actions` is append-only and its actor cannot be deleted |
 | Ambiguous feed data is refused, not guessed | extraction returns a reason; `"1,234"` is rejected outright |
 | A doubtful price never enters the permanent record | quarantined until a **different** source agrees |
 | Two products are never silently merged | matching asks for review instead of picking a winner |
@@ -112,6 +116,8 @@ shot.mjs         visual QA — screenshots every page at 375 / 768 / 1440
 
 **Member portal** — `/app/watchlist` · `/app/saved` · `/app/deal-signals` ·
 `/app/account`
+
+**Operations** — `/admin` · `/admin/review` · `/admin/quarantine`
 
 ## Not built yet
 

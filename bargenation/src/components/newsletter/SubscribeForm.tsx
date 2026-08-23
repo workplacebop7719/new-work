@@ -3,6 +3,8 @@
 import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import { subscribeAction, type SubscribeState } from '@/newsletter/actions';
+import type { IssuedChallenge } from '@/security/challenge';
+import { ChallengeFields, useChallenge } from '@/components/security/ChallengeFields';
 
 /**
  * The signup control for The Edit.
@@ -15,16 +17,26 @@ import { subscribeAction, type SubscribeState } from '@/newsletter/actions';
  * Controlled input: React 19 resets uncontrolled fields after a form action,
  * which would clear a typed address on any validation failure.
  */
-export function SubscribeForm({ source = '/edit' }: { source?: string }) {
+export function SubscribeForm({
+  source = '/edit',
+  challenge = null,
+}: {
+  source?: string;
+  /** Subscriber lists are worth poisoning, so this form carries a challenge. */
+  challenge?: IssuedChallenge | null;
+}) {
   const [state, act, pending] = useActionState<SubscribeState, FormData>(subscribeAction, {
     error: null, pending: null, devConfirmUrl: null,
   });
   const [address, setAddress] = useState('');
+  const challengeState = useChallenge(challenge);
+  const waitingOnChallenge = challenge !== null && challengeState.status === 'solving';
 
   return (
     <div className="max-w-[32rem]">
-      <form action={act}>
+      <form action={act} className="relative">
         <input type="hidden" name="source" value={source} />
+        <ChallengeFields challenge={challenge} state={challengeState} />
         <label htmlFor="edit-email" className="eyebrow block text-ink-50">
           Your email
         </label>
@@ -41,7 +53,7 @@ export function SubscribeForm({ source = '/edit' }: { source?: string }) {
           />
           <button
             type="submit"
-            disabled={pending}
+            disabled={pending || waitingOnChallenge}
             className="shrink-0 pb-2 text-[0.6875rem] font-semibold uppercase tracking-[0.16em] hover:opacity-55 disabled:opacity-40"
           >
             {pending ? 'One moment' : 'Get the Edit'}

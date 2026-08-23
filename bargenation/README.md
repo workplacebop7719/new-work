@@ -27,6 +27,7 @@ npm run contrast   # WCAG AA guard over the shipped tokens
 npm run smoke      # end-to-end member flow in a real browser (needs a dev server)
 npm run smoke:recovery   # forgot / reset / verify, driven the same way
 npm run smoke:account    # change password, export, delete
+npm run smoke:challenge  # the bot challenge on sign-up and reset
 npm run signals    # one Deal Signal sweep (connects as the jobs role)
 npm run ingest     # one ingestion pass from a local records file
 npm run legal      # guard: no compliance claims, no invented company details
@@ -53,7 +54,9 @@ See [docs/DATABASE.md](docs/DATABASE.md) for what the schema guarantees and why,
 [docs/LEGAL.md](docs/LEGAL.md) for how the legal pages handle what we do not know, and
 [docs/NEWSLETTER.md](docs/NEWSLETTER.md) for how consent is kept provable, and
 [docs/RETAILERS.md](docs/RETAILERS.md) for how a verdict about a named business
-is derived and when it refuses to give one.
+is derived and when it refuses to give one, and
+[docs/BOT-RESISTANCE.md](docs/BOT-RESISTANCE.md) for why there is no captcha
+vendor and what stands in for one.
 
 ## The rules that are actually enforced
 
@@ -116,6 +119,7 @@ src/ingest/      source port, normalisation, product matching, watchdog, pipelin
 src/content/     legal document metadata and the details we do not yet have
 src/newsletter/  issue composition, subscription and consent
 src/email/       the delivery port both The Edit and account recovery use
+src/security/    the first-party bot challenge (no third-party script)
 src/app/app/     the member portal, behind a real session check
 src/db/          pooled client, schema, parity and signal-job tests
 db/migrations/   … 0007 adds the narrowly-granted signal job role

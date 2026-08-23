@@ -22,6 +22,7 @@
     "smoke": "node scripts/smoke-member-flow.mjs",
     "smoke:recovery": "node scripts/smoke-recovery.mjs",
     "smoke:account": "node scripts/smoke-account.mjs",
+    "smoke:challenge": "node scripts/smoke-challenge.mjs",
     "signals": "tsx scripts/run-signals.mts",
     "ingest": "tsx scripts/run-ingest.mts",
     "legal": "node scripts/check-legal-claims.mjs"

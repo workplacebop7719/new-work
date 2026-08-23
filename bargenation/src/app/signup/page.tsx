@@ -4,6 +4,7 @@ import { safeReturnTo } from '@/auth/return-url';
 import { signUpAction } from '@/auth/actions';
 import { MIN_PASSWORD_LENGTH } from '@/auth/types';
 import { AuthForm, Field, AuthLink } from '@/components/auth/AuthForm';
+import { issueChallenge } from '@/security/challenge';
 
 export const metadata: Metadata = { title: 'Create account' };
 
@@ -28,6 +29,7 @@ export default async function SignupPage({
       </p>
 
       <AuthForm
+        challenge={issueChallenge('SIGN_UP')}
         action={signUpAction}
         submitLabel="Create account"
         configured={configured}

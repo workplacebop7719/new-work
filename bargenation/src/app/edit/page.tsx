@@ -4,6 +4,7 @@ import { getStandout, getMadeTheCut, getWeWouldHold } from '@/data/repository';
 import { composeIssue } from '@/newsletter/compose';
 import { emailConfigured } from '@/email/port';
 import { SubscribeForm } from '@/components/newsletter/SubscribeForm';
+import { issueChallenge } from '@/security/challenge';
 
 export const metadata: Metadata = {
   title: 'The Bargenation Edit',
@@ -144,7 +145,7 @@ export default async function EditPage() {
         <aside className="lg:border-l lg:border-line lg:pl-16">
           <h2 className="display display-md">Get the Edit</h2>
           <div className="mt-8">
-            <SubscribeForm source="/edit" />
+            <SubscribeForm challenge={issueChallenge('SUBSCRIBE')} source="/edit" />
           </div>
 
           {!emailConfigured() && (

@@ -1,7 +1,11 @@
 'use server';
 
+
 import { requestSubscription } from './subscribe';
 import { email } from '@/email/port';
+import {
+  challengeFromForm, verifyChallenge, CHALLENGE_MESSAGE,
+} from '@/security/challenge';
 import { memberFeaturesAvailable } from '@/data/member-repository';
 
 /**
@@ -21,11 +25,23 @@ export interface SubscribeState {
   devConfirmUrl: string | null;
 }
 
+/**
+ * A subscriber list is worth poisoning: signing a real address up to a list it
+ * never asked for is harassment, and it burns our sending reputation. Double
+ * opt-in already means a forged address never receives an issue, but it does
+ * mean a forged address receives a confirmation email — so the challenge
+ * stops the flood before it becomes mail somebody else has to read.
+ */
 export async function subscribeAction(
   _prev: SubscribeState, form: FormData,
 ): Promise<SubscribeState> {
   const address = String(form.get('email') ?? '');
   const source = String(form.get('source') ?? '/edit');
+
+  const verdict = verifyChallenge(challengeFromForm(form), 'SUBSCRIBE');
+  if (!verdict.ok) {
+    return { error: CHALLENGE_MESSAGE, pending: null, devConfirmUrl: null };
+  }
 
   if (!memberFeaturesAvailable) {
     return {

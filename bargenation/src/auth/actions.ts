@@ -5,6 +5,9 @@ import { auth } from './index';
 import { AUTH_MESSAGE, DELETE_CONFIRMATION, isAuthError, isPlausibleEmail } from './types';
 import { safeReturnTo } from './return-url';
 import { isPlausibleToken } from './token';
+import {
+  challengeFromForm, verifyChallenge, CHALLENGE_MESSAGE, type ChallengePurpose,
+} from '@/security/challenge';
 import { writeSessionCookie, clearSessionCookie } from './session';
 import {
   ensureProfile, eraseAccount, memberFeaturesAvailable, isAccountNotErasable,
@@ -52,6 +55,22 @@ async function provision(user: Parameters<typeof ensureProfile>[0]): Promise<voi
  * This file is `'use server'`, which puts it in a different bundle graph from
  * the adapters, so the class object it imported is not the one they threw.
  */
+/**
+ * Bot resistance on the forms worth automating against (§01).
+ *
+ * Sign-up and password reset only. NOT sign-in: a challenge there taxes every
+ * real customer on every visit to slow down credential stuffing, which rate
+ * limiting handles without charging the honest majority.
+ *
+ * Returns our own single message for every failure. Which check failed is a
+ * tuning signal — "too fast" and "bad solution" together describe exactly how
+ * to get through — so the caller learns only that it did not work.
+ */
+function challengeRefused(formData: FormData, purpose: ChallengePurpose): FormState | null {
+  const verdict = verifyChallenge(challengeFromForm(formData), purpose);
+  return verdict.ok ? null : { error: CHALLENGE_MESSAGE, notice: null };
+}
+
 function messageFor(err: unknown): string {
   if (isAuthError(err)) return AUTH_MESSAGE[err.code];
   return AUTH_MESSAGE.UNAVAILABLE;
@@ -82,6 +101,9 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
   const password = String(formData.get('password') ?? '');
   const displayName = String(formData.get('displayName') ?? '');
   const returnTo = safeReturnTo(formData.get('returnTo'));
+
+  const refused = challengeRefused(formData, 'SIGN_UP');
+  if (refused) return refused;
 
   try {
     const { token, session } = await auth().signUp({ email, password, displayName });
@@ -115,6 +137,9 @@ export async function requestPasswordResetAction(
   _prev: FormState, formData: FormData,
 ): Promise<FormState> {
   const address = String(formData.get('email') ?? '');
+
+  const refused = challengeRefused(formData, 'PASSWORD_RESET');
+  if (refused) return refused;
 
   if (!isPlausibleEmail(address)) {
     return { error: 'That doesn’t look like an email address.', notice: null };

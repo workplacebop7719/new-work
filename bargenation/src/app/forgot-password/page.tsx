@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { requestPasswordResetAction } from '@/auth/actions';
 import { AuthForm, Field, AuthLink } from '@/components/auth/AuthForm';
 import { DeliveryNote } from '@/components/auth/DeliveryNote';
+import { issueChallenge } from '@/security/challenge';
 
 export const metadata: Metadata = {
   title: 'Forgot your password',
@@ -34,6 +35,7 @@ export default function ForgotPasswordPage() {
       <DeliveryNote port={port} />
 
       <AuthForm
+        challenge={issueChallenge('PASSWORD_RESET')}
         action={requestPasswordResetAction}
         submitLabel="Send the link"
         configured={port.configured}

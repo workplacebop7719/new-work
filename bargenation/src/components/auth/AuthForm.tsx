@@ -3,6 +3,8 @@
 import { useActionState } from 'react';
 import Link from 'next/link';
 import type { FormState } from '@/auth/actions';
+import type { IssuedChallenge } from '@/security/challenge';
+import { ChallengeFields, useChallenge } from '@/components/security/ChallengeFields';
 
 /**
  * Shared shell for the sign-in and sign-up forms (PRD §29, §30).
@@ -19,6 +21,7 @@ export function AuthForm({
   returnTo,
   hidden,
   unavailableNote,
+  challenge = null,
   children,
   footer,
 }: {
@@ -31,18 +34,27 @@ export function AuthForm({
   hidden?: Record<string, string>;
   /** Overrides the copy shown when the submit control is switched off. */
   unavailableNote?: string;
+  /** Bot resistance, on the forms worth automating against. Omitted elsewhere. */
+  challenge?: IssuedChallenge | null;
   /** Absent on verify-email, where everything needed came in the link. */
   children?: React.ReactNode;
   footer: React.ReactNode;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null, notice: null });
+  const challengeState = useChallenge(challenge);
+
+  // Only a real, still-solving challenge holds the button. An unsupported
+  // browser is let through to the server, which has its own checks and can
+  // say what happened — better than a button that never enables.
+  const waitingOnChallenge = challenge !== null && challengeState.status === 'solving';
 
   return (
-    <form action={formAction} className="mt-12 max-w-[26rem]">
+    <form action={formAction} className="relative mt-12 max-w-[26rem]">
       {returnTo !== undefined && <input type="hidden" name="returnTo" value={returnTo} />}
       {Object.entries(hidden ?? {}).map(([name, value]) => (
         <input key={name} type="hidden" name={name} value={value} />
       ))}
+      <ChallengeFields challenge={challenge} state={challengeState} />
 
       {state.error && (
         // role=alert announces the failure without stealing focus
@@ -71,10 +83,10 @@ export function AuthForm({
         {configured ? (
           <button
             type="submit"
-            disabled={pending}
+            disabled={pending || waitingOnChallenge}
             className="on-pink inline-flex min-h-[48px] w-full items-center justify-center px-6 text-[0.8125rem] font-semibold uppercase tracking-[0.1em] transition-colors duration-[--dur-micro] hover:bg-ink hover:text-white disabled:opacity-50"
           >
-            {pending ? 'One moment' : submitLabel}
+            {pending || waitingOnChallenge ? 'One moment' : submitLabel}
           </button>
         ) : (
           <>

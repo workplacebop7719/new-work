@@ -52,7 +52,27 @@ export type AuthErrorCode =
   | 'NOT_CONFIGURED'
   | 'UNAVAILABLE';
 
+/**
+ * A stable marker that survives module duplication.
+ *
+ * `instanceof` compares prototypes, which means it compares CLASS OBJECTS —
+ * and Next.js bundles a `'use server'` module into a different graph from the
+ * one the adapters are reached through. `types.ts` is therefore instantiated
+ * twice in a running server, and an AuthError thrown by the adapter is not an
+ * `instanceof` the AuthError that actions.ts imported.
+ *
+ * The symptom was silent and total: every sign-in failure, duplicate address
+ * and short password rendered "We couldn't reach our sign-in service" instead
+ * of its real message. AUTH_MESSAGE was effectively dead code, and the tests
+ * passed throughout because inside one Vitest module graph there is only one
+ * class. Found by driving the flow in a browser.
+ */
+const AUTH_ERROR_BRAND = 'bargenation.AuthError';
+
 export class AuthError extends Error {
+  /** Read by isAuthError. Not `instanceof`, deliberately — see above. */
+  readonly brand = AUTH_ERROR_BRAND;
+
   constructor(
     readonly code: AuthErrorCode,
     /** Internal detail for logs. Never rendered. */
@@ -61,6 +81,21 @@ export class AuthError extends Error {
     super(message ?? code);
     this.name = 'AuthError';
   }
+}
+
+/**
+ * The check every catch block must use instead of `instanceof AuthError`.
+ *
+ * It verifies the code as well as the brand. A duck-typed guard that trusted
+ * `code` blindly would index AUTH_MESSAGE with an unknown key and render the
+ * string "undefined" to a customer.
+ */
+export function isAuthError(err: unknown): err is AuthError {
+  if (typeof err !== 'object' || err === null) return false;
+  const candidate = err as { brand?: unknown; code?: unknown };
+  return candidate.brand === AUTH_ERROR_BRAND
+    && typeof candidate.code === 'string'
+    && Object.prototype.hasOwnProperty.call(AUTH_MESSAGE, candidate.code);
 }
 
 /**
@@ -91,6 +126,17 @@ export interface AuthPort {
   readonly configured: boolean;
   /** Shown in the UI so a developer is never confused about which is live. */
   readonly name: string;
+  /**
+   * Whether a reset or verification link this port issues actually reaches an
+   * inbox.
+   *
+   * Supabase sends its own transactional mail, so for that adapter this is
+   * true. The development adapter hands its tokens to an email port that
+   * records messages instead of sending them, so it is false — and the
+   * recovery pages say so rather than accepting an address and leaving
+   * somebody waiting for a message that will never arrive (§01).
+   */
+  readonly deliversEmail: boolean;
 
   signUp(input: Credentials & { displayName?: string }): Promise<AuthResult>;
   signIn(input: Credentials): Promise<AuthResult>;

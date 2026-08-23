@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { getStandout, getMadeTheCut, getWeWouldHold } from '@/data/repository';
 import { composeIssue } from '@/newsletter/compose';
-import { emailConfigured } from '@/newsletter/email-port';
+import { emailConfigured } from '@/email/port';
 import { SubscribeForm } from '@/components/newsletter/SubscribeForm';
 
 export const metadata: Metadata = {

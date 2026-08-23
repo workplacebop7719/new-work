@@ -3,6 +3,7 @@ import {
   AuthError, assertPasswordStrong, isPlausibleEmail, normaliseEmail,
   type AuthPort, type AuthResult, type Credentials, type AuthUser,
 } from './types';
+import { email as defaultEmail, type EmailPort } from '@/email/port';
 
 /**
  * DEVELOPMENT AUTHENTICATION ADAPTER.
@@ -12,8 +13,14 @@ import {
  * It is the auth equivalent of the fixture dataset: real behaviour, obviously
  * not real infrastructure.
  *
- * State lives in memory and is lost on restart. There is no email delivery, so
- * reset and verification tokens are returned to the caller instead of sent.
+ * State lives in memory and is lost on restart.
+
+ * Recovery and verification links go through the app's email port, which
+ * currently records messages instead of sending them. That is why this adapter
+ * reports `deliversEmail: false` — the flow is genuinely exercisable, but
+ * nothing arrives, and the pages say so instead of leaving somebody waiting.
+ * `__pendingResetToken` and `__pendingVerifyToken` remain for tests and for
+ * driving the flow locally.
  *
  * THIS MUST NEVER RUN IN PRODUCTION. `createDevAuth` throws when NODE_ENV is
  * production, which is asserted by a test. A fake auth provider reaching
@@ -41,7 +48,9 @@ function verifyPassword(password: string, salt: string, expected: string): boole
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-export function createDevAuth(options: { now?: () => Date } = {}): AuthPort {
+export function createDevAuth(
+  options: { now?: () => Date; email?: EmailPort; baseUrl?: string } = {},
+): AuthPort {
   if (process.env.NODE_ENV === 'production') {
     throw new Error(
       'The development auth adapter cannot run in production. ' +
@@ -50,6 +59,27 @@ export function createDevAuth(options: { now?: () => Date } = {}): AuthPort {
   }
 
   const now = options.now ?? (() => new Date());
+  const mail = options.email ?? defaultEmail();
+  const baseUrl = options.baseUrl ?? process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3210';
+
+  /**
+   * Sends the message, and — only when nothing can actually deliver it —
+   * writes the link to the server log.
+   *
+   * Without this there is no way to complete a password reset locally at all,
+   * which would make the recovery pages unreviewable by hand. It is safe here
+   * and nowhere else: this whole adapter throws on construction under
+   * NODE_ENV=production, so the branch cannot exist in a deployed process.
+   * A reset link is a bearer credential, and the server log is the one place
+   * in development that only the developer running it can read — never the
+   * page, which anybody looking over a shoulder can.
+   */
+  async function deliver(message: Parameters<EmailPort['send']>[0]): Promise<void> {
+    await mail.send(message);
+    if (!mail.configured) {
+      console.info(`[dev auth] ${message.kind} for ${message.to} — ${message.body}`);
+    }
+  }
   const users = new Map<string, StoredUser>();          // email -> user
   const sessions = new Map<string, { userId: string; expiresAt: number }>();
   const resetTokens = new Map<string, string>();        // token -> email
@@ -75,6 +105,7 @@ export function createDevAuth(options: { now?: () => Date } = {}): AuthPort {
   } = {
     configured: true,
     name: 'development (in-memory)',
+    deliversEmail: false,
 
     async signUp({ email, password, displayName }) {
       const e = normaliseEmail(email);
@@ -92,7 +123,15 @@ export function createDevAuth(options: { now?: () => Date } = {}): AuthPort {
         hash: hashPassword(password, salt),
       };
       users.set(e, user);
-      verifyTokens.set(randomUUID(), e);
+
+      const verifyToken = randomUUID();
+      verifyTokens.set(verifyToken, e);
+      await deliver({
+        to: e,
+        kind: 'EMAIL_VERIFICATION',
+        subject: 'Confirm your email',
+        body: `Confirm your address: ${baseUrl}/verify-email?token=${verifyToken}`,
+      });
 
       return issue(user);
     },
@@ -125,11 +164,22 @@ export function createDevAuth(options: { now?: () => Date } = {}): AuthPort {
       return { user: publicUser(user), expiresAt: new Date(record.expiresAt).toISOString() };
     },
 
-    async requestPasswordReset(email) {
-      const e = normaliseEmail(email);
+    async requestPasswordReset(address) {
+      const e = normaliseEmail(address);
       // Always succeeds, whether or not the address exists — otherwise this
-      // endpoint reveals which addresses have accounts.
-      if (users.has(e)) resetTokens.set(randomUUID(), e);
+      // endpoint reveals which addresses have accounts. Note that no message is
+      // sent for an unknown address either: sending "you have no account here"
+      // would move the same disclosure from our response into their inbox.
+      if (!users.has(e)) return;
+
+      const token = randomUUID();
+      resetTokens.set(token, e);
+      await deliver({
+        to: e,
+        kind: 'PASSWORD_RESET',
+        subject: 'Reset your password',
+        body: `Set a new password: ${baseUrl}/reset-password?token=${token}`,
+      });
     },
 
     async resetPassword(token, newPassword) {

@@ -9,9 +9,9 @@ export const metadata: Metadata = { title: 'Sign in' };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ returnTo?: string }>;
+  searchParams: Promise<{ returnTo?: string; reset?: string }>;
 }) {
-  const { returnTo } = await searchParams;
+  const { returnTo, reset } = await searchParams;
   // Validated here, on the way in, not only on the way out.
   const destination = safeReturnTo(returnTo);
   const configured = auth().configured;
@@ -25,15 +25,32 @@ export default async function LoginPage({
         Your Watchlist is where you left it.
       </h1>
 
+      {/* Set by resetPasswordAction, which redirects here rather than signing
+          anybody in — see the note on that action. */}
+      {reset === '1' && (
+        <p
+          role="status"
+          className="measure mt-8 border-l-2 border-pink-ink bg-wash px-4 py-3 text-[0.875rem] leading-relaxed"
+        >
+          Your password is set. Every device that was signed in as you has been signed out, so
+          this is the first sign-in with the new one.
+        </p>
+      )}
+
       <AuthForm
         action={signInAction}
         submitLabel="Sign in"
         configured={configured}
         returnTo={destination}
         footer={
-          <p>
-            No account yet? <AuthLink href={`/signup?returnTo=${encodeURIComponent(destination)}`}>Create one</AuthLink>.
-          </p>
+          <>
+            <p>
+              No account yet? <AuthLink href={`/signup?returnTo=${encodeURIComponent(destination)}`}>Create one</AuthLink>.
+            </p>
+            <p className="mt-2">
+              <AuthLink href="/forgot-password">Forgot your password?</AuthLink>
+            </p>
+          </>
         }
       >
         <Field label="Email" name="email" type="email" autoComplete="email" />

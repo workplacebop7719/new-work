@@ -17,21 +17,32 @@ export function AuthForm({
   submitLabel,
   configured,
   returnTo,
+  hidden,
+  unavailableNote,
   children,
   footer,
 }: {
   action: (prev: FormState, data: FormData) => Promise<FormState>;
   submitLabel: string;
   configured: boolean;
-  returnTo: string;
-  children: React.ReactNode;
+  /** Omitted by the recovery forms, which have nowhere to come back to. */
+  returnTo?: string;
+  /** Extra hidden fields — the token a reset or verification link carries. */
+  hidden?: Record<string, string>;
+  /** Overrides the copy shown when the submit control is switched off. */
+  unavailableNote?: string;
+  /** Absent on verify-email, where everything needed came in the link. */
+  children?: React.ReactNode;
   footer: React.ReactNode;
 }) {
-  const [state, formAction, pending] = useActionState(action, { error: null });
+  const [state, formAction, pending] = useActionState(action, { error: null, notice: null });
 
   return (
     <form action={formAction} className="mt-12 max-w-[26rem]">
-      <input type="hidden" name="returnTo" value={returnTo} />
+      {returnTo !== undefined && <input type="hidden" name="returnTo" value={returnTo} />}
+      {Object.entries(hidden ?? {}).map(([name, value]) => (
+        <input key={name} type="hidden" name={name} value={value} />
+      ))}
 
       {state.error && (
         // role=alert announces the failure without stealing focus
@@ -43,7 +54,18 @@ export function AuthForm({
         </p>
       )}
 
-      <div className="space-y-7">{children}</div>
+      {/* role=status, not alert: a confirmation is not an error, and it should
+          be announced politely rather than interrupting. */}
+      {state.notice && (
+        <p
+          role="status"
+          className="mb-8 border-l-2 border-pink-ink bg-wash px-4 py-3 text-[0.875rem] leading-snug"
+        >
+          {state.notice}
+        </p>
+      )}
+
+      {children && <div className="space-y-7">{children}</div>}
 
       <div className="mt-10">
         {configured ? (
@@ -65,8 +87,8 @@ export function AuthForm({
               {submitLabel}
             </button>
             <p id="auth-unavailable" className="mt-3 text-[0.75rem] leading-snug text-ink-50">
-              Accounts aren’t switched on yet — this needs credentials we don’t have. Nothing you
-              typed here would be saved, so we’ve left the button off rather than pretend.
+              {unavailableNote ??
+                'Accounts aren’t switched on yet — this needs credentials we don’t have. Nothing you typed here would be saved, so we’ve left the button off rather than pretend.'}
             </p>
           </>
         )}

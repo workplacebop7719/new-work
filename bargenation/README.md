@@ -25,6 +25,7 @@ npm test
 npm run build
 npm run contrast   # WCAG AA guard over the shipped tokens
 npm run smoke      # end-to-end member flow in a real browser (needs a dev server)
+npm run smoke:recovery   # forgot / reset / verify, driven the same way
 npm run signals    # one Deal Signal sweep (connects as the jobs role)
 npm run ingest     # one ingestion pass from a local records file
 npm run legal      # guard: no compliance claims, no invented company details
@@ -112,7 +113,8 @@ src/data/        repository (the only module that knows where deals come from),
 src/auth/        typed port, dev + supabase adapters, return-url allowlist
 src/ingest/      source port, normalisation, product matching, watchdog, pipeline
 src/content/     legal document metadata and the details we do not yet have
-src/newsletter/  issue composition, email port, subscription and consent
+src/newsletter/  issue composition, subscription and consent
+src/email/       the delivery port both The Edit and account recovery use
 src/app/app/     the member portal, behind a real session check
 src/db/          pooled client, schema, parity and signal-job tests
 db/migrations/   … 0007 adds the narrowly-granted signal job role
@@ -125,8 +127,10 @@ shot.mjs         visual QA — screenshots every page at 375 / 768 / 1440
 ## Built
 
 **Public** — `/` · `/today` · `/search` · `/categories` · `/categories/[slug]` ·
-`/deals/[slug]` · `/stores` · `/stores/[slug]` · `/how-it-works` · `/login` ·
-`/signup` · `404`
+`/deals/[slug]` · `/stores` · `/stores/[slug]` · `/how-it-works` · `404`
+
+**Accounts** — `/login` · `/signup` · `/forgot-password` · `/reset-password` ·
+`/verify-email`
 
 **Member portal** — `/app/watchlist` · `/app/saved` · `/app/deal-signals` ·
 `/app/account`
@@ -145,7 +149,8 @@ visibly disabled with the reason, and no navigation links to them.
 | Area | Blocked on |
 |---|---|
 | Real sign-in (architecture and portal built, forms disabled) | Supabase Auth credentials |
-| Forgot / reset / verify-email pages | the next slice |
+| Delivering recovery and confirmation links (the flow itself is built) | an email provider credential |
+| Rate limiting the recovery endpoints | somewhere to keep counters — a slice of its own |
 | Sending The Edit (composition and signup are built) | an email provider credential |
 | Affiliate `/go/[offer]` redirects | an affiliate account |
 | Admin platform | depends on authentication |

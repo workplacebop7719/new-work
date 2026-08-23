@@ -87,6 +87,8 @@ export function createSupabaseAuth(): AuthPort {
   return {
     configured: true,
     name: 'supabase',
+    // Supabase owns delivery of its own recovery and confirmation mail.
+    deliversEmail: true,
 
     async signUp({ email, password, displayName }) {
       const e = normaliseEmail(email);
@@ -164,6 +166,7 @@ export function unconfigured(): AuthPort {
   return {
     configured: false,
     name: 'unconfigured',
+    deliversEmail: false,
     signUp: refuse,
     signIn: refuse,
     signOut: async () => undefined,

@@ -9,6 +9,11 @@
  * adapter cannot exist yet. What exists is the shape it will implement, and a
  * development adapter that records what WOULD have been sent — which is
  * enough to build and test every flow that depends on delivery.
+ *
+ * It lives here rather than under `newsletter/` because two unrelated parts of
+ * the product now send mail: The Edit, and the account-recovery flows. An
+ * `auth/` module reaching into `newsletter/` for a transport would be a
+ * layering error that the import graph would happily allow.
  */
 
 export interface Message {
@@ -17,7 +22,12 @@ export interface Message {
   /** Plain text. HTML templates come with the real provider. */
   body: string;
   /** Which flow produced this, for logging and for tests. */
-  kind: 'CONFIRM_SUBSCRIPTION' | 'EDIT_ISSUE' | 'DEAL_SIGNAL';
+  kind:
+    | 'CONFIRM_SUBSCRIPTION'
+    | 'EDIT_ISSUE'
+    | 'DEAL_SIGNAL'
+    | 'PASSWORD_RESET'
+    | 'EMAIL_VERIFICATION';
 }
 
 export interface EmailPort {

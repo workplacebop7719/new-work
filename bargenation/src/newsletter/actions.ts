@@ -1,7 +1,7 @@
 'use server';
 
 import { requestSubscription } from './subscribe';
-import { email } from './email-port';
+import { email } from '@/email/port';
 import { memberFeaturesAvailable } from '@/data/member-repository';
 
 /**

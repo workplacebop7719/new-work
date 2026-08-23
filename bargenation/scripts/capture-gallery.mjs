@@ -41,6 +41,7 @@ const PAGES = [
   ['app-watchlist', '/app/watchlist', 'Portal — Watchlist', true],
   ['app-saved', '/app/saved', 'Portal — Saved', true],
   ['app-signals', '/app/deal-signals', 'Portal — Deal Signals', true],
+  ['app-household', '/app/household', 'Portal — Household, leading with what there is nowhere to put', true],
   ['app-noticed', '/app/noticed', 'Portal — What we noticed, switched off by default', true],
   ['app-account', '/app/account', 'Portal — Account', true],
   ['admin', '/admin', 'Operations — overview', true],

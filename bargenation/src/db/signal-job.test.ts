@@ -348,3 +348,157 @@ d('a watch on a whole retailer', () => {
     expect(active.retailerWatchesExamined).toBe(paused.retailerWatchesExamined + 1);
   });
 });
+
+/**
+ * INTEREST ALERTS AND THE PRIVILEGE BOUNDARY (§26, §52).
+ *
+ * Two things are being proven. That a member who opted in gets an alert about
+ * something they kept looking at and never watched — and, more importantly,
+ * that the job still cannot read the tables migration 0007 denies it, because
+ * the obvious implementation of this feature read both of them.
+ */
+d('interest alerts', () => {
+  const MEMBER = 'dddddddd-0000-4000-8000-00000000000a';
+  const FREEBIE = 'dddddddd-0000-4000-8000-00000000000b';
+  const NOW = new Date('2026-08-23T12:00:00Z');
+
+  let admin: pg.Client;
+  let sweep: typeof import('@/data/signal-runner').sweepDealSignals;
+  let productSlug: string;
+
+  beforeAll(async () => {
+    admin = new pg.Client({ connectionString: ADMIN_URL });
+    await admin.connect();
+    await admin.query('delete from profiles where id = any($1::uuid[])', [[MEMBER, FREEBIE]]);
+
+    const stamp = `interest-${Date.now()}`;
+    productSlug = stamp;
+    await admin.query(
+      `insert into retailers (slug, name) values ($1, 'Interest Test')`, [`${stamp}-r`],
+    );
+    await admin.query(
+      `insert into products (slug, name, category_id)
+       values ($1, 'Interest Test Item', (select id from categories order by sort_order limit 1))`,
+      [productSlug],
+    );
+    const offer = await admin.query<{ id: string }>(
+      `insert into offers (product_id, retailer_id, source_id, price_cents, is_sample_data,
+                           last_verified_at, in_stock)
+       values ((select id from products where slug = $1),
+               (select id from retailers where slug = $2),
+               (select id from data_sources where tier = 1 limit 1),
+               3000, false, $3, true)
+       returning id`,
+      [productSlug, `${stamp}-r`, NOW],
+    );
+    const offerId = offer.rows[0]!.id;
+
+    // A long fall to a genuine low, so the ordinary pipeline scores it highly.
+    const prices = [...Array.from({ length: 40 }, (_, i) => 9000 - i * 20), 3000];
+    for (const [i, price] of prices.entries()) {
+      await admin.query(
+        `insert into price_observations (offer_id, price_cents, in_stock, observed_at, source_id)
+         values ($1, $2, true, $3, (select id from data_sources where tier = 1 limit 1))`,
+        [offerId, price, new Date(NOW.getTime() - (prices.length - i) * 86_400_000)],
+      );
+    }
+
+    for (const [id, membership] of [[MEMBER, 'MEMBER'], [FREEBIE, 'FREE']] as const) {
+      await admin.query(
+        `insert into profiles (id, display_name, membership) values ($1, $2, $3)`,
+        [id, membership, membership],
+      );
+      await admin.query(
+        `insert into preferences (profile_id, settings)
+         values ($1, '{"behaviourAlerts": true}'::jsonb)`, [id],
+      );
+      // Both looked at it the same number of times.
+      await admin.query(
+        `insert into interest_events (profile_id, product_id, kind, occurrences)
+         values ($1, (select id from products where slug = $2), 'VIEWED', 5)`,
+        [id, productSlug],
+      );
+    }
+
+    ({ sweepDealSignals: sweep } = await import('@/data/signal-runner'));
+  });
+
+  afterAll(async () => {
+    await admin?.query('delete from profiles where id = any($1::uuid[])', [[MEMBER, FREEBIE]]);
+    await admin?.end();
+  });
+
+  it('tells a member about something they kept looking at', async () => {
+    await sweep(JOB_URL!, NOW);
+    const { rows } = await admin.query<{ kind: string; message: string }>(
+      'select kind, message from deal_signals where profile_id = $1', [MEMBER],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.kind).toBe('NOTICED');
+    expect(rows[0]!.message).toMatch(/keep coming back/i);
+    // The reason travels with it, so nobody is messaged without being told why.
+    expect(rows[0]!.message).toMatch(/looked at this 5 times/i);
+  });
+
+  /**
+   * §52 as a database assertion. The free customer has an identical interest
+   * history — same product, same count, same consent. The only difference is
+   * that nobody is paying, and inference is the thing being paid for.
+   */
+  it('does not act on an identical history for a free customer', async () => {
+    const { rows } = await admin.query<{ n: number }>(
+      'select count(*)::int as n from deal_signals where profile_id = $1', [FREEBIE],
+    );
+    expect(rows[0]!.n).toBe(0);
+  });
+
+  it('does not repeat itself on the next sweep', async () => {
+    await sweep(JOB_URL!, NOW);
+    const { rows } = await admin.query<{ n: number }>(
+      'select count(*)::int as n from deal_signals where profile_id = $1', [MEMBER],
+    );
+    expect(rows[0]!.n).toBe(1);
+  });
+
+  it('counts the members it looked at', async () => {
+    const result = await sweep(JOB_URL!, NOW);
+    expect(result.membersExamined).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * The boundary that caught the first version of interest alerts.
+ */
+d('the job still cannot read who anybody is', () => {
+  let job: pg.Client;
+
+  beforeAll(async () => {
+    job = new pg.Client({ connectionString: JOB_URL });
+    await job.connect();
+  });
+  afterAll(async () => { await job?.end(); });
+
+  it('cannot read profiles or preferences, even now that it needs one field', async () => {
+    await expect(job.query('select membership from profiles limit 1')).rejects.toThrow(/permission/i);
+    await expect(job.query('select settings from preferences limit 1')).rejects.toThrow(/permission/i);
+  });
+
+  /** It asks a question instead, and the answer is ids and nothing else. */
+  it('may call the function that answers the one thing it needs', async () => {
+    const { rows, fields } = await job.query('select interest_alert_recipients() as id');
+    expect(fields.map((f) => f.name)).toEqual(['id']);
+    expect(Array.isArray(rows)).toBe(true);
+  });
+
+  it('can read interest counts, which is what it sweeps', async () => {
+    await expect(job.query('select count(*) from interest_events')).resolves.toBeTruthy();
+  });
+
+  it('cannot write or erase somebody’s interest history', async () => {
+    await expect(job.query('delete from interest_events')).rejects.toThrow(/permission/i);
+    await expect(
+      job.query(`insert into interest_events (profile_id, product_id, kind)
+                 values (gen_random_uuid(), gen_random_uuid(), 'VIEWED')`),
+    ).rejects.toThrow(/permission/i);
+  });
+});

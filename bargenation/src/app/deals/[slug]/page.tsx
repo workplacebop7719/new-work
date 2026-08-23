@@ -8,6 +8,7 @@ import { RecommendationMark, RecommendationLine } from '@/components/deal/Recomm
 import { PriceHistoryChart } from '@/components/deal/PriceHistoryChart';
 import { DealCard } from '@/components/deal/DealCard';
 import { DealActions } from '@/components/deal/DealActions';
+import { NoteInterest } from '@/components/member/NoteInterest';
 
 export async function generateStaticParams() {
   return (await getDeals()).map((d) => ({ slug: d.offer.product.slug }));
@@ -38,6 +39,8 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
 
   return (
     <article className="mx-auto max-w-[1600px] px-5 pb-24 pt-10 sm:px-8">
+      {/* Records nothing unless the customer is signed in AND has asked us to. */}
+      <NoteInterest productSlug={offer.product.slug} />
       <nav aria-label="Breadcrumb" className="eyebrow text-ink-50">
         <Link href="/today" className="link-grow">Today</Link>
         <span className="mx-2" aria-hidden="true">/</span>

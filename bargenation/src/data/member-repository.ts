@@ -384,6 +384,8 @@ export interface AccountExport {
   } | null;
   saved: SavedRow[];
   watchlist: WatchlistItemRow[];
+  /** What we noticed, when the customer turned that on. */
+  noticed: InterestRow[];
   dealSignals: Array<{ kind: string; message: string; createdAt: string; readAt: string | null }>;
 }
 
@@ -436,6 +438,7 @@ export async function exportAccount(profileId: string): Promise<AccountExport> {
         : null,
       saved: await listSaved(profileId),
       watchlist: await listWatchlist(profileId),
+      noticed: await listInterests(profileId),
       dealSignals: signals.rows.map((sig) => ({
         kind: sig.kind,
         message: sig.message,
@@ -509,5 +512,132 @@ export async function eraseAccount(profileId: string): Promise<void> {
       }
       throw err;
     }
+  });
+}
+
+/* ============================================================
+   INTEREST — WHAT WE NOTICED (§26, §37, §52)
+   ============================================================ */
+
+/**
+ * Recording interest is OPT IN, and this is the only door to it.
+ *
+ * Nothing is written for a signed-out visitor, and nothing is written for a
+ * signed-in customer who has not turned it on. The check lives here rather
+ * than at the call site so that a new surface which forgets to ask still
+ * records nothing — the safe default is the one you get by not thinking about
+ * it.
+ *
+ * What is stored is a COUNT PER DAY, never an instant. No IP, no user agent,
+ * no referrer, no session id, no dwell time. Enough to tell "came back four
+ * times" from "glanced once", and not enough to reconstruct an afternoon.
+ */
+export type InterestKind = 'VIEWED' | 'SEARCHED' | 'CONSIDERED';
+
+export const BEHAVIOUR_ALERTS_KEY = 'behaviourAlerts';
+
+export async function behaviourAlertsEnabled(profileId: string): Promise<boolean> {
+  assertAvailable();
+  return asCustomer(profileId, async (client) => {
+    const { rows } = await client.query<{ settings: Record<string, unknown> }>(
+      'select settings from preferences limit 1',
+    );
+    return rows[0]?.settings?.[BEHAVIOUR_ALERTS_KEY] === true;
+  });
+}
+
+export async function setBehaviourAlerts(profileId: string, enabled: boolean): Promise<void> {
+  assertAvailable();
+  await asCustomer(profileId, async (client) => {
+    await client.query(
+      `insert into preferences (profile_id, settings)
+       values ($1, jsonb_build_object($2::text, $3::boolean))
+       on conflict (profile_id) do update
+         set settings = preferences.settings || jsonb_build_object($2::text, $3::boolean),
+             updated_at = now()`,
+      [profileId, BEHAVIOUR_ALERTS_KEY, enabled],
+    );
+
+    // Turning it off is not a promise to stop collecting — it is a promise
+    // that what was collected is gone. Anything less makes the switch a
+    // setting rather than a decision.
+    if (!enabled) await client.query('delete from interest_events');
+  });
+}
+
+export async function recordInterest(
+  profileId: string, subject: { productSlug: string }, kind: InterestKind = 'VIEWED',
+): Promise<void> {
+  if (!memberFeaturesAvailable) return;
+  if (!(await behaviourAlertsEnabled(profileId))) return;
+
+  await asCustomer(profileId, async (client) => {
+    await client.query(
+      `insert into interest_events (profile_id, product_id, kind)
+       select $1, p.id, $3 from products p where p.slug = $2
+       on conflict (profile_id, product_id, category_id, kind, observed_on)
+         do update set occurrences = interest_events.occurrences + 1`,
+      [profileId, subject.productSlug, kind],
+    );
+  });
+}
+
+export interface InterestRow {
+  productSlug: string | null;
+  productName: string | null;
+  kind: string;
+  occurrences: number;
+  lastSeenOn: string;
+}
+
+/** Summed per product, which is the shape the domain layer reasons about. */
+export async function listInterests(profileId: string): Promise<InterestRow[]> {
+  assertAvailable();
+  return asCustomer(profileId, async (client) => {
+    const { rows } = await client.query<{
+      slug: string | null; name: string | null; kind: string;
+      occurrences: string; last_seen: Date;
+    }>(
+      `select p.slug, p.name, i.kind,
+              sum(i.occurrences) as occurrences,
+              max(i.observed_on) as last_seen
+       from interest_events i
+       left join products p on p.id = i.product_id
+       group by p.slug, p.name, i.kind
+       order by sum(i.occurrences) desc, p.slug asc`,
+    );
+    return rows.map((r) => ({
+      productSlug: r.slug,
+      productName: r.name,
+      kind: r.kind,
+      occurrences: Number(r.occurrences),
+      lastSeenOn: r.last_seen.toISOString().slice(0, 10),
+    }));
+  });
+}
+
+export async function clearInterests(profileId: string): Promise<void> {
+  assertAvailable();
+  await asCustomer(profileId, async (client) => {
+    // No predicate: RLS scopes it to the caller's own rows.
+    await client.query('delete from interest_events');
+  });
+}
+
+/**
+ * Membership, which is a flag and not a payments integration.
+ *
+ * There is no way to buy this — no provider is configured and the price is
+ * not decided. An operator sets it for a real member once both exist. The
+ * account page says exactly that rather than showing an upgrade button that
+ * goes nowhere (§01).
+ */
+export async function readMembership(profileId: string): Promise<'FREE' | 'MEMBER'> {
+  assertAvailable();
+  return asCustomer(profileId, async (client) => {
+    const { rows } = await client.query<{ membership: string }>(
+      'select membership from profiles limit 1',
+    );
+    return rows[0]?.membership === 'MEMBER' ? 'MEMBER' : 'FREE';
   });
 }

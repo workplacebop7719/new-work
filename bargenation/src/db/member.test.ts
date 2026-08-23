@@ -314,6 +314,75 @@ d('member repository isolation', () => {
     });
   });
 
+  /**
+   * INTEREST (§37, §52).
+   *
+   * The consent switch is the whole feature's licence to exist, so the tests
+   * that matter are: nothing is recorded without it, and turning it off
+   * ERASES rather than merely stopping.
+   */
+  describe('what we noticed', () => {
+    it('is off until the customer turns it on', async () => {
+      expect(await repo.behaviourAlertsEnabled(ALICE)).toBe(false);
+    });
+
+    /** The load-bearing one: no consent, no row. Not "a row we ignore". */
+    it('records nothing at all while it is off', async () => {
+      await repo.recordInterest(ALICE, { productSlug: slugA });
+      expect(await repo.listInterests(ALICE)).toHaveLength(0);
+    });
+
+    it('records a count once it is on', async () => {
+      await repo.setBehaviourAlerts(ALICE, true);
+      await repo.recordInterest(ALICE, { productSlug: slugA });
+      await repo.recordInterest(ALICE, { productSlug: slugA });
+
+      const rows = await repo.listInterests(ALICE);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]!.productSlug).toBe(slugA);
+      expect(rows[0]!.occurrences).toBe(2);
+    });
+
+    it('never shows one customer what another looked at', async () => {
+      await repo.setBehaviourAlerts(BOB, true);
+      expect(await repo.listInterests(BOB)).toHaveLength(0);
+    });
+
+    /**
+     * Turning it off is not a promise to stop collecting. It is a promise
+     * that what was collected is gone — anything less makes the switch a
+     * setting rather than a decision.
+     */
+    it('erases everything when it is turned off', async () => {
+      await repo.setBehaviourAlerts(ALICE, true);
+      await repo.recordInterest(ALICE, { productSlug: slugA });
+      expect((await repo.listInterests(ALICE)).length).toBeGreaterThan(0);
+
+      await repo.setBehaviourAlerts(ALICE, false);
+      expect(await repo.listInterests(ALICE)).toHaveLength(0);
+      expect(await repo.behaviourAlertsEnabled(ALICE)).toBe(false);
+    });
+
+    it('lets the customer delete it without turning the feature off', async () => {
+      await repo.setBehaviourAlerts(ALICE, true);
+      await repo.recordInterest(ALICE, { productSlug: slugA });
+      await repo.clearInterests(ALICE);
+
+      expect(await repo.listInterests(ALICE)).toHaveLength(0);
+      expect(await repo.behaviourAlertsEnabled(ALICE)).toBe(true);
+    });
+
+    it('appears in the export, because it is data we hold about them', async () => {
+      await repo.recordInterest(ALICE, { productSlug: slugA });
+      const dump = await repo.exportAccount(ALICE);
+      expect(dump.noticed.map((row) => row.productSlug)).toContain(slugA);
+    });
+
+    it('nobody is a member until somebody makes them one', async () => {
+      expect(await repo.readMembership(ALICE)).toBe('FREE');
+    });
+  });
+
   describe('erasure', () => {
     const VICTIM = 'cccccccc-0000-4000-8000-000000000003';
 
@@ -338,11 +407,14 @@ d('member repository isolation', () => {
         `insert into deal_signals (profile_id, kind, message)
          values ($1, 'PRICE_DROPPED', 'test signal')`, [VICTIM],
       );
+      await repo.setBehaviourAlerts(VICTIM, true);
+      await repo.recordInterest(VICTIM, { productSlug: slugA });
 
       await repo.eraseAccount(VICTIM);
 
       for (const table of [
         'profiles', 'saved_items', 'watchlists', 'deal_signals', 'households',
+        'interest_events', 'preferences',
       ]) {
         const column = table === 'profiles' ? 'id'
           : table === 'households' ? 'owner_profile_id' : 'profile_id';

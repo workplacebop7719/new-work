@@ -10,6 +10,7 @@ const MEMBER_NAV = [
   { href: '/app/watchlist', label: 'Watchlist' },
   { href: '/app/saved', label: 'Saved' },
   { href: '/app/deal-signals', label: 'Deal Signals' },
+  { href: '/app/noticed', label: 'What we noticed' },
   { href: '/app/account', label: 'Account' },
 ] as const;
 

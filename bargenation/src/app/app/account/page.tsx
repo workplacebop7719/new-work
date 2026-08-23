@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { readSession } from '@/auth/session';
+import { memberFeaturesAvailable, readMembership } from '@/data/member-repository';
 import { auth } from '@/auth';
 import Link from 'next/link';
 import { NotBuiltYet } from '@/components/ui/NotBuiltYet';
@@ -20,6 +21,7 @@ export default async function AccountPage() {
 
   const { user } = session;
   const provider = auth().name;
+  const membership = memberFeaturesAvailable ? await readMembership(user.id) : 'FREE';
 
   return (
     <div className="max-w-[46rem] space-y-14">
@@ -82,9 +84,17 @@ export default async function AccountPage() {
 
       <section>
         <h2 className="display display-md border-b border-line pb-4">Membership</h2>
-        <p className="mt-5 text-[0.9375rem] leading-relaxed text-ink-70">
-          You’re on the free tier. There is no paid tier yet — when there is, the free product
-          stays genuinely useful.
+        <p className="measure mt-5 text-[0.9375rem] leading-relaxed text-ink-70">
+          {membership === 'MEMBER'
+            ? 'Your account is marked as a member, which adds alerts about things you keep coming back to.'
+            : 'You’re on the free tier. There is no paid tier to buy yet — no price is set and no payments are configured, so there is no upgrade button here rather than one that goes nowhere.'}
+        </p>
+        <p className="measure mt-4 text-[0.8125rem] leading-relaxed text-ink-50">
+          Whatever changes, membership will never buy a better Value Index, a different Buy or
+          Hold call, or a Watchlist alert that arrives sooner. A free customer’s Watchlist fires
+          at exactly the same moment as a member’s. What membership adds is us looking at the
+          things you never got round to adding —{' '}
+          <Link href="/app/noticed" className="link-grow text-pink-ink">what we noticed</Link>.
         </p>
       </section>
 

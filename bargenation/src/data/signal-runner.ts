@@ -1,4 +1,5 @@
 import pg from 'pg';
+import { noticeSomething, type InterestRecord } from '@/domain/interest';
 import {
   evaluateSignals,
   evaluateRetailerWatch,
@@ -33,6 +34,8 @@ import type { SourceTier } from '@/domain/confidence';
 
 export interface SweepResult {
   watchesExamined: number;
+  /** Members whose interest history was looked at. Free customers are not. */
+  membersExamined: number;
   /** Of those, watches whose subject is a whole retailer rather than an item. */
   retailerWatchesExamined: number;
   signalsCreated: number;
@@ -184,6 +187,7 @@ export async function sweepDealSignals(
 
   const result: SweepResult = {
     watchesExamined: 0,
+    membersExamined: 0,
     retailerWatchesExamined: 0,
     signalsCreated: 0,
     byKind: {},
@@ -317,11 +321,147 @@ export async function sweepDealSignals(
       if (chosen) pending.push({ ...chosen, profileId: w.profile_id });
     }
 
+    /* ------------------------------------------------------------
+       INTEREST (§26, §52)
+
+       Membership adds INFERENCE. It never subtracts SERVICE — every watch
+       above was evaluated before this block runs, with no knowledge of who is
+       paying, and nothing here can change or delay one of them. This looks at
+       the things a member never got round to adding.
+
+       Interest is read only for customers who turned it on AND are members.
+       A free customer's interest history is never read here at all, which is
+       both the honest reading of consent and the cheapest way to be sure the
+       distinction cannot leak into the paths above.
+       ------------------------------------------------------------ */
+    // Asks a question rather than reading a table. Migration 0007 denies this
+    // role `profiles` and `preferences` outright, and it was right to — the
+    // first version of this block read both and was refused. The function
+    // returns ids and nothing else; see migration 0015.
+    const { rows: members } = await client.query<{ profile_id: string }>(
+      'select interest_alert_recipients() as profile_id',
+    );
+    result.membersExamined = members.length;
+
+    if (members.length > 0) {
+      const memberIds = members.map((m) => m.profile_id);
+
+      const { rows: interestRows } = await client.query<{
+        profile_id: string; slug: string | null; kind: string;
+        occurrences: string; last_seen: Date;
+      }>(
+        `select i.profile_id, p.slug, i.kind,
+                sum(i.occurrences) as occurrences, max(i.observed_on) as last_seen
+         from interest_events i
+         join products p on p.id = i.product_id
+         where i.profile_id = any($1::uuid[])
+         group by i.profile_id, p.slug, i.kind`,
+        [memberIds],
+      );
+
+      // What they already watch, and what we have already mentioned: both are
+      // "do not say this twice" rather than "do not say this".
+      const { rows: watchedRows } = await client.query<{ profile_id: string; slug: string }>(
+        `select w.profile_id, p.slug
+         from watchlist_items wi
+         join watchlists w on w.id = wi.watchlist_id
+         join products p on p.id = wi.product_id
+         where w.profile_id = any($1::uuid[])`,
+        [memberIds],
+      );
+      const { rows: toldRows } = await client.query<{ profile_id: string; slug: string }>(
+        `select s.profile_id, p.slug
+         from deal_signals s
+         join offers o on o.id = s.offer_id
+         join products p on p.id = o.product_id
+         where s.profile_id = any($1::uuid[])
+           and s.kind = 'NOTICED'
+           and s.created_at > now() - interval '90 days'`,
+        [memberIds],
+      );
+
+      const group = <T extends { profile_id: string }>(rows: T[], pick: (row: T) => string) => {
+        const out = new Map<string, string[]>();
+        for (const row of rows) {
+          const list = out.get(row.profile_id) ?? [];
+          list.push(pick(row));
+          out.set(row.profile_id, list);
+        }
+        return out;
+      };
+      const watchedByProfile = group(watchedRows, (r) => r.slug);
+      const toldByProfile = group(toldRows, (r) => r.slug);
+
+      const interestByProfile = new Map<string, InterestRecord[]>();
+      for (const row of interestRows) {
+        if (!row.slug) continue;
+        const list = interestByProfile.get(row.profile_id) ?? [];
+        list.push({
+          productSlug: row.slug,
+          categorySlug: null,
+          kind: row.kind as InterestRecord['kind'],
+          occurrences: Number(row.occurrences),
+          lastSeenOn: row.last_seen.toISOString().slice(0, 10),
+        });
+        interestByProfile.set(row.profile_id, list);
+      }
+
+      // Every offer we currently score, so inference reads the same pipeline
+      // output as everything else rather than a second, divergent view.
+      const { rows: catalogue } = await client.query<OfferRow>(
+        OFFERS_AT_RETAILER_SQL.replace(
+          'where o.retailer_id = any($1::uuid[])', 'where o.in_stock = true',
+        ),
+      );
+      const catalogueOfferIds = catalogue.map((row) => row.offer_id);
+
+      const { rows: catObs } = await client.query<{
+        offer_id: string; price_cents: number; in_stock: boolean; observed_at: Date;
+      }>(
+        `select offer_id, price_cents, in_stock, observed_at
+         from price_observations where offer_id = any($1::uuid[]) order by observed_at asc`,
+        [catalogueOfferIds],
+      );
+      const catHistory = new Map<string, PriceObservation[]>();
+      for (const r of catObs) {
+        const list = catHistory.get(r.offer_id) ?? [];
+        list.push({
+          priceCents: r.price_cents, inStock: r.in_stock,
+          observedAt: r.observed_at.toISOString(),
+        });
+        catHistory.set(r.offer_id, list);
+      }
+
+      const scored: Deal[] = catalogue.map((row) =>
+        scoreOffer(toOffer(row, catHistory, competitors, now), now),
+      );
+
+      for (const { profile_id: profileId } of members) {
+        const noticed = noticeSomething({
+          interests: interestByProfile.get(profileId) ?? [],
+          deals: scored,
+          watchedSlugs: watchedByProfile.get(profileId) ?? [],
+          alreadyMentionedSlugs: toldByProfile.get(profileId) ?? [],
+        });
+        if (!noticed) continue;
+
+        pending.push({
+          kind: 'NOTICED',
+          itemId: '',
+          offerId: noticed.offerId,
+          message: `${noticed.message} ${noticed.because}`,
+          profileId,
+        });
+      }
+    }
+
     for (const signal of pending) {
       await client.query(
         `insert into deal_signals (profile_id, watchlist_item_id, offer_id, kind, message)
          values ($1, $2, $3, $4, $5)`,
-        [signal.profileId, signal.itemId, signal.offerId, signal.kind, signal.message],
+        // A noticed-signal has no watchlist item: nobody asked for it, which
+        // is the whole point, so the column is null rather than invented.
+        [signal.profileId, signal.itemId || null, signal.offerId, signal.kind, signal.message],
       );
       result.signalsCreated++;
       result.byKind[signal.kind] = (result.byKind[signal.kind] ?? 0) + 1;

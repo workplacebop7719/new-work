@@ -28,6 +28,7 @@ npm run smoke      # end-to-end member flow in a real browser (needs a dev serve
 npm run smoke:recovery   # forgot / reset / verify, driven the same way
 npm run smoke:account    # change password, export, delete
 npm run smoke:challenge  # the bot challenge on sign-up and reset
+npm run smoke:noticed    # behaviour alerts: consent, recording, erasure
 npm run signals    # one Deal Signal sweep (connects as the jobs role)
 npm run ingest     # one ingestion pass from a local records file
 npm run legal      # guard: no compliance claims, no invented company details
@@ -56,7 +57,9 @@ See [docs/DATABASE.md](docs/DATABASE.md) for what the schema guarantees and why,
 [docs/RETAILERS.md](docs/RETAILERS.md) for how a verdict about a named business
 is derived and when it refuses to give one, and
 [docs/BOT-RESISTANCE.md](docs/BOT-RESISTANCE.md) for why there is no captcha
-vendor and what stands in for one.
+vendor and what stands in for one, and
+[docs/BEHAVIOUR-ALERTS.md](docs/BEHAVIOUR-ALERTS.md) for how membership adds
+inference without ever subtracting service.
 
 ## The rules that are actually enforced
 
@@ -141,7 +144,7 @@ shot.mjs         visual QA — screenshots every page at 375 / 768 / 1440
 `/app/account/delete`
 
 **Member portal** — `/app/watchlist` · `/app/saved` · `/app/deal-signals` ·
-`/app/account`
+`/app/noticed` · `/app/account`
 
 **Operations** — `/admin` · `/admin/review` · `/admin/quarantine`
 
@@ -159,6 +162,7 @@ visibly disabled with the reason, and no navigation links to them.
 | Real sign-in (architecture and portal built, forms disabled) | Supabase Auth credentials |
 | Delivering recovery and confirmation links (the flow itself is built) | an email provider credential |
 | Rate limiting the recovery endpoints | somewhere to keep counters — a slice of its own |
+| Selling membership (the tier itself works; an operator sets the flag) | a price and a payment provider |
 | Sending The Edit (composition and signup are built) | an email provider credential |
 | Affiliate `/go/[offer]` redirects | an affiliate account |
 | Admin platform | depends on authentication |

@@ -87,3 +87,38 @@ export async function toggleWatchPausedAction(formData: FormData): Promise<void>
   await member.setWatchPaused(profileId, itemId, !paused);
   revalidatePath('/app/watchlist');
 }
+
+/* ============================================================
+   INTEREST (§26, §37)
+   ============================================================ */
+
+/**
+ * Records that a signed-in, consenting customer looked at something.
+ *
+ * Silently does nothing for everybody else — an anonymous visitor, or a
+ * customer who has not turned this on. Deliberately NOT a redirect to sign in
+ * like the other actions: this is not something anybody asked to do, so
+ * interrupting a page view with a login prompt would be absurd.
+ */
+export async function noteInterestAction(productSlug: string): Promise<void> {
+  if (!member.memberFeaturesAvailable) return;
+  const session = await readSession();
+  if (!session) return;
+  if (typeof productSlug !== 'string' || productSlug.length === 0) return;
+
+  await member.recordInterest(session.user.id, { productSlug }, 'VIEWED');
+}
+
+export async function setBehaviourAlertsAction(formData: FormData): Promise<void> {
+  const enabled = String(formData.get('enabled') ?? '') === 'true';
+  const profileId = await requireProfileId('/app/noticed');
+  await member.setBehaviourAlerts(profileId, enabled);
+  revalidatePath('/app/noticed');
+  revalidatePath('/app/account');
+}
+
+export async function clearInterestsAction(): Promise<void> {
+  const profileId = await requireProfileId('/app/noticed');
+  await member.clearInterests(profileId);
+  revalidatePath('/app/noticed');
+}

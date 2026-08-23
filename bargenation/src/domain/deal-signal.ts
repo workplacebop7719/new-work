@@ -28,7 +28,14 @@ export type SignalKind =
   | 'PRICE_DROPPED'
   | 'BETTER_RETAILER_PRICE'
   | 'BACK_IN_STOCK'
-  | 'UNUSUALLY_STRONG';
+  | 'UNUSUALLY_STRONG'
+  /**
+   * Inferred rather than asked for — see domain/interest.ts. It is listed
+   * here because it lands in the same table and honours the same quiet
+   * period, and LAST in PRIORITY below because something the customer
+   * explicitly asked to hear about always outranks something we noticed.
+   */
+  | 'NOTICED';
 
 /** A drop must clear BOTH thresholds to be worth an interruption. */
 export const MIN_DROP_FRACTION = 0.05;   // 5% off the previous price
@@ -61,6 +68,9 @@ export const COOLDOWN_DAYS: Record<SignalKind, number> = {
   BETTER_RETAILER_PRICE: 7,
   BACK_IN_STOCK: 14,
   UNUSUALLY_STRONG: 14,
+  // The longest of them all. Nobody asked to hear this, so the bar for
+  // saying it twice is higher than for anything they did ask for.
+  NOTICED: 30,
 };
 
 export interface WatchTarget {
@@ -220,6 +230,9 @@ export function evaluateSignals(ctx: SignalContext): SignalCandidate[] {
 const PRIORITY: SignalKind[] = [
   'TARGET_REACHED', 'BACK_IN_STOCK', 'PRICE_DROPPED',
   'BETTER_RETAILER_PRICE', 'UNUSUALLY_STRONG',
+  // Last, always. Something the customer asked for outranks something we
+  // inferred, however good the inference.
+  'NOTICED',
 ];
 
 /**

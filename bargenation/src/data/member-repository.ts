@@ -132,6 +132,9 @@ export interface WatchlistItemRow {
   id: string;
   productSlug: string | null;
   productName: string | null;
+  /** Set when the subject of the watch is a whole retailer rather than an item. */
+  retailerSlug: string | null;
+  retailerName: string | null;
   keyword: string | null;
   targetPriceCents: number | null;
   size: string | null;
@@ -162,20 +165,27 @@ export async function listWatchlist(profileId: string): Promise<WatchlistItemRow
   assertAvailable();
   return asCustomer(profileId, async (client) => {
     const { rows } = await client.query<{
-      id: string; slug: string | null; name: string | null; keyword: string | null;
+      id: string; slug: string | null; name: string | null;
+      retailer_slug: string | null; retailer_name: string | null;
+      keyword: string | null;
       target_price_cents: number | null; size: string | null; color: string | null;
       state: string; paused: boolean; created_at: Date;
     }>(
-      `select w.id, p.slug, p.name, w.keyword, w.target_price_cents,
+      `select w.id, p.slug, p.name,
+              rt.slug as retailer_slug, rt.name as retailer_name,
+              w.keyword, w.target_price_cents,
               w.size, w.color, w.state, w.paused, w.created_at
        from watchlist_items w
        left join products p on p.id = w.product_id
+       left join retailers rt on rt.id = w.retailer_id
        order by w.created_at desc`,
     );
     return rows.map((r) => ({
       id: r.id,
       productSlug: r.slug,
       productName: r.name,
+      retailerSlug: r.retailer_slug,
+      retailerName: r.retailer_name,
       keyword: r.keyword,
       targetPriceCents: r.target_price_cents,
       size: r.size,
@@ -215,6 +225,56 @@ export async function watchProduct(
        where p.slug = $2 and w.product_id = p.id and w.watchlist_id = $1`,
       [listId, productSlug, options.targetPriceCents ?? null],
     );
+  });
+}
+
+/**
+ * Watch a whole retailer (§25, §43).
+ *
+ * `watchlist_items` has carried `retailer_id` since migration 0003 and its
+ * `watchlist_item_has_subject` check already accepts it as a subject on its
+ * own, so nothing about the schema changes here — this is the surface that
+ * finally uses it.
+ *
+ * Idempotent by retailer for the same reason `watchProduct` is: the retailer
+ * page is statically rendered and cannot know whether this customer already
+ * watches the store, so pressing Watch twice must not create a second row.
+ *
+ * Note the insert selects the retailer id from `retailers` rather than
+ * accepting one from the caller. A slug that does not exist inserts nothing
+ * instead of failing loudly, which matters because the slug arrives in a form
+ * field.
+ */
+export async function watchRetailer(profileId: string, retailerSlug: string): Promise<void> {
+  assertAvailable();
+  await asCustomer(profileId, async (client) => {
+    const listId = await defaultWatchlistId(client, profileId);
+    await client.query(
+      `insert into watchlist_items (watchlist_id, retailer_id)
+       select $1, r.id
+       from retailers r
+       where r.slug = $2
+         and not exists (
+           select 1 from watchlist_items existing
+           where existing.watchlist_id = $1 and existing.retailer_id = r.id
+         )`,
+      [listId, retailerSlug],
+    );
+  });
+}
+
+export async function isWatchingRetailer(
+  profileId: string, retailerSlug: string,
+): Promise<boolean> {
+  assertAvailable();
+  return asCustomer(profileId, async (client) => {
+    const { rows } = await client.query(
+      `select 1 from watchlist_items w
+       join retailers r on r.id = w.retailer_id
+       where r.slug = $1 limit 1`,
+      [retailerSlug],
+    );
+    return rows.length > 0;
   });
 }
 

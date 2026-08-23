@@ -63,6 +63,16 @@ export async function watchProductAction(formData: FormData): Promise<void> {
   revalidatePath('/app/watchlist');
 }
 
+export async function watchRetailerAction(formData: FormData): Promise<void> {
+  const slug = String(formData.get('retailerSlug') ?? '');
+  const returnTo = String(formData.get('returnTo') ?? '/stores');
+  const profileId = await requireProfileId(returnTo);
+
+  await member.watchRetailer(profileId, slug);
+  revalidatePath(returnTo);
+  revalidatePath('/app/watchlist');
+}
+
 export async function unwatchAction(formData: FormData): Promise<void> {
   const itemId = String(formData.get('itemId') ?? '');
   const profileId = await requireProfileId('/app/watchlist');

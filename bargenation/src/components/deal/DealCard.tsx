@@ -12,7 +12,16 @@ import { RecommendationMark } from './RecommendationMark';
  * typographically subordinate rather than hidden behind an interaction,
  * because on mobile there is no hover to reveal it.
  */
-export function DealCard({ deal, priority = false }: { deal: Deal; priority?: boolean }) {
+export function DealCard({
+  deal,
+  priority = false,
+  showRetailer = true,
+}: {
+  deal: Deal;
+  priority?: boolean;
+  /** Off on a retailer's own page, where every card would name the same store. */
+  showRetailer?: boolean;
+}) {
   const { offer } = deal;
   // Narrow the discriminated union once, so the union — not a boolean — drives rendering.
   const index = deal.publishable && deal.index.scorable ? deal.index : null;
@@ -28,7 +37,9 @@ export function DealCard({ deal, priority = false }: { deal: Deal; priority?: bo
         />
 
         <div className="mt-4 flex flex-1 flex-col">
-          <p className="eyebrow text-ink-50">{offer.retailer.name}</p>
+          <p className="eyebrow text-ink-50">
+            {showRetailer ? offer.retailer.name : offer.product.category}
+          </p>
 
           <h3 className="display display-sm mt-2 text-ink group-hover:underline group-hover:decoration-1 group-hover:underline-offset-4">
             {offer.product.name}

@@ -43,6 +43,35 @@ condition of being in stock.
 Per-kind cooldowns then sit underneath all of that, so a recurring edge of the
 same type does not become a drip.
 
+## Watching a whole retailer
+
+A watch whose subject is a store rather than an item (`watchlist_items.retailer_id`,
+in the schema since migration 0003 and unused until the retailer pages shipped).
+
+It evaluates exactly **one** rule: `UNUSUALLY_STRONG`, against the same
+threshold a product watch uses. There is deliberately no second definition of
+"unusual" anywhere in the product, and no retailer watch ever fires
+`PRICE_DROPPED` — the promise on the retailer page is "we'll tell you when
+something here is genuinely worth buying, not when they run a sale", and a
+store-wide sale alert is the thing this product exists to replace.
+
+The edge is a different one. A retailer watch has no single price to take an
+edge across, so the edge is **which offer** is strong: an offer this watch has
+already announced cannot announce itself again. That is what stops a catalogue
+item sitting at 9.2 for two months from being reported every time its 14-day
+cooldown lapses. The sweep reads `deal_signals.offer_id` over a 180-day window
+to know what it has already said.
+
+A store with four strong offers is still one interruption — the strongest wins,
+with the offer id breaking ties so two runs of the same sweep cannot disagree.
+
+`evaluateRetailerWatch()` in `src/domain/deal-signal.ts` is pure and holds all
+of it; `RETAILER_WATCH_SQL` in the runner only fetches evidence. Note the
+`product_id is null` predicate there: the schema permits a row carrying both a
+product and a retailer, and such a row is already handled by the product sweep.
+Without that predicate it would be swept twice and could produce two signals for
+one watch in a single pass.
+
 ## What cannot influence it
 
 There is no membership tier, advertiser or commission input — no parameter

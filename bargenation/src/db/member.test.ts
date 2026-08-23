@@ -158,6 +158,61 @@ d('member repository isolation', () => {
     });
   });
 
+  /**
+   * Watching a whole retailer (§43).
+   *
+   * `watchlist_items.retailer_id` has existed since migration 0003 but nothing
+   * wrote to it until the retailer pages shipped. These prove the column is
+   * genuinely wired — that a retailer watch is isolated like any other row,
+   * survives a round trip through `listWatchlist`, and cannot be duplicated.
+   */
+  describe('watching a whole retailer', () => {
+    let retailerSlug: string;
+
+    beforeAll(async () => {
+      const { createOwnedFixture } = await import('./owned-fixture');
+      const fixture = await createOwnedFixture(admin, 'retailerwatch');
+      retailerSlug = `${fixture.slug}-retailer`;
+    });
+
+    it('watches for the caller and nobody else', async () => {
+      await repo.watchRetailer(ALICE, retailerSlug);
+      expect(await repo.isWatchingRetailer(ALICE, retailerSlug)).toBe(true);
+      expect(await repo.isWatchingRetailer(BOB, retailerSlug)).toBe(false);
+    });
+
+    it('comes back from the list as a retailer, with no product attached', async () => {
+      const item = (await repo.listWatchlist(ALICE)).find((i) => i.retailerSlug === retailerSlug);
+      expect(item).toBeDefined();
+      expect(item!.productSlug).toBeNull();
+      expect(item!.retailerName).toMatch(/Retailer$/);
+    });
+
+    /** Same reason `watchProduct` is idempotent: the page has no session. */
+    it('is idempotent — pressing Watch twice creates one row', async () => {
+      const before = (await repo.listWatchlist(ALICE)).length;
+      await repo.watchRetailer(ALICE, retailerSlug);
+      expect((await repo.listWatchlist(ALICE)).length).toBe(before);
+    });
+
+    /**
+     * The slug arrives in a form field, so a wrong one is a thing that will
+     * happen. It must write nothing rather than raise — and, more importantly,
+     * must not create a subject-less watch that would silently never match.
+     */
+    it('writes nothing for a retailer that does not exist', async () => {
+      const before = (await repo.listWatchlist(ALICE)).length;
+      await repo.watchRetailer(ALICE, 'no-such-retailer-anywhere');
+      expect((await repo.listWatchlist(ALICE)).length).toBe(before);
+    });
+
+    it('cannot be removed by another customer', async () => {
+      const item = (await repo.listWatchlist(ALICE)).find((i) => i.retailerSlug === retailerSlug)!;
+      await repo.unwatch(BOB, item.id);
+      expect(await repo.isWatchingRetailer(ALICE, retailerSlug)).toBe(true);
+    });
+  });
+
   describe('deal signals', () => {
     beforeAll(async () => {
       await admin.query(

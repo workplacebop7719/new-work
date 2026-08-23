@@ -244,3 +244,77 @@ export function selectSignal(candidates: readonly SignalCandidate[]): SignalCand
     (a, b) => PRIORITY.indexOf(a.kind) - PRIORITY.indexOf(b.kind),
   )[0] as SignalCandidate;
 }
+
+/* ============================================================
+   RETAILER WATCHES (PRD §25, §43)
+   ============================================================ */
+
+/**
+ * A watch whose subject is a whole store rather than one item.
+ *
+ * The promise on the retailer page is narrow and deliberately so: "we'll tell
+ * you when something here is genuinely worth buying — not when they run a
+ * sale." So this evaluates exactly one rule, UNUSUALLY_STRONG, against the
+ * same threshold a product watch uses. There is no second definition of
+ * "unusual" anywhere in the product.
+ *
+ * The rules above are edge-triggered against a price. A retailer watch has no
+ * single price to take an edge across, so the edge here is a different one:
+ * WHICH OFFER is strong. An offer this watch has already announced cannot
+ * announce itself again, which is what stops a catalogue item that sits at 9.2
+ * for two months from being reported every time its cooldown lapses.
+ *
+ * Returns at most one candidate, for the same reason `selectSignal` exists:
+ * a store with four strong offers is still one interruption.
+ */
+export interface RetailerWatchContext {
+  item: WatchTarget;
+  /** Every offer we currently track at this retailer, already scored. */
+  deals: readonly Deal[];
+  recentSignals: readonly PriorSignal[];
+  /** Offers this watch has already told the customer about. */
+  announcedOfferIds: readonly string[];
+  now: Date;
+}
+
+export function evaluateRetailerWatch(ctx: RetailerWatchContext): SignalCandidate | null {
+  const { item, deals, recentSignals, announcedOfferIds, now } = ctx;
+
+  if (item.paused) return null;
+
+  const mostRecent = [...recentSignals].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  )[0];
+  if (mostRecent && daysSince(mostRecent.createdAt, now) * 24 < MIN_QUIET_HOURS) return null;
+  if (inCooldown('UNUSUALLY_STRONG', recentSignals, now)) return null;
+
+  const already = new Set(announcedOfferIds);
+
+  const strong = deals.filter(
+    (d) =>
+      !already.has(d.offer.id) &&
+      d.publishable &&
+      d.index.scorable &&
+      d.confidence.level === 'HIGH' &&
+      d.index.score >= UNUSUALLY_STRONG_INDEX,
+  );
+  if (strong.length === 0) return null;
+
+  // Highest score wins; offer id breaks ties so two runs of the same sweep
+  // never disagree about which one to send.
+  const best = [...strong].sort((a, b) => {
+    const byScore =
+      (b.index.scorable ? b.index.score : 0) - (a.index.scorable ? a.index.score : 0);
+    return byScore !== 0 ? byScore : a.offer.id.localeCompare(b.offer.id);
+  })[0] as Deal;
+
+  const score = best.index.scorable ? best.index.score : 0;
+  return {
+    kind: 'UNUSUALLY_STRONG',
+    itemId: item.itemId,
+    offerId: best.offer.id,
+    message:
+      `${best.offer.product.name} at ${best.offer.retailer.name} is scoring ` +
+      `${score.toFixed(1)} — stronger than we usually see.`,
+  };
+}

@@ -8,7 +8,7 @@ const COLUMNS = [
       { label: 'Today', href: '/today', built: true },
       { label: 'Search', href: '/search', built: true },
       { label: 'Categories', href: '/categories', built: true },
-      { label: 'Retailers', href: '/stores', built: false },
+      { label: 'Retailers', href: '/stores', built: true },
     ],
   },
   {

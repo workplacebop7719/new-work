@@ -52,14 +52,23 @@ export default async function WatchlistPage() {
                     <Link href={`/deals/${item.productSlug}`} className="link-grow">
                       {item.productName}
                     </Link>
+                  ) : item.retailerSlug ? (
+                    <Link href={`/stores/${item.retailerSlug}`} className="link-grow">
+                      {item.retailerName}
+                    </Link>
                   ) : (
                     item.keyword
                   )}
                 </p>
+                {/* A retailer watch has no target price to state — the whole
+                    catalogue is the subject — so it says what it will do
+                    instead of showing an empty setting. */}
                 <p className="mt-2 text-[0.8125rem] text-ink-70">
-                  {item.targetPriceCents
-                    ? `Tell me under ${formatUsd(item.targetPriceCents)}`
-                    : 'No target price set — we’ll flag anything unusually strong.'}
+                  {item.retailerSlug
+                    ? 'Whole retailer — we’ll flag anything here worth buying.'
+                    : item.targetPriceCents
+                      ? `Tell me under ${formatUsd(item.targetPriceCents)}`
+                      : 'No target price set — we’ll flag anything unusually strong.'}
                   {item.size && ` · size ${item.size}`}
                 </p>
               </div>

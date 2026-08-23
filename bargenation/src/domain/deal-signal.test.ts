@@ -7,9 +7,10 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  evaluateSignals, selectSignal, COOLDOWN_DAYS, MIN_DROP_CENTS, MIN_DROP_FRACTION,
+  evaluateSignals, evaluateRetailerWatch, selectSignal, COOLDOWN_DAYS,
+  MIN_DROP_CENTS, MIN_DROP_FRACTION,
   UNUSUALLY_STRONG_INDEX, MIN_QUIET_HOURS,
-  type SignalContext, type PriorSignal,
+  type SignalContext, type PriorSignal, type RetailerWatchContext,
 } from './deal-signal';
 import { scoreOffer } from './score-offer';
 import type { Offer, Deal } from './types';
@@ -332,5 +333,150 @@ describe('ordering and restraint', () => {
     const deal = makeDeal(obs([10000, 8000]));
     const runs = Array.from({ length: 20 }, () => JSON.stringify(evaluateSignals(ctx({ deal }))));
     expect(new Set(runs).size).toBe(1);
+  });
+});
+
+/* ============================================================
+   RETAILER WATCHES (§43)
+   ============================================================ */
+
+/**
+ * The promise on the retailer page is narrower than a product watch's, so
+ * these tests are mostly about what a retailer watch REFUSES to say. A store
+ * with a rack of mediocre sales must produce silence, or "watch this retailer"
+ * becomes the sale-alert email the product exists to replace.
+ */
+describe('watching a whole retailer', () => {
+  /** Deep, long, well-evidenced fall — scores above the unusual threshold. */
+  const strongDeal = (id: string, endCents = 3000): Deal => {
+    const prices = Array.from({ length: 40 }, (_, i) => 9000 - i * 20);
+    prices.push(endCents);
+    return makeDeal(obs(prices), { id, competitorPriceCents: [5200, 5400] });
+  };
+
+  /** A real, material price drop that is nonetheless nothing special. */
+  const ordinaryDeal = (id: string): Deal => {
+    const prices = Array.from({ length: 40 }, () => 5000);
+    prices.push(4400);
+    return makeDeal(obs(prices), { id });
+  };
+
+  const rctx = (over: Partial<RetailerWatchContext> = {}): RetailerWatchContext => ({
+    item: { itemId: 'retailer-watch', targetPriceCents: null, paused: false },
+    deals: [],
+    recentSignals: [],
+    announcedOfferIds: [],
+    now: NOW,
+    ...over,
+  });
+
+  it('fires on a genuinely exceptional offer at the store', () => {
+    const deal = strongDeal('offer-strong');
+    expect(deal.publishable).toBe(true);
+    expect(deal.confidence.level).toBe('HIGH');
+
+    const signal = evaluateRetailerWatch(rctx({ deals: [deal] }));
+    expect(signal?.kind).toBe('UNUSUALLY_STRONG');
+    expect(signal?.offerId).toBe('offer-strong');
+    expect(signal?.itemId).toBe('retailer-watch');
+  });
+
+  /**
+   * THE POINT OF THE FEATURE. A price drop that would earn PRICE_DROPPED on a
+   * product watch earns nothing here: the customer asked to hear when
+   * something is worth buying, not when the store discounted something.
+   */
+  it('says nothing about an ordinary sale, however real the drop', () => {
+    const deal = ordinaryDeal('offer-ordinary');
+    expect(evaluateSignals(ctx({ deal })).map((s) => s.kind)).toContain('PRICE_DROPPED');
+    expect(evaluateRetailerWatch(rctx({ deals: [deal] }))).toBeNull();
+  });
+
+  it('stays silent for a store where we track nothing', () => {
+    expect(evaluateRetailerWatch(rctx({ deals: [] }))).toBeNull();
+  });
+
+  it('is silent while paused', () => {
+    const paused = { itemId: 'retailer-watch', targetPriceCents: null, paused: true };
+    expect(evaluateRetailerWatch(rctx({ deals: [strongDeal('x')], item: paused }))).toBeNull();
+  });
+
+  it('never announces an Index we would not publish', () => {
+    const thin = makeDeal(obs([9000, 5000, 3000]), { id: 'offer-thin' });
+    expect(thin.publishable).toBe(false);
+    expect(evaluateRetailerWatch(rctx({ deals: [thin] }))).toBeNull();
+  });
+
+  /**
+   * A shelf of strong offers is still one interruption, and it is the
+   * strongest one that earns it.
+   *
+   * The two end prices below are chosen because they score differently — 9.5
+   * and 10.0. An earlier version of this test used two much deeper falls,
+   * both of which hit the ceiling of 10, so it could not tell "picks the
+   * strongest" apart from "picks the first alphabetically".
+   */
+  it('sends one signal for a store, and it is the strongest offer', () => {
+    const deals = [strongDeal('offer-a', 5000), strongDeal('offer-b', 4000)];
+    const [a, b] = deals as [Deal, Deal];
+    if (!a.index.scorable || !b.index.scorable) throw new Error('unreachable');
+    expect(b.index.score).toBeGreaterThan(a.index.score);
+
+    const signal = evaluateRetailerWatch(rctx({ deals }));
+    expect(signal?.offerId).toBe('offer-b');
+  });
+
+  /**
+   * The edge a retailer watch takes is "which offer", not "which price". An
+   * item that sits at 9.2 for two months must not be re-announced every time
+   * its cooldown lapses.
+   */
+  it('does not re-announce an offer it has already sent', () => {
+    const deal = strongDeal('offer-strong');
+    const already = rctx({ deals: [deal], announcedOfferIds: ['offer-strong'] });
+    expect(evaluateRetailerWatch(already)).toBeNull();
+  });
+
+  it('still reports a different strong offer that appears later', () => {
+    const deals = [strongDeal('offer-old', 3000), strongDeal('offer-new', 2600)];
+    const signal = evaluateRetailerWatch(
+      rctx({ deals, announcedOfferIds: ['offer-old'] }),
+    );
+    expect(signal?.offerId).toBe('offer-new');
+  });
+
+  it('respects the quiet period that sits over every watch', () => {
+    const recent: PriorSignal = {
+      kind: 'PRICE_DROPPED',
+      createdAt: new Date(NOW.getTime() - (MIN_QUIET_HOURS - 1) * 3_600_000).toISOString(),
+    };
+    expect(
+      evaluateRetailerWatch(rctx({ deals: [strongDeal('x')], recentSignals: [recent] })),
+    ).toBeNull();
+  });
+
+  it('respects the unusually-strong cooldown', () => {
+    const recent: PriorSignal = {
+      kind: 'UNUSUALLY_STRONG',
+      createdAt: new Date(
+        NOW.getTime() - (COOLDOWN_DAYS.UNUSUALLY_STRONG - 1) * 86_400_000,
+      ).toISOString(),
+    };
+    expect(
+      evaluateRetailerWatch(rctx({ deals: [strongDeal('x')], recentSignals: [recent] })),
+    ).toBeNull();
+  });
+
+  /** Two runs of the same sweep must not disagree about what to send. */
+  it('is deterministic when two offers tie', () => {
+    const a = strongDeal('offer-a');
+    const b = strongDeal('offer-b');
+    expect(evaluateRetailerWatch(rctx({ deals: [a, b] }))?.offerId).toBe('offer-a');
+    expect(evaluateRetailerWatch(rctx({ deals: [b, a] }))?.offerId).toBe('offer-a');
+  });
+
+  it('names the retailer in the message, since the customer watched a store', () => {
+    const signal = evaluateRetailerWatch(rctx({ deals: [strongDeal('x')] }));
+    expect(signal?.message).toContain('Calder Kids');
   });
 });

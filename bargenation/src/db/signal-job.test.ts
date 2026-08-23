@@ -215,3 +215,136 @@ d('the job role is as narrow as migration 0007 claims', () => {
     await expect(job.query('update price_observations set price_cents = 1')).rejects.toThrow(/permission denied/i);
   });
 });
+
+/**
+ * A watch whose subject is a whole store (§43).
+ *
+ * `watchlist_items.retailer_id` was in the schema from migration 0003 and the
+ * sweep explicitly skipped it (`and wi.product_id is not null`). These prove
+ * the retailer path is really wired end to end — that the sweep finds such a
+ * watch, scores the store's shelf, and stays quiet about everything that is
+ * merely on sale.
+ */
+d('a watch on a whole retailer', () => {
+  const OWNER = 'dddddddd-0000-4000-8000-000000000005';
+  const NOW = new Date('2026-08-20T12:00:00Z');
+
+  let admin: pg.Client;
+  let sweep: typeof import('@/data/signal-runner').sweepDealSignals;
+  let retailerSlug: string;
+  let itemId: string;
+  let strongOfferId: string;
+
+  /** Appends an ascending, strictly-ordered price walk to an offer. */
+  async function walk(offerId: string, prices: number[]) {
+    for (const [i, price] of prices.entries()) {
+      await admin.query(
+        `insert into price_observations (offer_id, price_cents, in_stock, observed_at, source_id)
+         values ($1, $2, true, $3, (select id from data_sources where tier = 1 limit 1))`,
+        [offerId, price, new Date(NOW.getTime() - (prices.length - i) * 86_400_000)],
+      );
+    }
+    await admin.query(
+      'update offers set price_cents = $2, last_verified_at = $3 where id = $1',
+      [offerId, prices[prices.length - 1], NOW],
+    );
+  }
+
+  async function makeOffer(productSlug: string, name: string): Promise<string> {
+    await admin.query(
+      `insert into products (slug, name, category_id)
+       values ($1, $2, (select id from categories order by sort_order limit 1))
+       on conflict (slug) do nothing`,
+      [productSlug, name],
+    );
+    const offer = await admin.query<{ id: string }>(
+      `insert into offers (product_id, retailer_id, source_id, price_cents, is_sample_data,
+                           last_verified_at)
+       values ((select id from products  where slug = $1),
+               (select id from retailers where slug = $2),
+               (select id from data_sources where tier = 1 limit 1),
+               9000, false, $3)
+       returning id`,
+      [productSlug, retailerSlug, NOW],
+    );
+    return offer.rows[0]!.id;
+  }
+
+  beforeAll(async () => {
+    admin = new pg.Client({ connectionString: ADMIN_URL });
+    await admin.connect();
+    await admin.query('delete from profiles where id = $1', [OWNER]);
+
+    // Owned catalog, uniquely stamped — price history is append-only, so a
+    // suite cannot tidy up after itself and must not borrow seeded rows.
+    const stamp = `retailer-sweep-${Date.now()}`;
+    retailerSlug = stamp;
+    await admin.query(
+      `insert into retailers (slug, name) values ($1, 'Retailer Sweep Test')`,
+      [retailerSlug],
+    );
+
+    // One offer that is genuinely exceptional, one that is merely on sale.
+    strongOfferId = await makeOffer(`${stamp}-strong`, 'Sweep Strong Item');
+    const ordinaryOfferId = await makeOffer(`${stamp}-ordinary`, 'Sweep Ordinary Item');
+
+    const long = Array.from({ length: 40 }, (_, i) => 9000 - i * 20);
+    await walk(strongOfferId, [...long, 3000]);
+    await walk(ordinaryOfferId, [...Array.from({ length: 40 }, () => 5000), 4400]);
+
+    await admin.query(`insert into profiles (id, display_name) values ($1, 'Store Watcher')`, [OWNER]);
+    const list = await admin.query<{ id: string }>(
+      `insert into watchlists (profile_id) values ($1) returning id`, [OWNER],
+    );
+    const item = await admin.query<{ id: string }>(
+      `insert into watchlist_items (watchlist_id, retailer_id)
+       values ($1, (select id from retailers where slug = $2)) returning id`,
+      [list.rows[0]!.id, retailerSlug],
+    );
+    itemId = item.rows[0]!.id;
+
+    ({ sweepDealSignals: sweep } = await import('@/data/signal-runner'));
+  });
+
+  afterAll(async () => {
+    await admin?.query('delete from profiles where id = $1', [OWNER]);
+    await admin?.end();
+  });
+
+  it('finds the watch at all — it is counted as a retailer watch', async () => {
+    const result = await sweep(JOB_URL!, NOW);
+    expect(result.retailerWatchesExamined).toBeGreaterThan(0);
+  });
+
+  /**
+   * The one signal it produces must be about the exceptional offer, not the
+   * ordinary one — which would have earned PRICE_DROPPED on a product watch.
+   */
+  it('reports the exceptional offer and ignores the ordinary sale', async () => {
+    const { rows } = await admin.query<{ kind: string; offer_id: string; message: string }>(
+      `select kind, offer_id, message from deal_signals
+       where profile_id = $1 order by created_at desc`,
+      [OWNER],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.kind).toBe('UNUSUALLY_STRONG');
+    expect(rows[0]!.offer_id).toBe(strongOfferId);
+    expect(rows[0]!.message).toContain('Retailer Sweep Test');
+  });
+
+  it('does not repeat itself on the next sweep', async () => {
+    await sweep(JOB_URL!, NOW);
+    const { rows } = await admin.query<{ n: number }>(
+      'select count(*)::int as n from deal_signals where profile_id = $1', [OWNER],
+    );
+    expect(rows[0]!.n).toBe(1);
+  });
+
+  it('is silent while paused', async () => {
+    await admin.query('update watchlist_items set paused = true where id = $1', [itemId]);
+    const paused = await sweep(JOB_URL!, NOW);
+    await admin.query('update watchlist_items set paused = false where id = $1', [itemId]);
+    const active = await sweep(JOB_URL!, NOW);
+    expect(active.retailerWatchesExamined).toBe(paused.retailerWatchesExamined + 1);
+  });
+});

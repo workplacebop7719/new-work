@@ -49,7 +49,9 @@ See [docs/DATABASE.md](docs/DATABASE.md) for what the schema guarantees and why,
 [docs/INGESTION.md](docs/INGESTION.md) for how feed data becomes history, and
 [docs/ADMIN.md](docs/ADMIN.md) for the operations surface, and
 [docs/LEGAL.md](docs/LEGAL.md) for how the legal pages handle what we do not know, and
-[docs/NEWSLETTER.md](docs/NEWSLETTER.md) for how consent is kept provable.
+[docs/NEWSLETTER.md](docs/NEWSLETTER.md) for how consent is kept provable, and
+[docs/RETAILERS.md](docs/RETAILERS.md) for how a verdict about a named business
+is derived and when it refuses to give one.
 
 ## The rules that are actually enforced
 
@@ -123,7 +125,8 @@ shot.mjs         visual QA — screenshots every page at 375 / 768 / 1440
 ## Built
 
 **Public** — `/` · `/today` · `/search` · `/categories` · `/categories/[slug]` ·
-`/deals/[slug]` · `/how-it-works` · `/login` · `/signup` · `404`
+`/deals/[slug]` · `/stores` · `/stores/[slug]` · `/how-it-works` · `/login` ·
+`/signup` · `404`
 
 **Member portal** — `/app/watchlist` · `/app/saved` · `/app/deal-signals` ·
 `/app/account`

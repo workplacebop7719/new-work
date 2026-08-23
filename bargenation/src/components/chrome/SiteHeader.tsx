@@ -19,6 +19,7 @@ const NAV = [
   { href: '/today', label: 'Today' },
   { href: '/search', label: 'Search' },
   { href: '/categories', label: 'Categories' },
+  { href: '/stores', label: 'Retailers' },
   { href: '/how-it-works', label: 'Method' },
   { href: '/about', label: 'About' },
 ];

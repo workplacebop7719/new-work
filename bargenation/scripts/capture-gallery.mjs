@@ -35,10 +35,13 @@ const PAGES = [
   ['login', '/login', 'Sign in'],
   ['signup', '/signup', 'Create an account'],
   ['forgot-password', '/forgot-password', 'Forgot password'],
+  ['account-password', '/app/account/password', 'Change password', true],
+  ['account-delete', '/app/account/delete', 'Delete account — what goes, and what does not', true],
   ['verify-email', '/verify-email', 'Confirm your email, with no token'],
   ['app-watchlist', '/app/watchlist', 'Portal — Watchlist', true],
   ['app-saved', '/app/saved', 'Portal — Saved', true],
   ['app-signals', '/app/deal-signals', 'Portal — Deal Signals', true],
+  ['app-noticed', '/app/noticed', 'Portal — What we noticed, switched off by default', true],
   ['app-account', '/app/account', 'Portal — Account', true],
   ['admin', '/admin', 'Operations — overview', true],
   ['admin-review', '/admin/review', 'Operations — match review', true],
@@ -67,12 +70,19 @@ try {
     // A real account, so the portal is the portal and not a redirect.
     const email = `gallery${Date.now()}${width}@example.com`;
     await page.goto(`${BASE}/signup`, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(2500);
+    // The submit button is disabled until the bot challenge is solved, so
+    // clicking on a timer clicks a dead control.
+    await page.waitForFunction(
+      () => document.querySelector('input[name=challengeSolution]')?.value !== '',
+      { timeout: 30_000 },
+    ).catch(() => undefined);
+    await page.waitForTimeout(1400);
     await page.fill('#field-displayName', 'Sam');
     await page.fill('#field-email', email);
     await page.fill('#field-password', 'correct horse battery');
-    await page.click('button[type=submit]');
-    await page.waitForTimeout(3000);
+    await page.locator('form:has(#field-email) button[type=submit]').click();
+    await page.waitForURL((url) => !url.pathname.startsWith('/signup'), { timeout: 20_000 })
+      .catch(() => undefined);
 
     if (PG) {
       const db = new pg.Client({ connectionString: PG });

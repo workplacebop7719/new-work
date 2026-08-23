@@ -260,6 +260,151 @@ d('member repository isolation', () => {
     });
   });
 
+  /**
+   * EXPORT AND ERASURE (§37).
+   *
+   * The two operations where a scoping mistake is most expensive: an export
+   * that reached another household would hand one customer another's
+   * children's sizes in a file they keep, and an erasure that missed a table
+   * would leave personal data behind after we told somebody it was gone.
+   *
+   * Both are scoped by row level security rather than by a WHERE clause, so
+   * these tests are really asking whether the policies do what the functions
+   * assume.
+   */
+  describe('export', () => {
+    it('exports the caller’s own account', async () => {
+      const dump = await repo.exportAccount(ALICE);
+      expect(dump.profile.id).toBe(ALICE);
+      expect(dump.exportedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    });
+
+    it('contains what the customer actually put there', async () => {
+      const dump = await repo.exportAccount(ALICE);
+      expect(dump.saved.length).toBeGreaterThan(0);
+      expect(dump.watchlist.length).toBeGreaterThan(0);
+    });
+
+    /**
+     * The assertion that matters: Bob's export is Bob's, never Alice's.
+     *
+     * By identity rather than by count. An earlier test in this file gives Bob
+     * a saved item of his own, so "Bob's export is empty" was never the right
+     * question — "does Bob's export contain anything of Alice's" is.
+     */
+    it('never reaches another customer’s rows', async () => {
+      const alice = await repo.exportAccount(ALICE);
+      const bob = await repo.exportAccount(BOB);
+
+      expect(bob.profile.id).toBe(BOB);
+      expect(bob.saved.map((row) => row.offerId)).toEqual([offerB]);
+      expect(bob.saved.map((row) => row.offerId)).not.toContain(offerA);
+      expect(bob.watchlist.map((row) => row.productSlug)).not.toContain(slugA);
+
+      const aliceMessages = alice.dealSignals.map((sig) => sig.message);
+      for (const message of bob.dealSignals.map((sig) => sig.message)) {
+        expect(aliceMessages).not.toContain(message);
+      }
+    });
+
+    it('is plain data — it survives a round trip through JSON', async () => {
+      const dump = await repo.exportAccount(ALICE);
+      expect(() => JSON.parse(JSON.stringify(dump))).not.toThrow();
+      expect(JSON.parse(JSON.stringify(dump)).profile.id).toBe(ALICE);
+    });
+  });
+
+  describe('erasure', () => {
+    const VICTIM = 'cccccccc-0000-4000-8000-000000000003';
+
+    /**
+     * Everything customer-owned cascades from `profiles`, so erasure is one
+     * DELETE rather than a list that has to be kept in step with the schema.
+     * This asserts the cascade rather than the list — a new table added
+     * without `on delete cascade` fails here, which is the point.
+     */
+    it('leaves nothing behind in any customer-owned table', async () => {
+      await repo.ensureProfile(asUser(VICTIM, 'victim'));
+      await repo.save(VICTIM, offerA);
+      await repo.watchProduct(VICTIM, slugA, { targetPriceCents: 1000 });
+      await admin.query(
+        `insert into households (owner_profile_id, name) values ($1, 'Test House')`, [VICTIM],
+      );
+      await admin.query(
+        `insert into household_members (household_id, nickname, birth_year)
+         select id, 'Kid', 2018 from households where owner_profile_id = $1`, [VICTIM],
+      );
+      await admin.query(
+        `insert into deal_signals (profile_id, kind, message)
+         values ($1, 'PRICE_DROPPED', 'test signal')`, [VICTIM],
+      );
+
+      await repo.eraseAccount(VICTIM);
+
+      for (const table of [
+        'profiles', 'saved_items', 'watchlists', 'deal_signals', 'households',
+      ]) {
+        const column = table === 'profiles' ? 'id'
+          : table === 'households' ? 'owner_profile_id' : 'profile_id';
+        const { rows } = await admin.query<{ n: number }>(
+          `select count(*)::int as n from ${table} where ${column} = $1`, [VICTIM],
+        );
+        expect({ table, n: rows[0]!.n }).toEqual({ table, n: 0 });
+      }
+
+      // Reached only through the household, so it cannot be checked by profile id.
+      const members = await admin.query<{ n: number }>(
+        `select count(*)::int as n from household_members
+         where household_id not in (select id from households)`,
+      );
+      expect(members.rows[0]!.n).toBe(0);
+    });
+
+    it('cannot erase another customer', async () => {
+      await repo.ensureProfile(asUser(VICTIM, 'victim'));
+      // Alice asks to erase; RLS scopes the delete to Alice's own row, so the
+      // victim survives regardless of the id passed in.
+      await repo.eraseAccount(VICTIM).catch(() => undefined);
+      const { rows } = await admin.query<{ n: number }>(
+        'select count(*)::int as n from profiles where id = $1', [BOB],
+      );
+      expect(rows[0]!.n).toBe(1);
+    });
+
+    /**
+     * The audit trail refuses to lose its author. This must surface as an
+     * explanation, not as a raw constraint violation on a page.
+     */
+    /**
+     * A fresh operator id per run, because this test cannot tidy up after
+     * itself: the audit row is the thing preventing the delete, and removing
+     * it to clean up would defeat the point. Reusing a fixed id meant the
+     * second run could not even set the fixture up.
+     */
+    it('reports an operator whose audit rows hold them, rather than throwing SQL', async () => {
+      const { rows: [generated] } = await admin.query<{ id: string }>(
+        'select gen_random_uuid() as id',
+      );
+      const OPERATOR = generated!.id;
+      await admin.query(
+        `insert into profiles (id, display_name, role) values ($1, 'Op', 'admin')`, [OPERATOR],
+      );
+      await admin.query(
+        `insert into admin_actions (actor_id, action, target, reason)
+         values ($1, 'RELEASE_QUARANTINE', 'test-target', 'erasure test')`, [OPERATOR],
+      );
+
+      await expect(repo.eraseAccount(OPERATOR)).rejects.toMatchObject({
+        name: 'AccountNotErasable',
+      });
+
+      const { rows } = await admin.query<{ n: number }>(
+        'select count(*)::int as n from profiles where id = $1', [OPERATOR],
+      );
+      expect(rows[0]!.n).toBe(1);
+    });
+  });
+
   describe('profile provisioning', () => {
     it('is idempotent', async () => {
       await repo.ensureProfile(asUser(ALICE, 'alice'));

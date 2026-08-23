@@ -351,3 +351,163 @@ export async function markSignalRead(profileId: string, signalId: string): Promi
     await client.query('update deal_signals set read_at = now() where id = $1', [signalId]);
   });
 }
+
+/* ============================================================
+   WHAT WE HOLD, AND GIVING IT BACK (§37)
+   ============================================================ */
+
+/**
+ * Everything this customer's account contains, as plain data.
+ *
+ * Runs as the customer, so row level security decides the scope rather than a
+ * WHERE clause somebody has to remember — an export that accidentally read
+ * another household would be the worst possible bug in this function, and the
+ * database refuses it before the query author can get it wrong.
+ *
+ * Deliberately NOT included: price observations, offers and Value Index
+ * components. They are our record of what things cost, identical for every
+ * customer, and are not personal data — padding an export with them would
+ * make it look thorough while burying the four things that are actually
+ * about a person.
+ */
+export interface AccountExport {
+  exportedAt: string;
+  profile: { id: string; displayName: string | null; createdAt: string };
+  household: {
+    name: string | null;
+    members: Array<{
+      nickname: string | null;
+      birthYear: number | null;
+      clothingSize: string | null;
+      shoeSize: string | null;
+    }>;
+  } | null;
+  saved: SavedRow[];
+  watchlist: WatchlistItemRow[];
+  dealSignals: Array<{ kind: string; message: string; createdAt: string; readAt: string | null }>;
+}
+
+export async function exportAccount(profileId: string): Promise<AccountExport> {
+  assertAvailable();
+  return asCustomer(profileId, async (client) => {
+    const profile = await client.query<{ id: string; display_name: string | null; created_at: Date }>(
+      'select id, display_name, created_at from profiles',
+    );
+    const row = profile.rows[0];
+    if (!row) throw new Error('no profile for the signed-in customer');
+
+    const households = await client.query<{ id: string; name: string | null }>(
+      'select id, name from households order by created_at asc limit 1',
+    );
+    const house = households.rows[0];
+
+    const members = house
+      ? await client.query<{
+          nickname: string | null; birth_year: number | null;
+          clothing_size: string | null; shoe_size: string | null;
+        }>(
+          `select nickname, birth_year, clothing_size, shoe_size
+           from household_members where household_id = $1 order by created_at asc`,
+          [house.id],
+        )
+      : { rows: [] };
+
+    const signals = await client.query<{
+      kind: string; message: string; created_at: Date; read_at: Date | null;
+    }>('select kind, message, created_at, read_at from deal_signals order by created_at desc');
+
+    return {
+      exportedAt: new Date().toISOString(),
+      profile: {
+        id: row.id,
+        displayName: row.display_name,
+        createdAt: row.created_at.toISOString(),
+      },
+      household: house
+        ? {
+            name: house.name,
+            members: members.rows.map((m) => ({
+              nickname: m.nickname,
+              birthYear: m.birth_year,
+              clothingSize: m.clothing_size,
+              shoeSize: m.shoe_size,
+            })),
+          }
+        : null,
+      saved: await listSaved(profileId),
+      watchlist: await listWatchlist(profileId),
+      dealSignals: signals.rows.map((sig) => ({
+        kind: sig.kind,
+        message: sig.message,
+        createdAt: sig.created_at.toISOString(),
+        readAt: sig.read_at ? sig.read_at.toISOString() : null,
+      })),
+    };
+  });
+}
+
+/**
+ * Why an account could not be erased, when it could not.
+ *
+ * Branded rather than identified by `instanceof`, for the same reason
+ * AuthError is: this class is read from a `'use server'` module, which Next
+ * bundles into a different graph, so the class object there is not this one.
+ * That exact mistake made every auth error render the wrong message for
+ * weeks — see docs/AUTH.md.
+ */
+const NOT_ERASABLE_BRAND = 'bargenation.AccountNotErasable';
+
+export class AccountNotErasable extends Error {
+  readonly brand = NOT_ERASABLE_BRAND;
+
+  constructor(readonly why: string) {
+    super(why);
+    this.name = 'AccountNotErasable';
+  }
+}
+
+export function isAccountNotErasable(err: unknown): err is AccountNotErasable {
+  if (typeof err !== 'object' || err === null) return false;
+  const candidate = err as { brand?: unknown; why?: unknown };
+  return candidate.brand === NOT_ERASABLE_BRAND && typeof candidate.why === 'string';
+}
+
+/**
+ * Erases the profile row, and with it everything that hangs off it.
+ *
+ * Households, household members, watchlists, watchlist items, saved items,
+ * Deal Signals and preferences all cascade from `profiles`, so this is one
+ * DELETE rather than a list somebody has to keep in step with the schema. A
+ * new customer-owned table added without `on delete cascade` would be a leak,
+ * and a test asserts nothing survives.
+ *
+ * Two things deliberately do NOT go, and the UI says both:
+ *
+ *   A newsletter subscription. `newsletter_subscribers.profile_id` is
+ *   `on delete set null`, because subscribing was a separate act of consent
+ *   with its own evidentiary record (§41). Deleting an account must not
+ *   silently revoke a consent the customer gave elsewhere — nor keep it
+ *   secretly. The account page links to the unsubscribe page.
+ *
+ *   Staff audit rows. `admin_actions.actor_id` is `on delete restrict`, so an
+ *   operator who has released or discarded a price cannot be erased. That is
+ *   the audit trail refusing to lose its author, which is correct, and this
+ *   reports it as a reason rather than a database error.
+ */
+export async function eraseAccount(profileId: string): Promise<void> {
+  assertAvailable();
+  await asCustomer(profileId, async (client) => {
+    try {
+      await client.query('delete from profiles where id = $1', [profileId]);
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      // 23503 = foreign_key_violation, which here means an audit row holds it.
+      if (code === '23503') {
+        throw new AccountNotErasable(
+          'This account has taken recorded operator actions, and the audit trail cannot lose its author.',
+        );
+      }
+      throw err;
+    }
+  });
+}

@@ -106,6 +106,7 @@ export function createDevAuth(
     configured: true,
     name: 'development (in-memory)',
     deliversEmail: false,
+    canDeleteIdentity: true,
 
     async signUp({ email, password, displayName }) {
       const e = normaliseEmail(email);
@@ -162,6 +163,38 @@ export function createDevAuth(
       const user = [...users.values()].find((u) => u.id === record.userId);
       if (!user) return null;
       return { user: publicUser(user), expiresAt: new Date(record.expiresAt).toISOString() };
+    },
+
+    async changePassword({ sessionToken, email: address, currentPassword, newPassword }) {
+      const e = normaliseEmail(address);
+      const user = users.get(e);
+      if (!user || !verifyPassword(currentPassword, user.salt, user.hash)) {
+        throw new AuthError('INVALID_CREDENTIALS');
+      }
+      assertPasswordStrong(newPassword);
+
+      user.salt = randomBytes(16).toString('hex');
+      user.hash = hashPassword(newPassword, user.salt);
+
+      // Every session goes, including the one that asked. Issuing a fresh one
+      // below is what keeps this device signed in — a change made because a
+      // password may be compromised must not leave the old sessions alive.
+      for (const [t, sess] of sessions) if (sess.userId === user.id) sessions.delete(t);
+      void sessionToken;
+
+      return issue(user);
+    },
+
+    async deleteIdentity({ sessionToken, email: address }) {
+      const e = normaliseEmail(address);
+      const user = users.get(e);
+      if (!user) throw new AuthError('INVALID_CREDENTIALS');
+
+      users.delete(e);
+      for (const [t, sess] of sessions) if (sess.userId === user.id) sessions.delete(t);
+      for (const [t, v] of resetTokens) if (v === e) resetTokens.delete(t);
+      for (const [t, v] of verifyTokens) if (v === e) verifyTokens.delete(t);
+      void sessionToken;
     },
 
     async requestPasswordReset(address) {

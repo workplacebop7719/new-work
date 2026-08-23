@@ -89,6 +89,9 @@ export function createSupabaseAuth(): AuthPort {
     name: 'supabase',
     // Supabase owns delivery of its own recovery and confirmation mail.
     deliversEmail: true,
+    // Deleting a user is an admin operation requiring the service-role key,
+    // which bypasses RLS and is deliberately absent from this process (§69).
+    canDeleteIdentity: false,
 
     async signUp({ email, password, displayName }) {
       const e = normaliseEmail(email);
@@ -134,6 +137,30 @@ export function createSupabaseAuth(): AuthPort {
       };
     },
 
+    async changePassword({ email, currentPassword, newPassword }) {
+      assertPasswordStrong(newPassword);
+
+      // Re-authenticate rather than trusting the session. This is the check
+      // that stops an unattended browser from becoming a takeover, and it is
+      // also how we get a token scoped to this customer to update with.
+      const { data, error } = await client.auth.signInWithPassword({
+        email: normaliseEmail(email),
+        password: currentPassword,
+      });
+      if (error) throw translateSupabaseError(error);
+
+      const { error: updateError } = await client.auth.updateUser({ password: newPassword });
+      if (updateError) throw translateSupabaseError(updateError);
+
+      return toResult(data);
+    },
+
+    async deleteIdentity() {
+      // Unreachable while canDeleteIdentity is false, and refuses rather than
+      // silently doing nothing if that ever changes without the work.
+      throw new AuthError('NOT_CONFIGURED', 'deleting a user needs the service-role key');
+    },
+
     async requestPasswordReset(email) {
       // Never surfaces whether the address exists.
       await client.auth.resetPasswordForEmail(normaliseEmail(email)).catch(() => undefined);
@@ -167,10 +194,13 @@ export function unconfigured(): AuthPort {
     configured: false,
     name: 'unconfigured',
     deliversEmail: false,
+    canDeleteIdentity: false,
     signUp: refuse,
     signIn: refuse,
     signOut: async () => undefined,
     getSession: async () => null,
+    changePassword: refuse,
+    deleteIdentity: refuse,
     requestPasswordReset: refuse,
     resetPassword: refuse,
     verifyEmail: refuse,

@@ -48,6 +48,11 @@ describe('adapter selection', () => {
       () => port.requestPasswordReset('a@b.com'),
       () => port.resetPassword('t', 'long enough password'),
       () => port.verifyEmail('t'),
+      () => port.changePassword({
+        sessionToken: 't', email: 'a@b.com',
+        currentPassword: 'long enough password', newPassword: 'another long password',
+      }),
+      () => port.deleteIdentity({ sessionToken: 't', email: 'a@b.com' }),
     ]) {
       await expect(call()).rejects.toMatchObject({ code: 'NOT_CONFIGURED' });
     }
@@ -60,6 +65,37 @@ describe('adapter selection', () => {
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co');
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon-key');
     expect(createAuth().name).toBe('supabase');
+  });
+});
+
+/**
+ * A capability the port must not overstate (§37, §69).
+ *
+ * Deleting a Supabase user needs the service-role key, which bypasses row
+ * level security entirely and is deliberately absent from this process. If
+ * `canDeleteIdentity` ever reported true here, the delete-account page would
+ * stop telling customers that the sign-in itself outlives their data — and
+ * would start claiming an erasure that never happened.
+ */
+describe('what each adapter admits it cannot do', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('the real provider cannot remove a login identity', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon-key');
+    const port = createAuth();
+
+    expect(port.canDeleteIdentity).toBe(false);
+    await expect(port.deleteIdentity({ sessionToken: 't', email: 'a@b.com' }))
+      .rejects.toMatchObject({ code: 'NOT_CONFIGURED' });
+  });
+
+  it('and delivers its own mail, which we therefore must not warn about', () => {
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://example.supabase.co');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon-key');
+    expect(createAuth().deliversEmail).toBe(true);
   });
 });
 

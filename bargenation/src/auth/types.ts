@@ -137,16 +137,54 @@ export interface AuthPort {
    * somebody waiting for a message that will never arrive (§01).
    */
   readonly deliversEmail: boolean;
+  /**
+   * Whether this port can remove the login identity itself.
+   *
+   * False for Supabase, and not an oversight: deleting a user requires the
+   * service-role key, which bypasses row level security entirely and must
+   * never be available to request-handling code (§69). We can erase
+   * everything we hold either way; the account page says plainly which of the
+   * two happened rather than implying more than was done.
+   */
+  readonly canDeleteIdentity: boolean;
 
   signUp(input: Credentials & { displayName?: string }): Promise<AuthResult>;
   signIn(input: Credentials): Promise<AuthResult>;
   signOut(sessionToken: string): Promise<void>;
   /** Resolves a stored token to a session, or null when absent/expired. */
   getSession(sessionToken: string | null): Promise<Session | null>;
+  /**
+   * Changes the password of the signed-in customer.
+   *
+   * Takes the CURRENT password, always. Without it, an unattended browser is
+   * a complete account takeover — the attacker changes the password, and the
+   * owner is the one locked out.
+   *
+   * Returns a fresh session because every other one is invalidated: the
+   * caller writes the new token to the cookie, so the device that made the
+   * change stays signed in and no other does.
+   */
+  changePassword(input: {
+    sessionToken: string;
+    email: string;
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<AuthResult>;
+  /** Only meaningful when `canDeleteIdentity`; refuses otherwise. */
+  deleteIdentity(input: { sessionToken: string; email: string }): Promise<void>;
   requestPasswordReset(email: string): Promise<void>;
   resetPassword(token: string, newPassword: string): Promise<void>;
   verifyEmail(token: string): Promise<void>;
 }
+
+/**
+ * What somebody types to confirm they mean to delete their account.
+ *
+ * Lives here rather than beside the action because actions.ts is
+ * `'use server'`, where every export must be an async server action — and the
+ * page that renders the field must show the same word the action checks.
+ */
+export const DELETE_CONFIRMATION = 'delete';
 
 /** PRD §30 keeps registration minimal; this is the whole password rule. */
 export const MIN_PASSWORD_LENGTH = 10;

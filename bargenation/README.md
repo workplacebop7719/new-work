@@ -26,6 +26,7 @@ npm run build
 npm run contrast   # WCAG AA guard over the shipped tokens
 npm run smoke      # end-to-end member flow in a real browser (needs a dev server)
 npm run smoke:recovery   # forgot / reset / verify, driven the same way
+npm run smoke:account    # change password, export, delete
 npm run signals    # one Deal Signal sweep (connects as the jobs role)
 npm run ingest     # one ingestion pass from a local records file
 npm run legal      # guard: no compliance claims, no invented company details
@@ -131,6 +132,9 @@ shot.mjs         visual QA — screenshots every page at 375 / 768 / 1440
 
 **Accounts** — `/login` · `/signup` · `/forgot-password` · `/reset-password` ·
 `/verify-email`
+
+**Self-service** — `/app/account/password` · `/app/account/export` ·
+`/app/account/delete`
 
 **Member portal** — `/app/watchlist` · `/app/saved` · `/app/deal-signals` ·
 `/app/account`

@@ -1,7 +1,12 @@
 import type { Metadata } from 'next';
 import { readSession } from '@/auth/session';
 import { auth } from '@/auth';
+import Link from 'next/link';
 import { NotBuiltYet } from '@/components/ui/NotBuiltYet';
+
+/** Shared look for the links that now do something. */
+const action =
+  'inline-flex min-h-[44px] items-center border border-ink px-5 text-[0.8125rem] font-semibold uppercase tracking-[0.06em] transition-colors duration-[--dur-micro] hover:bg-ink hover:text-white';
 
 export const metadata: Metadata = { title: 'Account' };
 
@@ -38,14 +43,13 @@ export default async function AccountPage() {
 
       <section>
         <h2 className="display display-md border-b border-line pb-4">Security</h2>
-        <div className="mt-6 flex flex-wrap gap-8">
-          <NotBuiltYet
-            label="Change password"
-            reason="Not built yet. The auth port supports it; the page isn’t written."
-          />
+        <div className="mt-6 flex flex-wrap items-start gap-6">
+          <Link href="/app/account/password" className={action}>
+            Change password
+          </Link>
           <NotBuiltYet
             label="Sign out everywhere"
-            reason="Not built yet. Needs session listing the provider doesn’t expose to us."
+            reason="Not built yet as a control of its own — changing your password already does it, and doing it without one needs session listing the provider doesn’t expose to us."
           />
         </div>
       </section>
@@ -57,16 +61,23 @@ export default async function AccountPage() {
           household — a nickname, a birth year, sizes. We never asked for a child’s legal name,
           date of birth, school or address, and there is nowhere in the database to put them.
         </p>
-        <div className="mt-6 flex flex-wrap gap-8">
-          <NotBuiltYet
-            label="Delete account"
-            reason="Not built yet. This must delete the household record too, so it needs writing carefully rather than quickly."
-          />
-          <NotBuiltYet
-            label="Export my data"
-            reason="Not built yet."
-          />
+        <div className="mt-6 flex flex-wrap items-start gap-6">
+          {/* A plain link, not fetch-and-save: the response carries
+              Content-Disposition, so the browser writes the file itself. */}
+          <a href="/app/account/export" className={action} download>
+            Export my data
+          </a>
+          <Link
+            href="/app/account/delete"
+            className="inline-flex min-h-[44px] items-center border border-line-strong px-5 text-[0.8125rem] font-semibold uppercase tracking-[0.06em] text-ink-70 transition-colors duration-[--dur-micro] hover:border-ink hover:text-ink"
+          >
+            Delete account
+          </Link>
         </div>
+        <p className="mt-4 max-w-[52ch] text-[0.75rem] leading-snug text-ink-50">
+          The export is a JSON file of everything your account holds — profile, household,
+          Watchlist, Saved items and every Deal Signal we have sent you.
+        </p>
       </section>
 
       <section>

@@ -2,11 +2,14 @@
 
 import { redirect } from 'next/navigation';
 import { auth } from './index';
-import { AUTH_MESSAGE, isAuthError, isPlausibleEmail } from './types';
+import { AUTH_MESSAGE, DELETE_CONFIRMATION, isAuthError, isPlausibleEmail } from './types';
 import { safeReturnTo } from './return-url';
 import { isPlausibleToken } from './token';
 import { writeSessionCookie, clearSessionCookie } from './session';
-import { ensureProfile, memberFeaturesAvailable } from '@/data/member-repository';
+import {
+  ensureProfile, eraseAccount, memberFeaturesAvailable, isAccountNotErasable,
+} from '@/data/member-repository';
+import { readSession } from './session';
 import { SESSION_COOKIE } from './cookie-name';
 import { cookies } from 'next/headers';
 
@@ -185,6 +188,111 @@ export async function verifyEmailAction(
   }
 
   return { error: null, notice: 'Your email is confirmed. You can sign in now.' };
+}
+
+/**
+ * CHANGE PASSWORD, while signed in (§37).
+ *
+ * The current password is required, and that is the whole security of this
+ * form. Without it an unattended browser is a complete takeover: the attacker
+ * sets a new password and the owner is the one locked out.
+ *
+ * Succeeding invalidates every other session and writes the fresh token this
+ * device was issued, so the change takes effect everywhere immediately and
+ * this browser does not have to sign in again.
+ */
+export async function changePasswordAction(
+  _prev: FormState, formData: FormData,
+): Promise<FormState> {
+  const session = await readSession();
+  if (!session) return { error: AUTH_MESSAGE.NOT_CONFIGURED, notice: null };
+
+  const jar = await cookies();
+  const sessionToken = jar.get(SESSION_COOKIE)?.value;
+  if (!sessionToken) return { error: AUTH_MESSAGE.INVALID_CREDENTIALS, notice: null };
+
+  const currentPassword = String(formData.get('currentPassword') ?? '');
+  const newPassword = String(formData.get('newPassword') ?? '');
+  const confirm = String(formData.get('confirmPassword') ?? '');
+
+  if (newPassword !== confirm) return { error: 'Those two passwords don’t match.', notice: null };
+  if (newPassword === currentPassword) {
+    return { error: 'That is the password you already have.', notice: null };
+  }
+
+  try {
+    const { token } = await auth().changePassword({
+      sessionToken,
+      email: session.user.email,
+      currentPassword,
+      newPassword,
+    });
+    await writeSessionCookie(token);
+  } catch (err) {
+    return { error: messageFor(err), notice: null };
+  }
+
+  return {
+    error: null,
+    notice: 'Your password is changed. Every other device has been signed out.',
+  };
+}
+
+/**
+ * DELETE ACCOUNT (§37).
+ *
+ * Two gates, because this cannot be undone: the current password, and typing
+ * the word. The password stops an unattended browser; the typed word stops a
+ * misplaced click, which is the far more likely way somebody loses their
+ * Watchlist.
+ *
+ * Order matters. Our data goes first and the login identity second, so a
+ * failure halfway leaves an account that can still sign in and try again —
+ * the opposite order would strand a live pile of data with no way to reach
+ * it.
+ */
+export async function deleteAccountAction(
+  _prev: FormState, formData: FormData,
+): Promise<FormState> {
+  const session = await readSession();
+  if (!session) return { error: AUTH_MESSAGE.NOT_CONFIGURED, notice: null };
+
+  const jar = await cookies();
+  const sessionToken = jar.get(SESSION_COOKIE)?.value;
+  if (!sessionToken) return { error: AUTH_MESSAGE.INVALID_CREDENTIALS, notice: null };
+
+  const password = String(formData.get('password') ?? '');
+  const confirmation = String(formData.get('confirmation') ?? '').trim().toLowerCase();
+
+  if (confirmation !== DELETE_CONFIRMATION) {
+    return { error: `Type ${DELETE_CONFIRMATION} to confirm.`, notice: null };
+  }
+
+  const port = auth();
+
+  try {
+    // Verified through the ordinary sign-in path, so a wrong password fails
+    // here exactly as it would anywhere else — no second password check to
+    // drift out of step with the first.
+    await port.signIn({ email: session.user.email, password });
+  } catch (err) {
+    return { error: messageFor(err), notice: null };
+  }
+
+  try {
+    if (memberFeaturesAvailable) await eraseAccount(session.user.id);
+    if (port.canDeleteIdentity) {
+      await port.deleteIdentity({ sessionToken, email: session.user.email });
+    }
+  } catch (err) {
+    // Branded, not instanceof — see the note on the class.
+    if (isAccountNotErasable(err)) return { error: err.why, notice: null };
+    return { error: messageFor(err), notice: null };
+  }
+
+  await port.signOut(sessionToken);
+  await clearSessionCookie();
+  redirect('/?deleted=1');
 }
 
 export async function signOutAction(): Promise<void> {

@@ -1,0 +1,117 @@
+#!/usr/bin/env node
+/**
+ * Captures every page of the product for visual review.
+ *
+ * Signs a real account up first, so the member portal renders signed in
+ * rather than as a redirect to the sign-in page, and promotes it to admin so
+ * the operations surface renders too. Writes JPEGs, because the gallery these
+ * feed embeds them and a full-page PNG at 1440 is megabytes on its own.
+ *
+ *   BASE=http://localhost:3210 PGURL=... node scripts/capture-gallery.mjs
+ */
+import { chromium } from 'playwright';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import pg from 'pg';
+
+const BASE = process.env.BASE || 'http://localhost:3210';
+const OUT = process.env.OUT || '/tmp/gallery';
+const PG = process.env.PGURL;
+
+mkdirSync(OUT, { recursive: true });
+
+/** Public first, then the flows, then what only a member or operator sees. */
+const PAGES = [
+  ['home', '/', 'The front page'],
+  ['today', '/today', 'Today — what we would actually buy'],
+  ['categories', '/categories', 'Browse by category'],
+  ['category-shoes', '/categories/shoes', 'One category'],
+  ['deal', '/deals/calder-trail-sneaker', 'A deal, with the full working shown'],
+  ['stores', '/stores', 'Retailers'],
+  ['store', '/stores/calder-kids', 'One retailer, with its evidence'],
+  ['search', '/search?q=coat', 'Search'],
+  ['how-it-works', '/how-it-works', 'The method'],
+  ['about', '/about', 'About'],
+  ['edit', '/edit', 'The Edit — the newsletter'],
+  ['login', '/login', 'Sign in'],
+  ['signup', '/signup', 'Create an account'],
+  ['forgot-password', '/forgot-password', 'Forgot password'],
+  ['verify-email', '/verify-email', 'Confirm your email, with no token'],
+  ['app-watchlist', '/app/watchlist', 'Portal — Watchlist', true],
+  ['app-saved', '/app/saved', 'Portal — Saved', true],
+  ['app-signals', '/app/deal-signals', 'Portal — Deal Signals', true],
+  ['app-account', '/app/account', 'Portal — Account', true],
+  ['admin', '/admin', 'Operations — overview', true],
+  ['admin-review', '/admin/review', 'Operations — match review', true],
+  ['admin-quarantine', '/admin/quarantine', 'Operations — quarantine', true],
+  ['privacy', '/privacy', 'Privacy'],
+  ['terms', '/terms', 'Terms'],
+  ['disclosures', '/disclosures', 'Disclosures'],
+  ['contact', '/contact', 'Contact'],
+  ['not-found', '/no-such-page-here', '404'],
+];
+
+const browser = await chromium.launch({
+  executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+});
+
+const shots = [];
+
+try {
+  for (const width of [1440, 390]) {
+    const ctx = await browser.newContext({
+      viewport: { width, height: width === 1440 ? 1000 : 860 },
+      deviceScaleFactor: 1,
+    });
+    const page = await ctx.newPage();
+
+    // A real account, so the portal is the portal and not a redirect.
+    const email = `gallery${Date.now()}${width}@example.com`;
+    await page.goto(`${BASE}/signup`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(2500);
+    await page.fill('#field-displayName', 'Sam');
+    await page.fill('#field-email', email);
+    await page.fill('#field-password', 'correct horse battery');
+    await page.click('button[type=submit]');
+    await page.waitForTimeout(3000);
+
+    if (PG) {
+      const db = new pg.Client({ connectionString: PG });
+      await db.connect();
+      const { rows } = await db.query('select id from profiles order by created_at desc limit 1');
+      if (rows[0]) await db.query("update profiles set role='admin' where id=$1", [rows[0].id]);
+      await db.end();
+    }
+
+    for (const [name, path, caption, needsSession] of PAGES) {
+      await page.goto(BASE + path, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(width === 1440 ? 2200 : 1800);
+      // Next's development badge is furniture, not product.
+      await page.addStyleTag({ content: 'nextjs-portal,[data-nextjs-toast]{display:none!important}' });
+      await page.waitForTimeout(250);
+
+      // Very tall pages are clipped rather than shrunk. A 12,000px capture of
+      // a review queue full of test rows is not more informative than the
+      // first screenful and a half, and it dominates the gallery's weight.
+      const height = await page.evaluate(() => document.documentElement.scrollHeight);
+      const cap = width === 1440 ? 5200 : 4200;
+      const file = `${OUT}/${name}-${width}.jpg`;
+      await page.screenshot({
+        path: file,
+        type: 'jpeg',
+        quality: 60,
+        ...(height > cap
+          ? { clip: { x: 0, y: 0, width, height: cap } }
+          : { fullPage: true }),
+      });
+      const bytes = readFileSync(file).length;
+      if (width === 1440) shots.push({ name, path, caption, needsSession: Boolean(needsSession) });
+      console.log(`  ${String(bytes).padStart(8)}  ${name}-${width}`);
+    }
+    await ctx.close();
+  }
+} finally {
+  await browser.close();
+}
+
+writeFileSync(`${OUT}/index.json`, JSON.stringify(shots, null, 2));
+console.log(`\n${shots.length} pages captured to ${OUT}`);

@@ -171,6 +171,46 @@ duplication with `vi.resetModules()` and asserts both halves.
 boundary.** Found by driving the flow in a browser, like the profile
 provisioning bug before it.
 
+## Account self-service
+
+**Changing a password requires the current one.** Not friction to be smoothed
+away — it is the only thing between a borrowed laptop and a complete takeover,
+because changing the password is how an attacker locks the owner out of their
+own recovery flow. Succeeding invalidates every other session and issues a
+fresh one for the device that made the change, so it takes effect everywhere
+at once without signing that browser out.
+
+**Deleting requires the password and the typed word.** The password stops
+somebody else; the typed word stops you, which is the far likelier way a
+Watchlist is lost. Our data goes first and the login identity second, so a
+failure halfway leaves an account that can still sign in and try again.
+
+Everything customer-owned cascades from `profiles`, so erasure is one DELETE
+rather than a list that has to be kept in step with the schema. A new
+customer-owned table added without `on delete cascade` fails the test.
+
+Two things deliberately survive, and the page says both before the form:
+
+- **A subscription to The Edit.** `newsletter_subscribers.profile_id` is
+  `on delete set null` because subscribing was a separate act of consent with
+  its own evidentiary record. Silently revoking it would be as wrong as
+  silently keeping it, so the page links to the unsubscribe page.
+- **The login identity, when Supabase is the provider.** Deleting a user is an
+  admin operation needing the service-role key, which bypasses RLS and is
+  deliberately absent (§69). `canDeleteIdentity` reports false there, and the
+  page says we erased everything we hold rather than implying more.
+
+An operator who has taken recorded actions cannot be erased at all:
+`admin_actions.actor_id` is `on delete restrict`. That is the audit trail
+refusing to lose its author. It surfaces as a sentence, not a constraint
+violation.
+
+**Export** is a route handler, not a server action, because the honest form of
+"give me my data" is a file — only `Content-Disposition` produces one. Scope
+comes from RLS: there is no profile id parameter to get wrong, which matters
+most here, since an export that reached another household would hand one
+customer another's children's sizes in a file they keep.
+
 ## Not built yet
 
 **Rate limiting** on the recovery endpoints. There is nothing to hold counters

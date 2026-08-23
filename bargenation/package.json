@@ -24,6 +24,7 @@
     "smoke:account": "node scripts/smoke-account.mjs",
     "smoke:challenge": "node scripts/smoke-challenge.mjs",
     "smoke:noticed": "node scripts/smoke-noticed.mjs",
+    "smoke:household": "node scripts/smoke-household.mjs",
     "signals": "tsx scripts/run-signals.mts",
     "ingest": "tsx scripts/run-ingest.mts",
     "legal": "node scripts/check-legal-claims.mjs"

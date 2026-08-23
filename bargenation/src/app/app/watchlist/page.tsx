@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { readSession } from '@/auth/session';
-import { listWatchlist, memberFeaturesAvailable } from '@/data/member-repository';
+import { listWatchlist, readHousehold, memberFeaturesAvailable } from '@/data/member-repository';
 import { formatUsd } from '@/domain/types';
 import { EmptyState } from '@/components/member/EmptyState';
 import { WatchlistControls } from '@/components/member/WatchlistControls';
+import { WatchFor } from '@/components/member/WatchFor';
 
 export const metadata: Metadata = { title: 'Watchlist' };
 
@@ -21,7 +22,11 @@ const STATE_LABEL: Record<string, string> = {
 
 export default async function WatchlistPage() {
   const session = await readSession();
-  const items = session && memberFeaturesAvailable ? await listWatchlist(session.user.id) : [];
+  const live = Boolean(session) && memberFeaturesAvailable;
+  const [items, household] = live
+    ? await Promise.all([listWatchlist(session!.user.id), readHousehold(session!.user.id)])
+    : [[], null];
+  const members = household?.members ?? [];
 
   return (
     <section>
@@ -63,6 +68,23 @@ export default async function WatchlistPage() {
                 {/* A retailer watch has no target price to state — the whole
                     catalogue is the subject — so it says what it will do
                     instead of showing an empty setting. */}
+                {item.forMemberId && (() => {
+                  // Their recorded sizes, shown where the shopping is. The
+                  // point of a household is that a coat in the wrong size is
+                  // not a bargain, and that only helps if the size is visible
+                  // at the moment somebody is looking at the deal.
+                  const person = members.find((m) => m.id === item.forMemberId);
+                  const sizes = [
+                    person?.clothingSize && `clothes ${person.clothingSize}`,
+                    person?.shoeSize && `shoes ${person.shoeSize}`,
+                  ].filter(Boolean).join(' · ');
+                  return (
+                    <p className="eyebrow mt-2 text-ink-70">
+                      For {item.forNickname ?? 'someone in the household'}
+                      {sizes && <span className="ml-2 text-ink-50">{sizes}</span>}
+                    </p>
+                  );
+                })()}
                 <p className="mt-2 text-[0.8125rem] text-ink-70">
                   {item.retailerSlug
                     ? 'Whole retailer — we’ll flag anything here worth buying.'
@@ -71,6 +93,8 @@ export default async function WatchlistPage() {
                       : 'No target price set — we’ll flag anything unusually strong.'}
                   {item.size && ` · size ${item.size}`}
                 </p>
+                {/* Only where there is somebody to choose. */}
+                <WatchFor itemId={item.id} members={members} selectedId={item.forMemberId} />
               </div>
               <WatchlistControls itemId={item.id} paused={item.paused} />
             </li>

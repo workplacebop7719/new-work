@@ -135,6 +135,9 @@ export interface WatchlistItemRow {
   /** Set when the subject of the watch is a whole retailer rather than an item. */
   retailerSlug: string | null;
   retailerName: string | null;
+  /** Who this watch is for, when the customer said. */
+  forMemberId: string | null;
+  forNickname: string | null;
   keyword: string | null;
   targetPriceCents: number | null;
   size: string | null;
@@ -167,17 +170,20 @@ export async function listWatchlist(profileId: string): Promise<WatchlistItemRow
     const { rows } = await client.query<{
       id: string; slug: string | null; name: string | null;
       retailer_slug: string | null; retailer_name: string | null;
+      for_member_id: string | null; for_nickname: string | null;
       keyword: string | null;
       target_price_cents: number | null; size: string | null; color: string | null;
       state: string; paused: boolean; created_at: Date;
     }>(
       `select w.id, p.slug, p.name,
               rt.slug as retailer_slug, rt.name as retailer_name,
+              hm.id as for_member_id, hm.nickname as for_nickname,
               w.keyword, w.target_price_cents,
               w.size, w.color, w.state, w.paused, w.created_at
        from watchlist_items w
        left join products p on p.id = w.product_id
        left join retailers rt on rt.id = w.retailer_id
+       left join household_members hm on hm.id = w.household_member_id
        order by w.created_at desc`,
     );
     return rows.map((r) => ({
@@ -186,6 +192,8 @@ export async function listWatchlist(profileId: string): Promise<WatchlistItemRow
       productName: r.name,
       retailerSlug: r.retailer_slug,
       retailerName: r.retailer_name,
+      forMemberId: r.for_member_id,
+      forNickname: r.for_nickname,
       keyword: r.keyword,
       targetPriceCents: r.target_price_cents,
       size: r.size,
@@ -639,5 +647,208 @@ export async function readMembership(profileId: string): Promise<'FREE' | 'MEMBE
       'select membership from profiles limit 1',
     );
     return rows[0]?.membership === 'MEMBER' ? 'MEMBER' : 'FREE';
+  });
+}
+
+/* ============================================================
+   HOUSEHOLD (§35, §37)
+   ============================================================ */
+
+/**
+ * Who you are shopping for.
+ *
+ * The reason this exists at all: a coat in the wrong size is not a bargain,
+ * however good the Value Index. A household turns "this is 60% off" into
+ * "this is 60% off and it is the size your eldest actually wears".
+ *
+ * READ THE ABSENCES AS THE DESIGN. There is no legal name, no date of birth,
+ * no school, no address, no medical field and no government identifier — and
+ * not because we chose not to ask. The columns do not exist, so there is
+ * nothing to lose, nothing to be compelled to produce and nothing to
+ * mis-sell. A nickname is enough to size a coat and a birth year is enough to
+ * judge whether a toy suits.
+ *
+ * Everything here runs as the customer, so a household is reachable only by
+ * the profile that owns it — enforced by the policy in migration 0003, not by
+ * a WHERE clause somebody has to remember.
+ */
+export interface HouseholdMemberRow {
+  id: string;
+  nickname: string | null;
+  birthYear: number | null;
+  clothingSize: string | null;
+  shoeSize: string | null;
+}
+
+export interface HouseholdRow {
+  id: string;
+  name: string | null;
+  members: HouseholdMemberRow[];
+}
+
+/** Nothing about a person should be longer than this, and a size never is. */
+export const MAX_HOUSEHOLD_FIELD = 40;
+
+/**
+ * A birth year we will accept.
+ *
+ * The lower bound is not a guess at longevity — it is the point below which a
+ * value is far more likely to be a typo or a date pasted into the wrong box
+ * than a real answer, and a wrong year quietly produces wrong size advice.
+ */
+export const EARLIEST_BIRTH_YEAR = 1900;
+
+const trimmed = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const clean = value.trim().slice(0, MAX_HOUSEHOLD_FIELD);
+  return clean.length > 0 ? clean : null;
+};
+
+function parseBirthYear(value: unknown, now: Date): number | null {
+  if (typeof value !== 'string' || value.trim() === '') return null;
+  const year = Number(value.trim());
+  if (!Number.isInteger(year)) return null;
+  // A year in the future is not a person who exists yet.
+  if (year < EARLIEST_BIRTH_YEAR || year > now.getUTCFullYear()) return null;
+  return year;
+}
+
+/** One household per customer until sharing is a feature, same as watchlists. */
+async function householdId(
+  client: Parameters<Parameters<typeof asCustomer>[1]>[0],
+  profileId: string,
+): Promise<string> {
+  const existing = await client.query<{ id: string }>(
+    'select id from households order by created_at asc limit 1',
+  );
+  if (existing.rows[0]) return existing.rows[0].id;
+
+  const created = await client.query<{ id: string }>(
+    'insert into households (owner_profile_id) values ($1) returning id',
+    [profileId],
+  );
+  return created.rows[0]!.id;
+}
+
+export async function readHousehold(profileId: string): Promise<HouseholdRow | null> {
+  assertAvailable();
+  return asCustomer(profileId, async (client) => {
+    const houses = await client.query<{ id: string; name: string | null }>(
+      'select id, name from households order by created_at asc limit 1',
+    );
+    const house = houses.rows[0];
+    if (!house) return null;
+
+    const members = await client.query<{
+      id: string; nickname: string | null; birth_year: number | null;
+      clothing_size: string | null; shoe_size: string | null;
+    }>(
+      `select id, nickname, birth_year, clothing_size, shoe_size
+       from household_members where household_id = $1 order by created_at asc`,
+      [house.id],
+    );
+
+    return {
+      id: house.id,
+      name: house.name,
+      members: members.rows.map((m) => ({
+        id: m.id,
+        nickname: m.nickname,
+        birthYear: m.birth_year,
+        clothingSize: m.clothing_size,
+        shoeSize: m.shoe_size,
+      })),
+    };
+  });
+}
+
+export interface HouseholdMemberInput {
+  nickname?: string | null;
+  birthYear?: string | null;
+  clothingSize?: string | null;
+  shoeSize?: string | null;
+}
+
+/**
+ * Every field is optional, including the nickname.
+ *
+ * Somebody who only knows their child's shoe size should be able to say that
+ * and nothing else. Requiring a name to record a size would be asking for
+ * more about a child than the feature needs, which is the exact failure this
+ * table's shape exists to prevent.
+ */
+export async function addHouseholdMember(
+  profileId: string, input: HouseholdMemberInput, now: Date = new Date(),
+): Promise<void> {
+  assertAvailable();
+  await asCustomer(profileId, async (client) => {
+    const id = await householdId(client, profileId);
+    await client.query(
+      `insert into household_members
+         (household_id, nickname, birth_year, clothing_size, shoe_size)
+       values ($1, $2, $3, $4, $5)`,
+      [
+        id,
+        trimmed(input.nickname),
+        parseBirthYear(input.birthYear, now),
+        trimmed(input.clothingSize),
+        trimmed(input.shoeSize),
+      ],
+    );
+  });
+}
+
+export async function updateHouseholdMember(
+  profileId: string, memberId: string, input: HouseholdMemberInput, now: Date = new Date(),
+): Promise<void> {
+  assertAvailable();
+  await asCustomer(profileId, async (client) => {
+    // No household predicate: RLS on household_members already restricts this
+    // to households the caller owns, so naming somebody else's member id
+    // updates nothing rather than updating theirs.
+    await client.query(
+      `update household_members
+         set nickname = $2, birth_year = $3, clothing_size = $4, shoe_size = $5
+       where id = $1`,
+      [
+        memberId,
+        trimmed(input.nickname),
+        parseBirthYear(input.birthYear, now),
+        trimmed(input.clothingSize),
+        trimmed(input.shoeSize),
+      ],
+    );
+  });
+}
+
+/**
+ * Removing somebody removes them, and leaves their watches alone.
+ *
+ * `watchlist_items.household_member_id` is `on delete set null`, so a watch
+ * that was "coat for the eldest" becomes simply "coat". Deleting the child
+ * must not silently delete the shopping — and the watch losing a name is the
+ * honest outcome, rather than pointing at somebody who is gone.
+ */
+export async function removeHouseholdMember(profileId: string, memberId: string): Promise<void> {
+  assertAvailable();
+  await asCustomer(profileId, async (client) => {
+    await client.query('delete from household_members where id = $1', [memberId]);
+  });
+}
+
+/** Attaches a watch to a person, or detaches it when memberId is null. */
+export async function setWatchFor(
+  profileId: string, itemId: string, memberId: string | null,
+): Promise<void> {
+  assertAvailable();
+  await asCustomer(profileId, async (client) => {
+    // The subquery is the guard: naming another household's member id sets
+    // null rather than borrowing them, because that select returns nothing.
+    await client.query(
+      `update watchlist_items
+         set household_member_id = (select id from household_members where id = $2)
+       where id = $1`,
+      [itemId, memberId],
+    );
   });
 }

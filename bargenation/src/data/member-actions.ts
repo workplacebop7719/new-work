@@ -122,3 +122,46 @@ export async function clearInterestsAction(): Promise<void> {
   await member.clearInterests(profileId);
   revalidatePath('/app/noticed');
 }
+
+/* ============================================================
+   HOUSEHOLD (§35)
+   ============================================================ */
+
+const memberInput = (formData: FormData) => ({
+  nickname: String(formData.get('nickname') ?? ''),
+  birthYear: String(formData.get('birthYear') ?? ''),
+  clothingSize: String(formData.get('clothingSize') ?? ''),
+  shoeSize: String(formData.get('shoeSize') ?? ''),
+});
+
+export async function addHouseholdMemberAction(formData: FormData): Promise<void> {
+  const profileId = await requireProfileId('/app/household');
+  await member.addHouseholdMember(profileId, memberInput(formData));
+  revalidatePath('/app/household');
+  revalidatePath('/app/watchlist');
+}
+
+export async function updateHouseholdMemberAction(formData: FormData): Promise<void> {
+  const memberId = String(formData.get('memberId') ?? '');
+  const profileId = await requireProfileId('/app/household');
+  await member.updateHouseholdMember(profileId, memberId, memberInput(formData));
+  revalidatePath('/app/household');
+  revalidatePath('/app/watchlist');
+}
+
+export async function removeHouseholdMemberAction(formData: FormData): Promise<void> {
+  const memberId = String(formData.get('memberId') ?? '');
+  const profileId = await requireProfileId('/app/household');
+  await member.removeHouseholdMember(profileId, memberId);
+  revalidatePath('/app/household');
+  revalidatePath('/app/watchlist');
+}
+
+/** An empty selection means "nobody in particular", not "leave it alone". */
+export async function setWatchForAction(formData: FormData): Promise<void> {
+  const itemId = String(formData.get('itemId') ?? '');
+  const raw = String(formData.get('memberId') ?? '');
+  const profileId = await requireProfileId('/app/watchlist');
+  await member.setWatchFor(profileId, itemId, raw === '' ? null : raw);
+  revalidatePath('/app/watchlist');
+}

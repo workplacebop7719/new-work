@@ -321,6 +321,144 @@ d('member repository isolation', () => {
    * that matter are: nothing is recorded without it, and turning it off
    * ERASES rather than merely stopping.
    */
+  /**
+   * HOUSEHOLD (§35, §37).
+   *
+   * The tests that matter are about the absences and about isolation. This is
+   * the one table in the product that describes a child, so "Bob cannot read
+   * or touch Alice's household" is not a routine RLS check — it is the whole
+   * licence for the feature to exist.
+   */
+  describe('household', () => {
+    it('has no household until somebody adds one', async () => {
+      expect(await repo.readHousehold(BOB)).toBeNull();
+    });
+
+    it('creates one on first use and records what it was given', async () => {
+      await repo.addHouseholdMember(ALICE, {
+        nickname: 'Little One', birthYear: '2018', clothingSize: '5-6y', shoeSize: '12',
+      });
+
+      const house = await repo.readHousehold(ALICE);
+      expect(house!.members).toHaveLength(1);
+      expect(house!.members[0]).toMatchObject({
+        nickname: 'Little One', birthYear: 2018, clothingSize: '5-6y', shoeSize: '12',
+      });
+    });
+
+    /**
+     * Requiring a name to store a size would ask for more about a child than
+     * the feature needs — which is the exact failure this table's shape
+     * exists to prevent.
+     */
+    it('accepts a size with no name at all', async () => {
+      await repo.addHouseholdMember(ALICE, { shoeSize: '4' });
+      const house = await repo.readHousehold(ALICE);
+      const anonymous = house!.members.find((m) => m.shoeSize === '4');
+      expect(anonymous).toBeDefined();
+      expect(anonymous!.nickname).toBeNull();
+    });
+
+    it('stores blank fields as absent rather than as empty strings', async () => {
+      await repo.addHouseholdMember(ALICE, { nickname: '   ', clothingSize: '' });
+      const house = await repo.readHousehold(ALICE);
+      const blank = house!.members.at(-1)!;
+      expect(blank.nickname).toBeNull();
+      expect(blank.clothingSize).toBeNull();
+    });
+
+    /** A wrong year quietly produces wrong size advice, so it is not stored. */
+    it.each([
+      ['a full date pasted in', '2018-04-02'],
+      ['a year in the future', '3000'],
+      ['an implausible year', '1200'],
+      ['not a number', 'last April'],
+    ])('records no birth year for %s', async (_label, value) => {
+      await repo.addHouseholdMember(ALICE, { nickname: 'Test', birthYear: value });
+      expect((await repo.readHousehold(ALICE))!.members.at(-1)!.birthYear).toBeNull();
+    });
+
+    it('lets the owner correct what they entered', async () => {
+      const target = (await repo.readHousehold(ALICE))!.members[0]!;
+      await repo.updateHouseholdMember(ALICE, target.id, {
+        nickname: 'Renamed', clothingSize: '7-8y',
+      });
+
+      const after = (await repo.readHousehold(ALICE))!.members.find((m) => m.id === target.id)!;
+      expect(after.nickname).toBe('Renamed');
+      expect(after.clothingSize).toBe('7-8y');
+      // Cleared rather than silently kept: the form posts every field.
+      expect(after.shoeSize).toBeNull();
+    });
+
+    /** The load-bearing one, for the one table that describes a child. */
+    it('is invisible to another customer', async () => {
+      expect(await repo.readHousehold(BOB)).toBeNull();
+    });
+
+    it('cannot be edited by another customer, even naming the id', async () => {
+      const target = (await repo.readHousehold(ALICE))!.members[0]!;
+      await repo.updateHouseholdMember(BOB, target.id, { nickname: 'Taken over' });
+      await repo.removeHouseholdMember(BOB, target.id);
+
+      const after = (await repo.readHousehold(ALICE))!.members.find((m) => m.id === target.id);
+      expect(after).toBeDefined();
+      expect(after!.nickname).toBe('Renamed');
+    });
+
+    describe('watching for somebody', () => {
+      it('attaches a watch to a person', async () => {
+        const person = (await repo.readHousehold(ALICE))!.members[0]!;
+        const [watch] = await repo.listWatchlist(ALICE);
+
+        await repo.setWatchFor(ALICE, watch!.id, person.id);
+
+        const after = (await repo.listWatchlist(ALICE)).find((w) => w.id === watch!.id)!;
+        expect(after.forMemberId).toBe(person.id);
+        expect(after.forNickname).toBe('Renamed');
+      });
+
+      it('detaches when nobody is chosen', async () => {
+        const [watch] = await repo.listWatchlist(ALICE);
+        await repo.setWatchFor(ALICE, watch!.id, null);
+        expect((await repo.listWatchlist(ALICE))[0]!.forMemberId).toBeNull();
+      });
+
+      /** Naming another household's member borrows nothing. */
+      it('cannot attach a watch to somebody else’s household member', async () => {
+        const person = (await repo.readHousehold(ALICE))!.members[0]!;
+        await repo.watchProduct(BOB, slugA);
+        const [bobWatch] = await repo.listWatchlist(BOB);
+
+        await repo.setWatchFor(BOB, bobWatch!.id, person.id);
+
+        expect((await repo.listWatchlist(BOB))[0]!.forMemberId).toBeNull();
+      });
+
+      /**
+       * Deleting a child must not silently delete the shopping. The watch
+       * losing a name is the honest outcome; losing the watch is not.
+       */
+      it('keeps the watch when the person is removed', async () => {
+        const person = (await repo.readHousehold(ALICE))!.members[0]!;
+        const [watch] = await repo.listWatchlist(ALICE);
+        await repo.setWatchFor(ALICE, watch!.id, person.id);
+
+        await repo.removeHouseholdMember(ALICE, person.id);
+
+        const after = (await repo.listWatchlist(ALICE)).find((w) => w.id === watch!.id);
+        expect(after).toBeDefined();
+        expect(after!.forMemberId).toBeNull();
+      });
+    });
+
+    it('appears in the export, because it is data we hold about them', async () => {
+      const dump = await repo.exportAccount(ALICE);
+      expect(dump.household).not.toBeNull();
+      expect(dump.household!.members.length).toBeGreaterThan(0);
+    });
+  });
+
   describe('what we noticed', () => {
     it('is off until the customer turns it on', async () => {
       expect(await repo.behaviourAlertsEnabled(ALICE)).toBe(false);

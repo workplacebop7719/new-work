@@ -8,6 +8,7 @@ import { RecommendationMark, RecommendationLine } from '@/components/deal/Recomm
 import { PriceHistoryChart } from '@/components/deal/PriceHistoryChart';
 import { DealCard } from '@/components/deal/DealCard';
 import { DealActions } from '@/components/deal/DealActions';
+import { memberFeaturesAvailable } from '@/data/member-repository';
 import { NoteInterest } from '@/components/member/NoteInterest';
 
 export async function generateStaticParams() {
@@ -80,6 +81,7 @@ export default async function DealPage({ params }: { params: Promise<{ slug: str
             offerId={offer.id}
             productSlug={offer.product.slug}
             returnTo={`/deals/${offer.product.slug}`}
+            available={memberFeaturesAvailable}
           />
 
           {/* Outbound commerce is not built: no affiliate account, no /go route.

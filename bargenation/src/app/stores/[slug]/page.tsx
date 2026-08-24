@@ -7,6 +7,7 @@ import { MIN_OFFERS_FOR_VERDICT } from '@/domain/retailer-profile';
 import { DealCard } from '@/components/deal/DealCard';
 import { RetailerVerdictMark } from '@/components/retailer/RetailerVerdictMark';
 import { WatchRetailer } from '@/components/retailer/WatchRetailer';
+import { memberFeaturesAvailable } from '@/data/member-repository';
 
 export async function generateStaticParams() {
   return (await getRetailers()).map((r) => ({ slug: r.slug }));
@@ -78,7 +79,11 @@ export default async function RetailerPage({ params }: { params: Promise<{ slug:
             </p>
           )}
 
-          <WatchRetailer retailerSlug={retailer.slug} returnTo={`/stores/${retailer.slug}`} />
+          <WatchRetailer
+            retailerSlug={retailer.slug}
+            returnTo={`/stores/${retailer.slug}`}
+            available={memberFeaturesAvailable}
+          />
 
           {/* Stated here, not only on /disclosures (§52). */}
           <p className="measure mt-10 border-t border-line pt-5 text-[0.8125rem] leading-relaxed text-ink-70">

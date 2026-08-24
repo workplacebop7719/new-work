@@ -82,3 +82,22 @@ reject it.
   that silently discards messages.
 - Recorded prices are not deleted on account deletion, because they are not
   personal data. Stated plainly rather than left ambiguous.
+
+## The guard that is not about legal copy
+
+`npm run guard:server` reads every file carrying the `'use server'` directive
+and fails if any export is not an async function.
+
+It lives with the other guards because it protects the same thing they do: a
+mistake that passes typecheck, lint and the whole test suite, and only appears
+later. Here "later" is the production build, which reports
+*"A 'use server' file can only export async functions, found object"* — naming
+no file, with a stack of webpack chunk ids.
+
+That has cost three separate debugging sessions in this codebase
+(`DELETE_CONFIRMATION`, `isPlausibleToken`, `IDLE`), each a one-line constant
+put in the obvious place beside the code using it. Types are fine, because
+they are erased before the bundler sees them; values belong in a plain module
+next door.
+
+The guard has been watched rejecting a real violation and then passing again.

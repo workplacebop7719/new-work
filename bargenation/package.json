@@ -17,11 +17,13 @@
     "test:db": "vitest run src/db",
     "contrast": "node scripts/check-contrast.mjs",
     "legal": "node scripts/check-legal-claims.mjs",
+    "guard:server": "node scripts/check-server-exports.mjs",
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed": "tsx scripts/seed.mts",
     "db:reset": "node scripts/reset-db.mjs && node scripts/migrate.mjs && tsx scripts/seed.mts",
     "signals": "tsx scripts/run-signals.mts",
     "ingest": "tsx scripts/run-ingest.mts",
+    "smoke:flow": "node scripts/smoke-flow.mjs",
     "smoke": "node scripts/smoke-member-flow.mjs",
     "smoke:recovery": "node scripts/smoke-recovery.mjs",
     "smoke:account": "node scripts/smoke-account.mjs",
@@ -32,7 +34,7 @@
     "smoke:review": "node scripts/smoke-review.mjs",
     "smoke:admin": "node scripts/smoke-admin.mjs",
     "smoke:rate-limit": "node scripts/smoke-rate-limit.mjs",
-    "smoke:all": "for s in member-flow recovery account challenge noticed household newsletter review admin rate-limit; do node scripts/smoke-$s.mjs || exit 1; done"
+    "smoke:all": "for s in flow member-flow recovery account challenge noticed household newsletter review admin rate-limit; do node scripts/smoke-$s.mjs || exit 1; done"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

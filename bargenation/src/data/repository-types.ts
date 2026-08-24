@@ -43,3 +43,57 @@ export const selectors = {
       .toLowerCase()
       .includes(q),
 };
+
+/* ============================================================
+   SORTING A LIST OF DEALS
+   ============================================================ */
+
+/**
+ * The orders a browse page offers.
+ *
+ * Deliberately three, not eight. Every extra option is one more thing to read
+ * before you can start looking, and these cover the three questions people
+ * actually arrive with: what is worth buying, what is cheap, and what is new.
+ *
+ * There is no "sort by discount percentage", which is the one every other
+ * deals site leads with. A big percentage off an invented "was" price is
+ * exactly the claim this product exists not to repeat.
+ */
+export const SORT_ORDERS = [
+  { key: 'value', label: 'Best value first' },
+  { key: 'price', label: 'Cheapest first' },
+  { key: 'recent', label: 'Most recently checked' },
+] as const;
+
+export type SortKey = (typeof SORT_ORDERS)[number]['key'];
+
+export const DEFAULT_SORT: SortKey = 'value';
+
+/** Anything unrecognised falls back rather than erroring — it is a query string. */
+export const toSortKey = (value: unknown): SortKey =>
+  SORT_ORDERS.some((order) => order.key === value) ? (value as SortKey) : DEFAULT_SORT;
+
+/**
+ * Sorts a copy, never in place.
+ *
+ * Unscorable deals sink to the bottom of every order rather than being hidden.
+ * They are still real offers and somebody may want them; what they must not do
+ * is sit above a deal we can actually stand behind.
+ */
+export function sortDeals(deals: readonly Deal[], key: SortKey): Deal[] {
+  const scored = (deal: Deal) =>
+    deal.publishable && deal.index.scorable ? deal.index.score : -1;
+
+  const compare: Record<SortKey, (a: Deal, b: Deal) => number> = {
+    value: (a, b) => scored(b) - scored(a),
+    price: (a, b) => a.offer.priceCents - b.offer.priceCents,
+    recent: (a, b) =>
+      new Date(b.offer.lastVerifiedAt).getTime() - new Date(a.offer.lastVerifiedAt).getTime(),
+  };
+
+  // Product slug breaks every tie, so the same list never comes back in a
+  // different order between two renders of the same page.
+  return [...deals].sort(
+    (a, b) => compare[key](a, b) || a.offer.product.slug.localeCompare(b.offer.product.slug),
+  );
+}

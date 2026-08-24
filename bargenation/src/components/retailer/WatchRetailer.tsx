@@ -1,5 +1,8 @@
+'use client';
+
+import { useActionState } from 'react';
 import { watchRetailerAction } from '@/data/member-actions';
-import { memberFeaturesAvailable } from '@/data/member-repository';
+import { IDLE } from '@/data/member-action-state';
 
 /**
  * Watch a whole retailer (PRD §25, §31, §43).
@@ -11,10 +14,21 @@ import { memberFeaturesAvailable } from '@/data/member-repository';
  *
  * Renders for signed-out visitors and sends them to sign in with this page
  * remembered (§31). Gated off entirely when no database is configured rather
- * than shown doing nothing (§01).
+ * than shown doing nothing (§01), and it reports the outcome after the press
+ * rather than changing nothing on screen.
  */
-export function WatchRetailer({ retailerSlug, returnTo }: { retailerSlug: string; returnTo: string }) {
-  if (!memberFeaturesAvailable) {
+export function WatchRetailer({
+  retailerSlug,
+  returnTo,
+  available,
+}: {
+  retailerSlug: string;
+  returnTo: string;
+  available: boolean;
+}) {
+  const [state, watch, pending] = useActionState(watchRetailerAction, IDLE);
+
+  if (!available) {
     return (
       <p className="mt-8 max-w-[42ch] text-[0.75rem] leading-snug text-ink-50">
         Watching a retailer needs an account, and accounts need a database that isn’t configured
@@ -24,18 +38,31 @@ export function WatchRetailer({ retailerSlug, returnTo }: { retailerSlug: string
   }
 
   return (
-    <form action={watchRetailerAction} className="mt-8">
-      <input type="hidden" name="retailerSlug" value={retailerSlug} />
-      <input type="hidden" name="returnTo" value={returnTo} />
-      <button
-        type="submit"
-        className="on-pink inline-flex min-h-[44px] items-center px-5 text-[0.8125rem] font-semibold uppercase tracking-[0.06em] transition-colors duration-[--dur-micro] hover:bg-ink hover:text-white"
-      >
-        Watch this retailer
-      </button>
-      <p className="mt-2.5 max-w-[42ch] text-[0.75rem] leading-snug text-ink-50">
-        We’ll tell you when something here is genuinely worth buying — not when they run a sale.
-      </p>
-    </form>
+    <div className="mt-8">
+      <form action={watch}>
+        <input type="hidden" name="retailerSlug" value={retailerSlug} />
+        <input type="hidden" name="returnTo" value={returnTo} />
+        <button
+          type="submit"
+          disabled={pending}
+          className="on-pink inline-flex min-h-[44px] items-center px-5 text-[0.8125rem] font-semibold uppercase tracking-[0.06em] transition-colors duration-[--dur-micro] hover:bg-ink hover:text-white disabled:opacity-50"
+        >
+          {pending ? 'Adding' : 'Watch this retailer'}
+        </button>
+      </form>
+
+      {state.notice ? (
+        <p
+          role="status"
+          className="measure mt-3 border-l-2 border-pink-ink bg-wash px-4 py-2.5 text-[0.875rem] leading-snug"
+        >
+          {state.notice}
+        </p>
+      ) : (
+        <p className="mt-2.5 max-w-[42ch] text-[0.75rem] leading-snug text-ink-50">
+          We’ll tell you when something here is genuinely worth buying — not when they run a sale.
+        </p>
+      )}
+    </div>
   );
 }

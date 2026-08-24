@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { readSession } from '@/auth/session';
 import { loginHref } from '@/auth/return-url';
 import * as member from './member-repository';
+import type { MemberActionState } from './member-action-state';
 import { DEFAULT_QUIET_HOURS, isUsableTimeZone } from '@/domain/quiet-hours';
 
 /**
@@ -20,13 +21,28 @@ import { DEFAULT_QUIET_HOURS, isUsableTimeZone } from '@/domain/quiet-hours';
  * homepage (§31).
  */
 
+/**
+ * These actions used to return void. Pressing Save then did the right thing in
+ * the database and NOTHING visible on screen — the deal page is statically
+ * rendered, so it has no session at build time and cannot show "saved" itself.
+ * A control that works silently is indistinguishable from one that is broken,
+ * and people press it again.
+ *
+ * The state type and its idle value live in member-action-state.ts, because a
+ * `'use server'` file may only export async functions.
+ */
+const ok = (notice: string): MemberActionState => ({ error: null, notice });
+const failed = (error: string): MemberActionState => ({ error, notice: null });
+
 async function requireProfileId(returnTo: string): Promise<string> {
   const session = await readSession();
   if (!session) redirect(loginHref(returnTo));
   return session.user.id;
 }
 
-export async function saveOfferAction(formData: FormData): Promise<void> {
+export async function saveOfferAction(
+  _prev: MemberActionState, formData: FormData,
+): Promise<MemberActionState> {
   const offerId = String(formData.get('offerId') ?? '');
   const returnTo = String(formData.get('returnTo') ?? '/today');
   const profileId = await requireProfileId(returnTo);
@@ -34,6 +50,10 @@ export async function saveOfferAction(formData: FormData): Promise<void> {
   await member.save(profileId, offerId);
   revalidatePath(returnTo);
   revalidatePath('/app/saved');
+  // Says "it is saved", not "it has been saved", because the action is
+  // idempotent: pressing twice is harmless and the second press should read
+  // as confirmation rather than as a second save.
+  return ok('Saved. It’s in your Saved list.');
 }
 
 export async function unsaveOfferAction(formData: FormData): Promise<void> {
@@ -46,7 +66,9 @@ export async function unsaveOfferAction(formData: FormData): Promise<void> {
   revalidatePath('/app/saved');
 }
 
-export async function watchProductAction(formData: FormData): Promise<void> {
+export async function watchProductAction(
+  _prev: MemberActionState, formData: FormData,
+): Promise<MemberActionState> {
   const slug = String(formData.get('productSlug') ?? '');
   const returnTo = String(formData.get('returnTo') ?? '/today');
   const rawTarget = String(formData.get('targetPrice') ?? '').trim();
@@ -59,12 +81,26 @@ export async function watchProductAction(formData: FormData): Promise<void> {
       ? Math.round(dollars * 100)
       : null;
 
+  // Typed something that is not a price? Say so. Silently ignoring it means
+  // somebody waits forever for an alert at a threshold we never stored.
+  if (rawTarget !== '' && targetPriceCents === null) {
+    return failed('That target price didn’t look like a number, so nothing was saved.');
+  }
+
   await member.watchProduct(profileId, slug, { targetPriceCents });
   revalidatePath(returnTo);
   revalidatePath('/app/watchlist');
+
+  return ok(
+    targetPriceCents === null
+      ? 'Watching. We’ll tell you when something actually changes.'
+      : `Watching. We’ll tell you if it drops below ${(targetPriceCents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}.`,
+  );
 }
 
-export async function watchRetailerAction(formData: FormData): Promise<void> {
+export async function watchRetailerAction(
+  _prev: MemberActionState, formData: FormData,
+): Promise<MemberActionState> {
   const slug = String(formData.get('retailerSlug') ?? '');
   const returnTo = String(formData.get('returnTo') ?? '/stores');
   const profileId = await requireProfileId(returnTo);
@@ -72,6 +108,7 @@ export async function watchRetailerAction(formData: FormData): Promise<void> {
   await member.watchRetailer(profileId, slug);
   revalidatePath(returnTo);
   revalidatePath('/app/watchlist');
+  return ok('Watching this retailer. We’ll tell you when something here is worth buying.');
 }
 
 export async function unwatchAction(formData: FormData): Promise<void> {

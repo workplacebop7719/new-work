@@ -114,14 +114,16 @@ export default function PrivacyPage() {
 
       <h2>Asking to see, correct or delete your data</h2>
       <p>
-        You can ask us for a copy of what we hold, to correct it, or to delete it. Send that to our
-        privacy contact.
+        You can do all three yourself, from your account. Export downloads a file of everything
+        your account holds. Delete removes it. Your household, your Watchlist and what we noticed
+        are editable wherever they appear.
       </p>
       <p>
-        Two honest caveats. First, the self-service buttons for export and deletion are not built
-        yet, so a request today would be handled by a person. Second, recorded prices are not
-        deleted, because they are not about you — deleting your account removes your account,
-        not the record that a coat cost forty dollars in March.
+        Two honest caveats. First, recorded prices are not deleted, because they are not about
+        you — deleting your account removes your account, not the record that a coat cost forty
+        dollars in March. Second, if our authentication provider is one that only its own staff
+        can remove an account from, we erase everything we hold and tell you plainly that the
+        sign-in itself needs a person to finish; the delete page says which of the two happened.
       </p>
 
       <h2>Children</h2>

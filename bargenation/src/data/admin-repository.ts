@@ -396,3 +396,169 @@ export async function listRecentAudit(actorId: string, limit = 20): Promise<Audi
     }));
   });
 }
+
+/* ============================================================
+   SOURCES AND JOB HEALTH (§49)
+   ============================================================ */
+
+export interface SourceRunRow {
+  sourceName: string;
+  tier: number;
+  status: string;
+  startedAt: string;
+  finishedAt: string | null;
+  recordsSeen: number;
+  accepted: number;
+  rejected: number;
+  quarantined: number;
+  note: string | null;
+}
+
+export interface SourceRow {
+  id: string;
+  name: string;
+  tier: number;
+  lastRunAt: string | null;
+  lastStatus: string | null;
+  runsLast7d: number;
+  acceptedLast7d: number;
+  rejectedLast7d: number;
+}
+
+/**
+ * Every source and how it has been behaving.
+ *
+ * The columns that matter operationally are the REJECTIONS: a feed that
+ * suddenly rejects everything has changed its format, and a feed that
+ * suddenly accepts everything has probably stopped validating. Both look fine
+ * on a page that only shows "last run: succeeded".
+ */
+export async function listSources(actorId: string): Promise<SourceRow[]> {
+  return asStaff(actorId, async (client) => {
+    const { rows } = await client.query<{
+      id: string; name: string; tier: number;
+      last_run_at: Date | null; last_status: string | null;
+      runs_7d: string; accepted_7d: string; rejected_7d: string;
+    }>(
+      `select s.id, s.name, s.tier,
+              max(r.started_at)                                    as last_run_at,
+              (array_agg(r.status order by r.started_at desc))[1]  as last_status,
+              count(r.id) filter (where r.started_at > now() - interval '7 days') as runs_7d,
+              coalesce(sum(r.accepted) filter (where r.started_at > now() - interval '7 days'), 0) as accepted_7d,
+              coalesce(sum(r.rejected) filter (where r.started_at > now() - interval '7 days'), 0) as rejected_7d
+       from data_sources s
+       left join source_runs r on r.source_id = s.id
+       group by s.id, s.name, s.tier
+       order by s.tier asc, s.name asc`,
+    );
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      tier: r.tier,
+      lastRunAt: r.last_run_at?.toISOString() ?? null,
+      lastStatus: r.last_status,
+      runsLast7d: Number(r.runs_7d),
+      acceptedLast7d: Number(r.accepted_7d),
+      rejectedLast7d: Number(r.rejected_7d),
+    }));
+  });
+}
+
+export async function listRecentRuns(actorId: string, limit = 30): Promise<SourceRunRow[]> {
+  return asStaff(actorId, async (client) => {
+    const { rows } = await client.query<{
+      name: string; tier: number; status: string;
+      started_at: Date; finished_at: Date | null;
+      records_seen: number; accepted: number; rejected: number; quarantined: number;
+      note: string | null;
+    }>(
+      `select s.name, s.tier, r.status, r.started_at, r.finished_at,
+              r.records_seen, r.accepted, r.rejected, r.quarantined, r.note
+       from source_runs r
+       join data_sources s on s.id = r.source_id
+       order by r.started_at desc
+       limit $1`,
+      [limit],
+    );
+    return rows.map((r) => ({
+      sourceName: r.name,
+      tier: r.tier,
+      status: r.status,
+      startedAt: r.started_at.toISOString(),
+      finishedAt: r.finished_at?.toISOString() ?? null,
+      recordsSeen: r.records_seen,
+      accepted: r.accepted,
+      rejected: r.rejected,
+      quarantined: r.quarantined,
+      note: r.note,
+    }));
+  });
+}
+
+export interface RejectionRow {
+  sourceName: string;
+  reason: string;
+  occurrences: number;
+  lastSeenAt: string;
+}
+
+/** Grouped by reason, because one broken feed produces a thousand identical rows. */
+export async function listRejectionReasons(actorId: string): Promise<RejectionRow[]> {
+  return asStaff(actorId, async (client) => {
+    const { rows } = await client.query<{
+      name: string; reason: string; occurrences: string; last_seen: Date;
+    }>(
+      `select s.name, j.reason, count(*) as occurrences, max(j.created_at) as last_seen
+       from ingest_rejections j
+       join source_runs r on r.id = j.run_id
+       join data_sources s on s.id = r.source_id
+       where j.created_at > now() - interval '30 days'
+       group by s.name, j.reason
+       order by count(*) desc
+       limit 40`,
+    );
+    return rows.map((r) => ({
+      sourceName: r.name,
+      reason: r.reason,
+      occurrences: Number(r.occurrences),
+      lastSeenAt: r.last_seen.toISOString(),
+    }));
+  });
+}
+
+/* ============================================================
+   THE AUDIENCE, AS NUMBERS ONLY (§49)
+   ============================================================ */
+
+/**
+ * Counts, and nothing that could identify anybody.
+ *
+ * Staff cannot read profiles, watchlists, deal signals or subscribers —
+ * migration 0010 revokes all four and 0012 withholds read-by-email
+ * specifically. This asks a question instead (migration 0020) and gets back
+ * numbers: enough to answer "is the product being used and is anything
+ * stuck", not enough to look somebody up.
+ */
+export type AudienceSummary = Record<string, number>;
+
+export async function readAudienceSummary(actorId: string): Promise<AudienceSummary> {
+  return asStaff(actorId, async (client) => {
+    const { rows } = await client.query<{ metric: string; value: string }>(
+      'select metric, value from operations_summary()',
+    );
+    return Object.fromEntries(rows.map((r) => [r.metric, Number(r.value)]));
+  });
+}
+
+/** Whether commission data is reachable at all from this process. */
+export async function commerceReachable(actorId: string): Promise<boolean> {
+  return asStaff(actorId, async (client) => {
+    try {
+      await client.query('select 1 from commerce.affiliate_links limit 1');
+      return true;
+    } catch {
+      // Expected: migration 0005 revokes schema commerce from this role.
+      return false;
+    }
+  });
+}

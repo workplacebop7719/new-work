@@ -502,3 +502,112 @@ d('the job still cannot read who anybody is', () => {
     ).rejects.toThrow(/permission/i);
   });
 });
+
+/**
+ * QUARANTINE EXPIRY (§44).
+ *
+ * The single assertion that matters: an unreviewed hold is DISCARDED, not
+ * released. Time does not confirm a price nobody checked, and releasing on a
+ * timer would let an unverified observation into the record precisely because
+ * nobody had time to look at it.
+ */
+d('expiring a held observation nobody reviewed', () => {
+  let admin: pg.Client;
+
+  beforeAll(async () => {
+    admin = new pg.Client({ connectionString: ADMIN_URL });
+    await admin.connect();
+  });
+  afterAll(async () => { await admin?.end(); });
+
+  /** Its own offer, since price history cannot be tidied away afterwards. */
+  async function heldObservation(ageDays: number): Promise<string> {
+    const stamp = `expiry-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    await admin.query(
+      `insert into retailers (slug, name) values ($1, 'Expiry Test')`, [stamp],
+    );
+    await admin.query(
+      `insert into products (slug, name, category_id)
+       values ($1, 'Expiry Test Item', (select id from categories order by sort_order limit 1))`,
+      [stamp],
+    );
+    const offer = await admin.query<{ id: string }>(
+      `insert into offers (product_id, retailer_id, source_id, price_cents, is_sample_data)
+       values ((select id from products where slug = $1),
+               (select id from retailers where slug = $1),
+               (select id from data_sources where tier = 1 limit 1), 5000, false)
+       returning id`,
+      [stamp],
+    );
+    const held = await admin.query<{ id: string }>(
+      `insert into quarantined_observations
+         (offer_id, price_cents, in_stock, observed_at, source_id, reason, created_at)
+       values ($1, 1200, true, now(), (select id from data_sources where tier = 1 limit 1),
+               'implausible drop', now() - make_interval(days => $2))
+       returning id`,
+      [offer.rows[0]!.id, ageDays],
+    );
+    return held.rows[0]!.id;
+  }
+
+  const stateOf = async (id: string) => {
+    const { rows } = await admin.query<{ released_at: Date | null; discarded_at: Date | null }>(
+      'select released_at, discarded_at from quarantined_observations where id = $1', [id],
+    );
+    return rows[0]!;
+  };
+
+  it('discards a hold nobody looked at, and never releases it', async () => {
+    const stale = await heldObservation(30);
+    const { rows } = await admin.query<{ expire_quarantine: number }>(
+      'select expire_quarantine()',
+    );
+    expect(rows[0]!.expire_quarantine).toBeGreaterThan(0);
+
+    const state = await stateOf(stale);
+    expect(state.discarded_at).not.toBeNull();
+    expect(state.released_at).toBeNull();
+  });
+
+  it('leaves a recent hold alone, so a fortnight away does not empty the queue', async () => {
+    const recent = await heldObservation(3);
+    await admin.query('select expire_quarantine()');
+
+    const state = await stateOf(recent);
+    expect(state.discarded_at).toBeNull();
+    expect(state.released_at).toBeNull();
+  });
+
+  /** The audit trail must show WHY, and must not invent somebody to blame. */
+  it('records the expiry with no actor rather than attributing it to a person', async () => {
+    const stale = await heldObservation(30);
+    await admin.query('select expire_quarantine()');
+
+    const { rows } = await admin.query<{ actor_id: string | null; reason: string }>(
+      `select actor_id, reason from admin_actions
+       where target = $1 order by created_at desc limit 1`,
+      [`quarantined_observations:${stale}`],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.actor_id).toBeNull();
+    expect(rows[0]!.reason).toMatch(/expired unreviewed/i);
+    // And it still says what the watchdog objected to in the first place.
+    expect(rows[0]!.reason).toMatch(/implausible drop/i);
+  });
+
+  it('does not discard the same hold twice', async () => {
+    const stale = await heldObservation(30);
+    await admin.query('select expire_quarantine()');
+    const first = (await stateOf(stale)).discarded_at;
+
+    await admin.query('select expire_quarantine()');
+    expect((await stateOf(stale)).discarded_at).toEqual(first);
+  });
+
+  it('runs as part of the sweep, not only by hand', async () => {
+    await heldObservation(30);
+    const { sweepDealSignals } = await import('@/data/signal-runner');
+    const result = await sweepDealSignals(JOB_URL!, new Date());
+    expect(result.quarantineExpired).toBeGreaterThan(0);
+  });
+});

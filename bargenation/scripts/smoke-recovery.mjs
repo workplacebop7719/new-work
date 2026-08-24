@@ -19,6 +19,19 @@
 import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
 
+/**
+ * This script's own caller identity.
+ *
+ * Rate limiting counts by caller, and every Playwright context here
+ * shares one source address — so without this, smoke-rate-limit burning
+ * the sign-in allowance on purpose silently broke every script that ran
+ * after it for the next fifteen minutes. One connection per script is
+ * also what the real world looks like.
+ */
+const SMOKE_CALLER = '198.51.100.12';
+const CALLER_HEADERS = { 'x-forwarded-for': SMOKE_CALLER };
+
+
 const BASE = process.env.BASE || 'http://localhost:3000';
 const DEV_LOG = process.env.DEV_LOG || '/tmp/dev.log';
 
@@ -39,6 +52,24 @@ const check = (label, condition) => {
  * Waiting for the words we actually expect has no such ambiguity, and asserts
  * the thing that matters: the customer can see it.
  */
+/**
+ * Waits for the bot challenge to be solved.
+ *
+ * Never a fixed sleep. The submit button stays disabled until the proof of
+ * work completes — roughly two seconds — and `page.click` on a disabled
+ * control silently does nothing, so a 600ms wait produced a form that looked
+ * like it had rejected a perfectly good address.
+ */
+async function challengeSolved(page) {
+  await page.waitForFunction(
+    () => {
+      const field = document.querySelector('input[name=challengeSolution]');
+      return field === null || field.value !== '';
+    },
+    { timeout: 30_000 },
+  ).catch(() => undefined);
+}
+
 async function sawText(page, pattern, timeout = 15_000) {
   try {
     await page.waitForFunction(
@@ -66,10 +97,23 @@ function latestLink(kind) {
 const browser = await chromium.launch({
   executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
 });
-const page = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
+const page = await (await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS,  viewport: { width: 1280, height: 900 } })).newPage();
+
+/**
+ * A dev server compiles a route on its first request, which can take eight
+ * seconds and is enough to race a form submit. Not the product being slow —
+ * but enough to make this script fail on a cold start and pass on a re-run,
+ * which is the worst kind of test.
+ */
+async function warm(page, paths) {
+  for (const path of paths) {
+    await page.goto(BASE + path, { waitUntil: 'domcontentloaded' }).catch(() => undefined);
+  }
+}
 
 try {
   console.log('account recovery');
+  await warm(page, ['/signup', '/today', '/login', '/forgot-password', '/reset-password']);
 
   const email = `recover${Date.now()}@example.com`;
   const oldPassword = 'correct horse battery';
@@ -77,17 +121,19 @@ try {
 
   // ---- an account to recover ----
   await page.goto(`${BASE}/signup`, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(1200);
+  await challengeSolved(page);
   await page.fill('#field-displayName', 'Recovery');
   await page.fill('#field-email', email);
   await page.fill('#field-password', oldPassword);
   await page.click('button[type=submit]');
   await page.waitForURL(/\/today/, { timeout: 20_000 }).catch(() => undefined);
-  check('signing up lands somewhere signed in', !page.url().includes('/signup'));
+  const signedUp = !page.url().includes('/signup');
+  check('signing up lands somewhere signed in', signedUp,
+    signedUp ? '' : (await page.locator('[role=alert]').allTextContents()).join(' | ').slice(0, 140));
 
   // ---- the page must admit nothing will arrive ----
   await page.goto(`${BASE}/forgot-password`, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(1200);
+  await challengeSolved(page);
   const body = await page.textContent('body');
   check('says plainly that no email will arrive (§01)',
     /nothing will arrive/i.test(body ?? ''));
@@ -104,7 +150,7 @@ try {
 
   // ---- the real address ----
   await page.goto(`${BASE}/forgot-password`, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(600);
+  await challengeSolved(page);
   await page.fill('#field-email', email);
   await page.click('button[type=submit]');
   check('a real address is answered at all', await sawText(page, /if there’s an account/i));
@@ -148,8 +194,9 @@ try {
   await page.fill('#field-email', email);
   await page.fill('#field-password', oldPassword);
   await page.click('button[type=submit]');
-  check('the old password no longer works',
-    await sawText(page, /email and password don’t match/i));
+  const oldRefused = await sawText(page, /email and password don’t match/i);
+  check('the old password no longer works', oldRefused,
+    oldRefused ? '' : `landed on ${page.url()} — ${(await page.locator('[role=alert]').allTextContents()).join(' | ').slice(0, 120)}`);
 
   // React resets uncontrolled fields after a form action, so the failed attempt
   // above leaves both boxes empty. Refilling is not belt-and-braces here.

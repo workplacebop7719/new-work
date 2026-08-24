@@ -320,6 +320,47 @@ export async function changePasswordAction(
 }
 
 /**
+ * SIGN OUT EVERYWHERE (§37).
+ *
+ * For the library computer you forgot to close, or the phone you no longer
+ * have. Every session ends, including this one — and a fresh one is issued
+ * for the device that asked, so clearing the others does not sign you out of
+ * the one in your hand.
+ *
+ * The password is required. Without it, an unattended browser could be used
+ * to kick the owner off everything they own: a nuisance attack with no upside
+ * for anybody.
+ */
+export async function signOutEverywhereAction(
+  _prev: FormState, formData: FormData,
+): Promise<FormState> {
+  const session = await readSession();
+  if (!session) return { error: AUTH_MESSAGE.NOT_CONFIGURED, notice: null };
+
+  const jar = await cookies();
+  const sessionToken = jar.get(SESSION_COOKIE)?.value;
+  if (!sessionToken) return { error: AUTH_MESSAGE.INVALID_CREDENTIALS, notice: null };
+
+  const password = String(formData.get('password') ?? '');
+
+  try {
+    const { token } = await auth().signOutEverywhere({
+      sessionToken,
+      email: session.user.email,
+      password,
+    });
+    await writeSessionCookie(token);
+  } catch (err) {
+    return { error: messageFor(err), notice: null };
+  }
+
+  return {
+    error: null,
+    notice: 'Every other device has been signed out. This one is still signed in.',
+  };
+}
+
+/**
  * DELETE ACCOUNT (§37).
  *
  * Two gates, because this cannot be undone: the current password, and typing

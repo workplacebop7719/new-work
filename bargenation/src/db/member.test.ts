@@ -329,6 +329,66 @@ d('member repository isolation', () => {
    * or touch Alice's household" is not a routine RLS check — it is the whole
    * licence for the feature to exist.
    */
+  /**
+   * QUIET HOURS (§36).
+   *
+   * The rule is that they DEFER delivery and never suppress a signal, so the
+   * tests worth having are about the preference round-tripping and about
+   * refusing one we could not honour.
+   */
+  describe('quiet hours', () => {
+    it('is unset until somebody sets it', async () => {
+      expect(await repo.readQuietHours(ALICE)).toBeNull();
+    });
+
+    it('round-trips exactly what was chosen', async () => {
+      await repo.setQuietHours(ALICE, {
+        startHour: 22, endHour: 7, timeZone: 'America/Toronto',
+      });
+      expect(await repo.readQuietHours(ALICE)).toEqual({
+        startHour: 22, endHour: 7, timeZone: 'America/Toronto',
+      });
+    });
+
+    it('does not disturb the other preferences alongside it', async () => {
+      await repo.setBehaviourAlerts(ALICE, true);
+      await repo.setQuietHours(ALICE, {
+        startHour: 23, endHour: 6, timeZone: 'Europe/Paris',
+      });
+      expect(await repo.behaviourAlertsEnabled(ALICE)).toBe(true);
+      expect((await repo.readQuietHours(ALICE))?.timeZone).toBe('Europe/Paris');
+    });
+
+    it('clears without clearing everything else', async () => {
+      await repo.setQuietHours(ALICE, null);
+      expect(await repo.readQuietHours(ALICE)).toBeNull();
+      expect(await repo.behaviourAlertsEnabled(ALICE)).toBe(true);
+
+      // Put it back: later blocks in this file assert the default, and a test
+      // that leaves a preference switched on decides their outcome.
+      await repo.setBehaviourAlerts(ALICE, false);
+    });
+
+    /**
+     * Stored badly, this would make every future sweep decide "not quiet" and
+     * the customer would never find out why they were woken.
+     */
+    it('refuses a zone it cannot resolve rather than storing it', async () => {
+      await expect(repo.setQuietHours(ALICE, {
+        startHour: 22, endHour: 7, timeZone: 'Middle/Earth',
+      })).rejects.toThrow(/unusable/i);
+      expect(await repo.readQuietHours(ALICE)).toBeNull();
+    });
+
+    it('is invisible to another customer', async () => {
+      await repo.setQuietHours(ALICE, {
+        startHour: 21, endHour: 8, timeZone: 'America/Toronto',
+      });
+      expect(await repo.readQuietHours(BOB)).toBeNull();
+      await repo.setQuietHours(ALICE, null);
+    });
+  });
+
   describe('household', () => {
     it('has no household until somebody adds one', async () => {
       expect(await repo.readHousehold(BOB)).toBeNull();

@@ -53,6 +53,9 @@ describe('adapter selection', () => {
         currentPassword: 'long enough password', newPassword: 'another long password',
       }),
       () => port.deleteIdentity({ sessionToken: 't', email: 'a@b.com' }),
+      () => port.signOutEverywhere({
+        sessionToken: 't', email: 'a@b.com', password: 'long enough password',
+      }),
     ]) {
       await expect(call()).rejects.toMatchObject({ code: 'NOT_CONFIGURED' });
     }

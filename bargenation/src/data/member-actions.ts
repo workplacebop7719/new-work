@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { readSession } from '@/auth/session';
 import { loginHref } from '@/auth/return-url';
 import * as member from './member-repository';
+import { DEFAULT_QUIET_HOURS, isUsableTimeZone } from '@/domain/quiet-hours';
 
 /**
  * Member mutations (PRD §25, §27, §31).
@@ -164,4 +165,41 @@ export async function setWatchForAction(formData: FormData): Promise<void> {
   const profileId = await requireProfileId('/app/watchlist');
   await member.setWatchFor(profileId, itemId, raw === '' ? null : raw);
   revalidatePath('/app/watchlist');
+}
+
+/* ============================================================
+   QUIET HOURS (§36)
+   ============================================================ */
+
+/**
+ * Quiet hours DEFER delivery; they never suppress a signal.
+ *
+ * Turning them on does not mean you stop being told what happened — the
+ * portal shows everything either way. It means nothing leaves the building
+ * while you are asleep.
+ */
+export async function setQuietHoursAction(formData: FormData): Promise<void> {
+  const profileId = await requireProfileId('/app/account');
+  const enabled = String(formData.get('enabled') ?? '') === 'true';
+
+  if (!enabled) {
+    await member.setQuietHours(profileId, null);
+  } else {
+    const hour = (name: string, fallback: number) => {
+      const parsed = Number(String(formData.get(name) ?? ''));
+      return Number.isInteger(parsed) && parsed >= 0 && parsed <= 23 ? parsed : fallback;
+    };
+    const timeZone = String(formData.get('timeZone') ?? '');
+
+    await member.setQuietHours(profileId, {
+      startHour: hour('startHour', DEFAULT_QUIET_HOURS.startHour),
+      endHour: hour('endHour', DEFAULT_QUIET_HOURS.endHour),
+      // A zone the browser reported. Falls back rather than refusing, because
+      // being wrong by a few hours beats a form that will not save.
+      timeZone: isUsableTimeZone(timeZone) ? timeZone : DEFAULT_QUIET_HOURS.timeZone,
+    });
+  }
+
+  revalidatePath('/app/account');
+  revalidatePath('/app/deal-signals');
 }

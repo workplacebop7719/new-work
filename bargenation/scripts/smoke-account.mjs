@@ -10,6 +10,19 @@
 import { chromium } from 'playwright';
 import pg from 'pg';
 
+/**
+ * This script's own caller identity.
+ *
+ * Rate limiting counts by caller, and every Playwright context here
+ * shares one source address — so without this, smoke-rate-limit burning
+ * the sign-in allowance on purpose silently broke every script that ran
+ * after it for the next fifteen minutes. One connection per script is
+ * also what the real world looks like.
+ */
+const SMOKE_CALLER = '198.51.100.13';
+const CALLER_HEADERS = { 'x-forwarded-for': SMOKE_CALLER };
+
+
 const BASE = process.env.BASE || 'http://localhost:3210';
 const PG = process.env.PGURL;
 if (!PG) { console.error('PGURL is not set'); process.exit(1); }
@@ -84,8 +97,8 @@ try {
   const NEW = 'an entirely different passphrase';
 
   // Two contexts: one is "this device", the other is "somewhere else".
-  const here = await (await browser.newContext()).newPage();
-  const elsewhere = await (await browser.newContext()).newPage();
+  const here = await (await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS })).newPage();
+  const elsewhere = await (await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS })).newPage();
 
   await signUp(here, email, OLD);
   check('signed up', !here.url().includes('/signup'));
@@ -121,7 +134,7 @@ try {
   check('it names the account it belongs to', typeof parsed?.profile?.id === 'string');
 
   // An anonymous caller must not learn that exports exist at all.
-  const anon = await (await browser.newContext()).newPage();
+  const anon = await (await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS })).newPage();
   // Must be ON the origin first: fetch from about:blank is a cross-origin
   // request and fails before it reaches the route at all.
   await anon.goto(`${BASE}/today`, { waitUntil: 'domcontentloaded' });

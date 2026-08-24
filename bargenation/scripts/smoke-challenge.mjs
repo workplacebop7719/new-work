@@ -11,6 +11,19 @@
  */
 import { chromium } from 'playwright';
 
+/**
+ * This script's own caller identity.
+ *
+ * Rate limiting counts by caller, and every Playwright context here
+ * shares one source address — so without this, smoke-rate-limit burning
+ * the sign-in allowance on purpose silently broke every script that ran
+ * after it for the next fifteen minutes. One connection per script is
+ * also what the real world looks like.
+ */
+const SMOKE_CALLER = '198.51.100.14';
+const CALLER_HEADERS = { 'x-forwarded-for': SMOKE_CALLER };
+
+
 const BASE = process.env.BASE || 'http://localhost:3210';
 
 let failures = 0;
@@ -33,9 +46,21 @@ const browser = await chromium.launch({
   executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
 });
 
+/**
+ * A cold dev server compiles a route on first request. Measuring "how long
+ * does the proof of work take" from page load then times the COMPILER, which
+ * is how this reported nine seconds on a cold start and under two warm.
+ */
+async function warm(page, paths) {
+  for (const path of paths) {
+    await page.goto(BASE + path, { waitUntil: 'domcontentloaded' }).catch(() => undefined);
+  }
+}
+
 try {
   console.log('bot challenge');
-  const page = await (await browser.newContext()).newPage();
+  const page = await (await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS })).newPage();
+  await warm(page, ['/signup', '/today', '/login']);
 
   // ---- it solves, and quickly enough that nobody notices ----
   // Measured from navigation, with no sleep first. An earlier version waited
@@ -82,7 +107,7 @@ try {
       : page.url());
 
   // ---- a script that fills the honeypot is refused ----
-  const bot = await (await browser.newContext()).newPage();
+  const bot = await (await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS })).newPage();
   await bot.goto(`${BASE}/signup`, { waitUntil: 'domcontentloaded' });
   await bot.waitForFunction(
     () => document.querySelector('input[name=challengeSolution]')?.value !== '',
@@ -107,7 +132,7 @@ try {
   check('and it stays on the sign-up page', bot.url().includes('/signup'));
 
   // ---- a forged solution is refused ----
-  const forger = await (await browser.newContext()).newPage();
+  const forger = await (await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS })).newPage();
   await forger.goto(`${BASE}/signup`, { waitUntil: 'domcontentloaded' });
   // Wait for the real solution first: the submit button is disabled until the
   // challenge is solved, so tampering before that just clicks a dead control.
@@ -142,7 +167,7 @@ try {
     !/honeypot|difficulty|signature|too fast|solution/i.test(message ?? ''));
 
   // ---- sign-in is deliberately NOT challenged ----
-  const signin = await (await browser.newContext()).newPage();
+  const signin = await (await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS })).newPage();
   await signin.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' });
   await signin.waitForTimeout(1500);
   check('sign-in carries no challenge, so returning customers are not taxed',

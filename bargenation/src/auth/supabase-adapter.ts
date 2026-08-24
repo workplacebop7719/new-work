@@ -155,6 +155,28 @@ export function createSupabaseAuth(): AuthPort {
       return toResult(data);
     },
 
+    /**
+     * Supabase revokes every refresh token for a user when their password
+     * changes, and there is no anon-key call that ends other sessions on its
+     * own. So this re-authenticates and sets the password to itself, which is
+     * the documented way to reach the same outcome without the service-role
+     * key that must never live in request-handling code (§69).
+     *
+     * NOT YET EXERCISED against a live project, like everything else here.
+     */
+    async signOutEverywhere({ email, password }) {
+      const { data, error } = await client.auth.signInWithPassword({
+        email: normaliseEmail(email),
+        password,
+      });
+      if (error) throw translateSupabaseError(error);
+
+      const { error: updateError } = await client.auth.updateUser({ password });
+      if (updateError) throw translateSupabaseError(updateError);
+
+      return toResult(data);
+    },
+
     async deleteIdentity() {
       // Unreachable while canDeleteIdentity is false, and refuses rather than
       // silently doing nothing if that ever changes without the work.
@@ -200,6 +222,7 @@ export function unconfigured(): AuthPort {
     signOut: async () => undefined,
     getSession: async () => null,
     changePassword: refuse,
+    signOutEverywhere: refuse,
     deleteIdentity: refuse,
     requestPasswordReset: refuse,
     resetPassword: refuse,

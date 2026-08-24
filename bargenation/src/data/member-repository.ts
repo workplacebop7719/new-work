@@ -1,6 +1,7 @@
 import 'server-only';
 import { asCustomer } from '@/db/client';
 import type { AuthUser } from '@/auth/types';
+import { isValidQuietHours, type QuietHours } from '@/domain/quiet-hours';
 
 /**
  * Everything a signed-in customer owns: Saved, Watchlist, Deal Signals.
@@ -325,6 +326,8 @@ export interface DealSignalRow {
   message: string;
   createdAt: string;
   readAt: string | null;
+  /** When it becomes sendable. Null means now — see §36. */
+  deliverAfter: string | null;
   productSlug: string | null;
 }
 
@@ -333,9 +336,10 @@ export async function listDealSignals(profileId: string): Promise<DealSignalRow[
   return asCustomer(profileId, async (client) => {
     const { rows } = await client.query<{
       id: string; kind: string; message: string;
-      created_at: Date; read_at: Date | null; slug: string | null;
+      created_at: Date; read_at: Date | null; deliver_after: Date | null;
+      slug: string | null;
     }>(
-      `select d.id, d.kind, d.message, d.created_at, d.read_at, p.slug
+      `select d.id, d.kind, d.message, d.created_at, d.read_at, d.deliver_after, p.slug
        from deal_signals d
        left join offers o   on o.id = d.offer_id
        left join products p on p.id = o.product_id
@@ -348,6 +352,7 @@ export async function listDealSignals(profileId: string): Promise<DealSignalRow[
       message: r.message,
       createdAt: r.created_at.toISOString(),
       readAt: r.read_at?.toISOString() ?? null,
+      deliverAfter: r.deliver_after?.toISOString() ?? null,
       productSlug: r.slug,
     }));
   });
@@ -543,6 +548,7 @@ export async function eraseAccount(profileId: string): Promise<void> {
 export type InterestKind = 'VIEWED' | 'SEARCHED' | 'CONSIDERED';
 
 export const BEHAVIOUR_ALERTS_KEY = 'behaviourAlerts';
+export const QUIET_HOURS_KEY = 'quietHours';
 
 export async function behaviourAlertsEnabled(profileId: string): Promise<boolean> {
   assertAvailable();
@@ -849,6 +855,56 @@ export async function setWatchFor(
          set household_member_id = (select id from household_members where id = $2)
        where id = $1`,
       [itemId, memberId],
+    );
+  });
+}
+
+/* ============================================================
+   QUIET HOURS (§36)
+   ============================================================ */
+
+/**
+ * When this customer does not want to be interrupted.
+ *
+ * Returns null when nothing is set, which the domain treats as "no deferral"
+ * — off is the default, because a product that decides on somebody's behalf
+ * when they are asleep has guessed.
+ */
+export async function readQuietHours(profileId: string): Promise<QuietHours | null> {
+  assertAvailable();
+  return asCustomer(profileId, async (client) => {
+    const { rows } = await client.query<{ settings: Record<string, unknown> }>(
+      'select settings from preferences limit 1',
+    );
+    const stored = rows[0]?.settings?.[QUIET_HOURS_KEY];
+    return isValidQuietHours(stored) ? stored : null;
+  });
+}
+
+export async function setQuietHours(
+  profileId: string, quiet: QuietHours | null,
+): Promise<void> {
+  assertAvailable();
+  await asCustomer(profileId, async (client) => {
+    if (quiet === null) {
+      await client.query(
+        `update preferences set settings = settings - $2, updated_at = now()
+         where profile_id = $1`,
+        [profileId, QUIET_HOURS_KEY],
+      );
+      return;
+    }
+    // Refused rather than stored badly: an unusable zone would make every
+    // future sweep decide "not quiet" and the customer would never know why.
+    if (!isValidQuietHours(quiet)) throw new Error('unusable quiet hours');
+
+    await client.query(
+      `insert into preferences (profile_id, settings)
+       values ($1, jsonb_build_object($2::text, $3::jsonb))
+       on conflict (profile_id) do update
+         set settings = preferences.settings || jsonb_build_object($2::text, $3::jsonb),
+             updated_at = now()`,
+      [profileId, QUIET_HOURS_KEY, JSON.stringify(quiet)],
     );
   });
 }

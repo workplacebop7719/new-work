@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import { readSession } from '@/auth/session';
-import { memberFeaturesAvailable, readMembership } from '@/data/member-repository';
+import { memberFeaturesAvailable, readMembership, readQuietHours } from '@/data/member-repository';
+import { QuietHoursForm } from '@/components/member/QuietHoursForm';
 import { auth } from '@/auth';
 import Link from 'next/link';
-import { NotBuiltYet } from '@/components/ui/NotBuiltYet';
 
 /** Shared look for the links that now do something. */
 const action =
@@ -21,7 +21,9 @@ export default async function AccountPage() {
 
   const { user } = session;
   const provider = auth().name;
-  const membership = memberFeaturesAvailable ? await readMembership(user.id) : 'FREE';
+  const [membership, quietHours] = memberFeaturesAvailable
+    ? await Promise.all([readMembership(user.id), readQuietHours(user.id)])
+    : (['FREE', null] as const);
 
   return (
     <div className="max-w-[46rem] space-y-14">
@@ -49,10 +51,9 @@ export default async function AccountPage() {
           <Link href="/app/account/password" className={action}>
             Change password
           </Link>
-          <NotBuiltYet
-            label="Sign out everywhere"
-            reason="Not built yet as a control of its own — changing your password already does it, and doing it without one needs session listing the provider doesn’t expose to us."
-          />
+          <Link href="/app/account/sessions" className={action}>
+            Sign out everywhere
+          </Link>
         </div>
       </section>
 
@@ -80,6 +81,13 @@ export default async function AccountPage() {
           The export is a JSON file of everything your account holds — profile, household,
           Watchlist, Saved items and every Deal Signal we have sent you.
         </p>
+      </section>
+
+      <section>
+        <h2 className="display display-md border-b border-line pb-4">When we can reach you</h2>
+        <div className="mt-6">
+          <QuietHoursForm current={quietHours} />
+        </div>
       </section>
 
       <section>

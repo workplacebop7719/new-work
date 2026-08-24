@@ -10,6 +10,19 @@
 import { chromium } from 'playwright';
 import pg from 'pg';
 
+/**
+ * This script's own caller identity.
+ *
+ * Rate limiting counts by caller, and every Playwright context here
+ * shares one source address — so without this, smoke-rate-limit burning
+ * the sign-in allowance on purpose silently broke every script that ran
+ * after it for the next fifteen minutes. One connection per script is
+ * also what the real world looks like.
+ */
+const SMOKE_CALLER = '198.51.100.15';
+const CALLER_HEADERS = { 'x-forwarded-for': SMOKE_CALLER };
+
+
 const BASE = process.env.BASE || 'http://localhost:3210';
 const PG = process.env.PGURL;
 if (!PG) { console.error('PGURL is not set'); process.exit(1); }
@@ -36,7 +49,7 @@ const countFor = async (profileId) => {
 
 try {
   console.log('behaviour alerts');
-  const page = await (await browser.newContext()).newPage();
+  const page = await (await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS })).newPage();
   const email = `noticed${Date.now()}@example.com`;
 
   await page.goto(`${BASE}/signup`, { waitUntil: 'domcontentloaded' });

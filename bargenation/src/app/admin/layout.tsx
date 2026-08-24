@@ -33,7 +33,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <div>
             <p className="eyebrow text-ink-50">Operations</p>
-            <h1 className="display display-lg mt-2">Ingestion queue</h1>
+            <h1 className="display display-lg mt-2">Operations</h1>
           </div>
           <p className="eyebrow text-ink-50">
             {session.user.displayName ?? session.user.email} · {role}
@@ -46,6 +46,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               { href: '/admin', label: 'Overview' },
               { href: '/admin/review', label: 'Needs review' },
               { href: '/admin/quarantine', label: 'Quarantine' },
+              { href: '/admin/sources', label: 'Sources' },
+              { href: '/admin/audience', label: 'Audience' },
+              { href: '/admin/revenue', label: 'Revenue' },
             ].map((item) => (
               <li key={item.href}>
                 <Link

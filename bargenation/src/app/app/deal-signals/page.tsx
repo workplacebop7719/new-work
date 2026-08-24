@@ -35,6 +35,17 @@ export default async function DealSignalsPage() {
                 })}
                 {!signal.readAt && ' · new'}
               </p>
+              {/* Quiet hours defer delivery, never the record. The signal is
+                  here the moment it happened; only sending waits (§36). */}
+              {signal.deliverAfter && new Date(signal.deliverAfter) > new Date() && (
+                <p className="mt-1 text-[0.75rem] text-ink-50">
+                  Held until{' '}
+                  {new Date(signal.deliverAfter).toLocaleTimeString('en-US', {
+                    hour: 'numeric', minute: '2-digit',
+                  })}
+                  {' '}— your quiet hours
+                </p>
+              )}
               <p className="mt-2 text-[1rem] leading-relaxed">
                 {signal.productSlug ? (
                   <Link href={`/deals/${signal.productSlug}`} className="link-grow">

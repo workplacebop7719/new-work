@@ -11,6 +11,19 @@
 import { chromium } from 'playwright';
 import pg from 'pg';
 
+/**
+ * This script's own caller identity.
+ *
+ * Rate limiting counts by caller, and every Playwright context here
+ * shares one source address — so without this, smoke-rate-limit burning
+ * the sign-in allowance on purpose silently broke every script that ran
+ * after it for the next fifteen minutes. One connection per script is
+ * also what the real world looks like.
+ */
+const SMOKE_CALLER = '198.51.100.19';
+const CALLER_HEADERS = { 'x-forwarded-for': SMOKE_CALLER };
+
+
 const BASE = process.env.BASE || 'http://localhost:3000';
 const PG = process.env.PGURL;
 if (!PG) { console.error('PGURL is not set'); process.exit(1); }
@@ -38,18 +51,32 @@ async function signUp(page, email) {
   await page.waitForTimeout(2500);
 }
 
+/**
+ * A cold dev server compiles a route on its first request, which is long
+ * enough to race a locator. Not the product being slow — but enough to make
+ * this fail on a cold start and pass on a re-run, which is the worst kind of
+ * test to leave behind.
+ */
+async function warm(page, paths) {
+  for (const path of paths) {
+    await page.goto(BASE + path, { waitUntil: 'load', timeout: 60_000 })
+      .catch(() => undefined);
+  }
+}
+
 try {
   console.log('admin boundary');
 
   // A signed-in CUSTOMER must not be able to tell that /admin exists.
-  const customer = await (await browser.newContext()).newPage();
+  const customer = await (await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS })).newPage();
+  await warm(customer, ['/today', '/login', '/signup', '/admin', '/admin/quarantine']);
   await signUp(customer, `cust${Date.now()}@example.com`);
   const res = await customer.goto(`${BASE}/admin`, { waitUntil: 'domcontentloaded' });
   await customer.waitForTimeout(1200);
   check('a signed-in customer gets 404, not 403', res.status() === 404);
 
   // Promote a second account and check the surface works.
-  const staff = await (await browser.newContext()).newPage();
+  const staff = await (await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS })).newPage();
   const staffEmail = `staff${Date.now()}@example.com`;
   await signUp(staff, staffEmail);
   const { rows } = await db.query(

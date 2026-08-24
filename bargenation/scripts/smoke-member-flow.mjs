@@ -18,6 +18,19 @@
  */
 import { chromium } from 'playwright';
 
+/**
+ * This script's own caller identity.
+ *
+ * Rate limiting counts by caller, and every Playwright context here
+ * shares one source address — so without this, smoke-rate-limit burning
+ * the sign-in allowance on purpose silently broke every script that ran
+ * after it for the next fifteen minutes. One connection per script is
+ * also what the real world looks like.
+ */
+const SMOKE_CALLER = '198.51.100.11';
+const CALLER_HEADERS = { 'x-forwarded-for': SMOKE_CALLER };
+
+
 const BASE = process.env.BASE || 'http://localhost:3000';
 const SLUG = process.env.SLUG || 'calder-trail-sneaker';
 
@@ -30,15 +43,47 @@ const check = (label, condition) => {
 const browser = await chromium.launch({
   executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
 });
-const page = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
+const page = await (await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS,  viewport: { width: 1280, height: 900 } })).newPage();
+
+/**
+ * A dev server compiles a route on its first request, which can take eight
+ * seconds and is enough to race a form submit. Not the product being slow —
+ * but enough to make this script fail on a cold start and pass on a re-run,
+ * which is the worst kind of test.
+ */
+/**
+ * Waits for the bot challenge, never a stopwatch. The submit button stays
+ * disabled until the proof of work finishes — about two seconds — and
+ * clicking a disabled control silently does nothing, which reads as "sign-up
+ * is broken".
+ */
+async function challengeSolved(page) {
+  await page.waitForFunction(
+    () => {
+      const field = document.querySelector('input[name=challengeSolution]');
+      return field === null || field.value !== '';
+    },
+    { timeout: 30_000 },
+  ).catch(() => undefined);
+}
+
+async function warm(page, paths) {
+  for (const path of paths) {
+    // `load`, not `domcontentloaded`: the point is to make the server compile
+    // the route, and domcontentloaded can return while it still is.
+    await page.goto(BASE + path, { waitUntil: 'load', timeout: 60_000 })
+      .catch(() => undefined);
+  }
+}
 
 try {
   console.log('member flow');
+  await warm(page, ['/today', '/login', '/signup', `/deals/${SLUG}`, '/app/saved', '/app/watchlist']);
 
   // An anonymous Save must remember the task, not dump them on the homepage (§31).
   await page.goto(`${BASE}/deals/${SLUG}`, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1200);
-  await page.locator('form button:has-text("Save")').first().click();
+  await page.locator('form button:has-text("Save")').first().click({ timeout: 60_000 });
   // Wait on the condition, not a stopwatch: a cold dev server can take
   // seconds to compile /login on first hit, which made a fixed wait flaky.
   await page.waitForURL(/\/login/, { timeout: 15_000 }).catch(() => undefined);
@@ -50,7 +95,7 @@ try {
   const email = `smoke${Date.now()}@example.com`;
   await page.goto(`${BASE}/signup?returnTo=${encodeURIComponent(`/deals/${SLUG}`)}`,
     { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(900);
+  await challengeSolved(page);
   await page.fill('#field-displayName', 'Smoke');
   await page.fill('#field-email', email);
   await page.fill('#field-password', 'correct horse battery');

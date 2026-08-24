@@ -172,6 +172,23 @@ export interface AuthPort {
   }): Promise<AuthResult>;
   /** Only meaningful when `canDeleteIdentity`; refuses otherwise. */
   deleteIdentity(input: { sessionToken: string; email: string }): Promise<void>;
+  /**
+   * Ends every session for this customer, including the caller's.
+   *
+   * Returns a fresh session so the device that asked stays signed in — the
+   * same shape as changePassword, and for the same reason: somebody clearing
+   * a forgotten library computer should not be logged out of the one in
+   * their hand.
+   *
+   * Requires the password. Without it, an unattended browser could be used to
+   * kick the owner off every device they have, which is a nuisance attack
+   * with no upside.
+   */
+  signOutEverywhere(input: {
+    sessionToken: string;
+    email: string;
+    password: string;
+  }): Promise<AuthResult>;
   requestPasswordReset(email: string): Promise<void>;
   resetPassword(token: string, newPassword: string): Promise<void>;
   verifyEmail(token: string): Promise<void>;

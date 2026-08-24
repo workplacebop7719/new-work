@@ -185,6 +185,19 @@ export function createDevAuth(
       return issue(user);
     },
 
+    async signOutEverywhere({ sessionToken, email: address, password }) {
+      const e = normaliseEmail(address);
+      const user = users.get(e);
+      if (!user || !verifyPassword(password, user.salt, user.hash)) {
+        throw new AuthError('INVALID_CREDENTIALS');
+      }
+
+      for (const [t, sess] of sessions) if (sess.userId === user.id) sessions.delete(t);
+      void sessionToken;
+
+      return issue(user);
+    },
+
     async deleteIdentity({ sessionToken, email: address }) {
       const e = normaliseEmail(address);
       const user = users.get(e);

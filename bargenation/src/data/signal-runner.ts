@@ -1,5 +1,6 @@
 import pg from 'pg';
 import { noticeSomething, type InterestRecord } from '@/domain/interest';
+import { deliverableAt, isValidQuietHours, type QuietHours } from '@/domain/quiet-hours';
 import {
   evaluateSignals,
   evaluateRetailerWatch,
@@ -40,6 +41,10 @@ export interface SweepResult {
   retailerWatchesExamined: number;
   /** Expired rate-limit counters and spent challenges removed. */
   housekeepingRemoved: number;
+  /** Signals recorded but held until the customer's quiet hours end (§36). */
+  deferred: number;
+  /** Held observations discarded because nobody reviewed them in time. */
+  quarantineExpired: number;
   signalsCreated: number;
   byKind: Partial<Record<SignalKind, number>>;
 }
@@ -192,6 +197,8 @@ export async function sweepDealSignals(
     membersExamined: 0,
     retailerWatchesExamined: 0,
     housekeepingRemoved: 0,
+    deferred: 0,
+    quarantineExpired: 0,
     signalsCreated: 0,
     byKind: {},
   };
@@ -210,6 +217,13 @@ export async function sweepDealSignals(
       'select prune_rate_limits()',
     );
     result.housekeepingRemoved = pruned[0]?.prune_rate_limits ?? 0;
+
+    // A held price nobody reviewed is DISCARDED, never released: time does not
+    // confirm an observation we could not confirm. See migration 0019.
+    const { rows: expired } = await client.query<{ expire_quarantine: number }>(
+      'select expire_quarantine()',
+    );
+    result.quarantineExpired = expired[0]?.expire_quarantine ?? 0;
 
     const [{ rows: watches }, { rows: retailerWatches }] = await Promise.all([
       client.query<WatchRow>(WATCH_SQL),
@@ -472,15 +486,49 @@ export async function sweepDealSignals(
       }
     }
 
+    /**
+     * Quiet hours (§36), read once for everybody about to be told something.
+     *
+     * Through a function rather than a table read, for the same reason the
+     * interest sweep does: migration 0007 denies this role `preferences`
+     * outright, and needing one field is not a reason to hand a batch job
+     * everybody's settings.
+     */
+    const quietByProfile = new Map<string, QuietHours>();
+    if (pending.length > 0) {
+      const { rows: quietRows } = await client.query<{
+        profile_id: string; quiet_hours: unknown;
+      }>(
+        'select * from quiet_hours_for($1::uuid[])',
+        [[...new Set(pending.map((signal) => signal.profileId))]],
+      );
+      for (const row of quietRows) {
+        if (isValidQuietHours(row.quiet_hours)) {
+          quietByProfile.set(row.profile_id, row.quiet_hours);
+        }
+      }
+    }
+
     for (const signal of pending) {
+      // Deferred, never suppressed: the signal is recorded either way and the
+      // portal shows it. Only the moment it may be SENT moves.
+      const quiet = quietByProfile.get(signal.profileId) ?? null;
+      const sendableAt = deliverableAt(now, quiet);
+      const deliverAfter = sendableAt.getTime() === now.getTime() ? null : sendableAt;
+
       await client.query(
-        `insert into deal_signals (profile_id, watchlist_item_id, offer_id, kind, message)
-         values ($1, $2, $3, $4, $5)`,
+        `insert into deal_signals
+           (profile_id, watchlist_item_id, offer_id, kind, message, deliver_after)
+         values ($1, $2, $3, $4, $5, $6)`,
         // A noticed-signal has no watchlist item: nobody asked for it, which
         // is the whole point, so the column is null rather than invented.
-        [signal.profileId, signal.itemId || null, signal.offerId, signal.kind, signal.message],
+        [
+          signal.profileId, signal.itemId || null, signal.offerId,
+          signal.kind, signal.message, deliverAfter,
+        ],
       );
       result.signalsCreated++;
+      if (deliverAfter) result.deferred++;
       result.byKind[signal.kind] = (result.byKind[signal.kind] ?? 0) + 1;
     }
 

@@ -14,6 +14,19 @@ import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import pg from 'pg';
 
+/**
+ * This script's own caller identity.
+ *
+ * Rate limiting counts by caller, and every Playwright context here
+ * shares one source address — so without this, smoke-rate-limit burning
+ * the sign-in allowance on purpose silently broke every script that ran
+ * after it for the next fifteen minutes. One connection per script is
+ * also what the real world looks like.
+ */
+const SMOKE_CALLER = '198.51.100.18';
+const CALLER_HEADERS = { 'x-forwarded-for': SMOKE_CALLER };
+
+
 const BASE = process.env.BASE || 'http://localhost:3000';
 const PG = process.env.PGURL;
 if (!PG) { console.error('PGURL is not set'); process.exit(1); }
@@ -73,10 +86,24 @@ const browser = await chromium.launch({
   executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
 });
 
+/**
+ * A cold dev server compiles a route on its first request, which is long
+ * enough to race a locator. Not the product being slow — but enough to make
+ * this fail on a cold start and pass on a re-run, which is the worst kind of
+ * test to leave behind.
+ */
+async function warm(page, paths) {
+  for (const path of paths) {
+    await page.goto(BASE + path, { waitUntil: 'load', timeout: 60_000 })
+      .catch(() => undefined);
+  }
+}
+
 try {
   console.log('match resolution');
 
-  const page = await (await browser.newContext({ viewport: { width: 1440, height: 1000 } })).newPage();
+  const page = await (await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS,  viewport: { width: 1440, height: 1000 } })).newPage();
+  await warm(page, ['/today', '/login', '/signup', '/admin', '/admin/review']);
   await page.goto(`${BASE}/signup`, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1500);
   await page.fill('#field-displayName', 'Reviewer');

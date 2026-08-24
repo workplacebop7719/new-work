@@ -248,3 +248,87 @@ d('quarantine decisions are recorded and audited', () => {
     expect(Number.isFinite(summary.staleOffers)).toBe(true);
   });
 });
+
+/**
+ * THE OPERATIONS SURFACE, AND WHAT IT STILL CANNOT SEE (§49, §37, §52).
+ *
+ * Adding audience and revenue pages is exactly the moment a privilege
+ * boundary gets quietly widened to make a dashboard easier. These assert it
+ * was not.
+ */
+d('operating the product without reading the customers', () => {
+  let staff: pg.Client;
+
+  beforeAll(async () => {
+    // STAFF_URL, not ADMIN_URL. In this file ADMIN_URL is the SUPERUSER —
+    // "database admin" — and STAFF_URL is the narrowly-granted
+    // bargenation_admin role the operations surface actually connects as.
+    // Pointing these assertions at the superuser made every one of them pass
+    // vacuously, which is the worst possible outcome for a boundary test.
+    staff = new pg.Client({ connectionString: STAFF_URL });
+    await staff.connect();
+  });
+  afterAll(async () => { await staff?.end(); });
+
+  it('can count the audience', async () => {
+    const { rows } = await staff.query<{ metric: string; value: string }>(
+      'select metric, value from operations_summary()',
+    );
+    const metrics = Object.fromEntries(rows.map((r) => [r.metric, Number(r.value)]));
+    expect(metrics.customers).toBeGreaterThanOrEqual(0);
+    expect(metrics).toHaveProperty('subscribers_confirmed');
+    expect(metrics).toHaveProperty('signals_deferred');
+  });
+
+  /** The whole point: numbers, never rows. */
+  it('still cannot read the tables those numbers come from', async () => {
+    for (const query of [
+      'select * from watchlists limit 1',
+      'select * from watchlist_items limit 1',
+      'select * from saved_items limit 1',
+      'select * from deal_signals limit 1',
+      'select * from households limit 1',
+      'select * from household_members limit 1',
+      'select * from preferences limit 1',
+      'select * from newsletter_subscribers limit 1',
+    ]) {
+      await expect(staff.query(query)).rejects.toThrow(/permission|policy|denied/i);
+    }
+  });
+
+  /**
+   * `profiles` is the one exception, and it is a narrower one than it looks.
+   * The table is granted so the surface can find out who is looking, but the
+   * policy limits it to `id = auth.uid()` — so a connection with no subject
+   * set, which is what a bare pool connection is, sees nothing at all.
+   *
+   * Asserted separately from the denials above because "permission denied"
+   * and "zero rows by policy" are different protections, and conflating them
+   * would hide the day one of them stopped working.
+   */
+  it('sees no profiles at all without a subject, and never more than its own', async () => {
+    const { rows } = await staff.query('select id, role from profiles');
+    expect(rows).toHaveLength(0);
+  });
+
+  /**
+   * §52 as a database fact rather than a policy sentence. The revenue page
+   * asserts this to the operator's face; if it ever stopped holding, that
+   * page would start lying.
+   */
+  it('cannot reach commission data at all', async () => {
+    await expect(staff.query('select 1 from commerce.affiliate_links limit 1'))
+      .rejects.toThrow(/permission|denied|does not exist/i);
+  });
+
+  it('can read what it operates: sources, runs and rejections', async () => {
+    for (const query of [
+      'select count(*) from data_sources',
+      'select count(*) from source_runs',
+      'select count(*) from ingest_rejections',
+      'select count(*) from quarantined_observations',
+    ]) {
+      await expect(staff.query(query)).resolves.toBeTruthy();
+    }
+  });
+});

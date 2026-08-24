@@ -31,6 +31,7 @@ npm run smoke:challenge  # the bot challenge on sign-up and reset
 npm run smoke:noticed    # behaviour alerts: consent, recording, erasure
 npm run smoke:household  # who you shop for, and what there is nowhere to put
 npm run smoke:rate-limit # brute force refused, and the owner never locked out
+npm run smoke:all        # all ten, in order
 npm run signals    # one Deal Signal sweep (connects as the jobs role)
 npm run ingest     # one ingestion pass from a local records file
 npm run legal      # guard: no compliance claims, no invented company details
@@ -146,13 +147,14 @@ shot.mjs         visual QA — screenshots every page at 375 / 768 / 1440
 **Accounts** — `/login` · `/signup` · `/forgot-password` · `/reset-password` ·
 `/verify-email`
 
-**Self-service** — `/app/account/password` · `/app/account/export` ·
-`/app/account/delete`
+**Self-service** — `/app/account/password` · `/app/account/sessions` ·
+`/app/account/export` · `/app/account/delete`
 
 **Member portal** — `/app/watchlist` · `/app/saved` · `/app/deal-signals` ·
 `/app/household` · `/app/noticed` · `/app/account`
 
-**Operations** — `/admin` · `/admin/review` · `/admin/quarantine`
+**Operations** — `/admin` · `/admin/review` · `/admin/quarantine` ·
+`/admin/sources` · `/admin/audience` · `/admin/revenue`
 
 **The Edit** — `/edit` · `/edit/confirm` · `/edit/manage`
 
@@ -173,4 +175,3 @@ visibly disabled with the reason, and no navigation links to them.
 | Affiliate `/go/[offer]` redirects | an affiliate account |
 | Admin platform | depends on authentication |
 | Legal review of the drafted pages | a lawyer, not more writing |
-| Alerting an operator that an account is under attack (refusal works today) | the admin surface, and somewhere to send it |

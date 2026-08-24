@@ -26,6 +26,7 @@
     "smoke:noticed": "node scripts/smoke-noticed.mjs",
     "smoke:household": "node scripts/smoke-household.mjs",
     "smoke:rate-limit": "node scripts/smoke-rate-limit.mjs",
+    "smoke:all": "for s in member-flow recovery account challenge noticed household newsletter review admin rate-limit; do node scripts/smoke-$s.mjs || exit 1; done",
     "signals": "tsx scripts/run-signals.mts",
     "ingest": "tsx scripts/run-ingest.mts",
     "legal": "node scripts/check-legal-claims.mjs"

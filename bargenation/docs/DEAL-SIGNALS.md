@@ -108,6 +108,19 @@ an oversight. Each row of that table is a test.
 them. That needs a provider credential. `deal_signals.delivered_at` exists for
 it and stays null.
 
-**Quiet hours** (§36) are a per-customer preference the sweep does not read
-yet. When they arrive they should defer delivery, not suppress the signal —
-the record of what happened should not depend on when someone sleeps.
+**Quiet hours** (§36) are built. They DEFER delivery and never suppress a
+signal: what happened to a price is a fact about the world, and the record of
+it must not depend on when somebody sleeps. The sweep writes
+`deal_signals.deliver_after`, the portal shows "held until 7am", and the
+signal itself is there the moment it happened.
+
+The sweep reads the preference through `quiet_hours_for()` rather than the
+`preferences` table, for the same reason the interest sweep does: migration
+0007 denies this role that table outright, and needing one field is not a
+reason to hand a batch job everybody's settings.
+
+The wrapping window — ten at night to seven in the morning — is the case the
+code is written around rather than the exception, because it is what people
+actually set. Daylight saving is handled by Intl and the platform's own tz
+database, not by offset arithmetic that is wrong twice a year; tests cover
+both the night the clocks go forward and the night they go back.

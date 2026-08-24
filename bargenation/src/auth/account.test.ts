@@ -135,3 +135,54 @@ describe('the port is honest about what it can remove', () => {
     expect(makeAuth().canDeleteIdentity).toBe(true);
   });
 });
+
+describe('signing out everywhere', () => {
+  it('requires the password', async () => {
+    const auth = makeAuth();
+    const { token } = await auth.signUp(CREDS);
+
+    await expect(auth.signOutEverywhere({
+      sessionToken: token, email: CREDS.email, password: 'not the right one',
+    })).rejects.toMatchObject({ code: 'INVALID_CREDENTIALS' });
+
+    // And nothing was ended.
+    expect(await auth.getSession(token)).not.toBeNull();
+  });
+
+  it('ends every other session', async () => {
+    const auth = makeAuth();
+    await auth.signUp(CREDS);
+    const library = (await auth.signIn(CREDS)).token;
+    const phone = (await auth.signIn(CREDS)).token;
+    expect(await auth.getSession(library)).not.toBeNull();
+
+    await auth.signOutEverywhere({
+      sessionToken: phone, email: CREDS.email, password: CREDS.password,
+    });
+
+    expect(await auth.getSession(library)).toBeNull();
+  });
+
+  /** Clearing a forgotten computer must not log you out of the one in your hand. */
+  it('hands back a working session for the device that asked', async () => {
+    const auth = makeAuth();
+    const { token } = await auth.signUp(CREDS);
+
+    const fresh = await auth.signOutEverywhere({
+      sessionToken: token, email: CREDS.email, password: CREDS.password,
+    });
+
+    expect(fresh.token).not.toBe(token);
+    expect(await auth.getSession(fresh.token)).not.toBeNull();
+    expect(await auth.getSession(token)).toBeNull();
+  });
+
+  it('leaves the password alone', async () => {
+    const auth = makeAuth();
+    const { token } = await auth.signUp(CREDS);
+    await auth.signOutEverywhere({
+      sessionToken: token, email: CREDS.email, password: CREDS.password,
+    });
+    await expect(auth.signIn(CREDS)).resolves.toBeTruthy();
+  });
+});

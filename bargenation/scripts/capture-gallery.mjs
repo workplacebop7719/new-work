@@ -13,6 +13,19 @@ import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import pg from 'pg';
 
+/**
+ * This script's own caller identity.
+ *
+ * Rate limiting counts by caller, and every Playwright context here
+ * shares one source address — so without this, smoke-rate-limit burning
+ * the sign-in allowance on purpose silently broke every script that ran
+ * after it for the next fifteen minutes. One connection per script is
+ * also what the real world looks like.
+ */
+const SMOKE_CALLER = '198.51.100.20';
+const CALLER_HEADERS = { 'x-forwarded-for': SMOKE_CALLER };
+
+
 const BASE = process.env.BASE || 'http://localhost:3210';
 const OUT = process.env.OUT || '/tmp/gallery';
 const PG = process.env.PGURL;
@@ -62,7 +75,7 @@ const shots = [];
 
 try {
   for (const width of [1440, 390]) {
-    const ctx = await browser.newContext({
+    const ctx = await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS, 
       viewport: { width, height: width === 1440 ? 1000 : 860 },
       deviceScaleFactor: 1,
     });

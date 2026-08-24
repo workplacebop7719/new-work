@@ -6,7 +6,7 @@
  * rather than a 403 (a 403 confirms the address is worth attacking), and that
  * releasing a held price actually writes both the observation and its audit row.
  *
- *   BASE=http://localhost:3000 node scripts/smoke-admin.mjs
+ *   BASE=http://localhost:3210 node scripts/smoke-admin.mjs
  */
 import { chromium } from 'playwright';
 import pg from 'pg';
@@ -24,7 +24,7 @@ const SMOKE_CALLER = '198.51.100.19';
 const CALLER_HEADERS = { 'x-forwarded-for': SMOKE_CALLER };
 
 
-const BASE = process.env.BASE || 'http://localhost:3000';
+const BASE = process.env.BASE || 'http://localhost:3210';
 const PG = process.env.PGURL;
 if (!PG) { console.error('PGURL is not set'); process.exit(1); }
 
@@ -43,7 +43,23 @@ const browser = await chromium.launch({
 
 async function signUp(page, email) {
   await page.goto(`${BASE}/signup`, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(1200);
+
+  /*
+   * Wait for the SOLUTION, not for a number of milliseconds. The proof of
+   * work takes about four seconds on a modest machine and the submit button
+   * stays disabled until it finishes, so a flat wait shorter than that clicks
+   * a dead control and every later assertion describes a page that is working
+   * perfectly. Then the dwell time, which the server measures by its own clock.
+   */
+  await page.waitForFunction(
+    () => {
+      const field = document.querySelector('input[name=challengeSolution]');
+      return field === null || field.value !== '';
+    },
+    { timeout: 30_000 },
+  ).catch(() => undefined);
+  await page.waitForTimeout(1400);
+
   await page.fill('#field-displayName', 'Staffer');
   await page.fill('#field-email', email);
   await page.fill('#field-password', 'correct horse battery');
@@ -116,6 +132,41 @@ try {
   const auditAfter = await db.query('select count(*)::int n from admin_actions');
   check('releasing records the observation', after.rows[0].n === before.rows[0].n + 1);
   check('releasing records the audit row', auditAfter.rows[0].n === auditBefore.rows[0].n + 1);
+
+  /* ---- abuse: the shape of an attack, and none of the people in it ----
+   *
+   * The property under test is a privacy one, so it is asserted against the
+   * rendered page rather than against the query: whatever an operator can read
+   * here, none of it may be a token. A 64-character hex string on this page
+   * would mean staff had been handed a per-caller activity log by accident.
+   */
+  const TOKEN = 'ab'.repeat(32);
+  await db.query(
+    `insert into rate_limit_hits (bucket, dimension, token)
+     select 'SIGN_IN', 'caller', $1 from generate_series(1, 30)`, [TOKEN],
+  );
+
+  await staff.goto(`${BASE}/admin/abuse`, { waitUntil: 'domcontentloaded' });
+  // The route streams behind a loading shell on first compile, so reading the
+  // body immediately captures the fallback and every assertion below then
+  // describes a page that rendered perfectly a second later.
+  await staff.waitForFunction(
+    () => /Last hour/i.test(document.body.innerText), null, { timeout: 30_000 },
+  ).catch(() => undefined);
+  const abuse = await staff.locator('body').innerText();
+
+  check('the abuse page reports the attempts', /\b30\b/.test(abuse));
+  check('and says how concentrated they are', /Busiest one/i.test(abuse));
+  check('and flags what is past the allowance', /past the allowance/i.test(abuse));
+  check('and reads the figures back in a sentence', /being refused/i.test(abuse));
+  check('shows no token, to anybody, ever', !/[0-9a-f]{64}/.test(abuse));
+  check('offers no way to search for one caller',
+    (await staff.locator('input[type=search], input[name*=token], input[name*=search]').count()) === 0);
+  check('names the allowances it is applying', /per source/i.test(abuse));
+  check('and explains why sign in is not limited by address',
+    /lock you out of your own account/i.test(abuse));
+
+  await db.query('delete from rate_limit_hits where token = $1', [TOKEN]);
 } finally {
   await browser.close();
   await db.end();

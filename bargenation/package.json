@@ -34,7 +34,9 @@
     "smoke:review": "node scripts/smoke-review.mjs",
     "smoke:admin": "node scripts/smoke-admin.mjs",
     "smoke:rate-limit": "node scripts/smoke-rate-limit.mjs",
-    "smoke:all": "for s in flow member-flow recovery account challenge noticed household newsletter review admin rate-limit; do node scripts/smoke-$s.mjs || exit 1; done"
+    "smoke:all": "node scripts/clear-rate-limits.mjs; node scripts/warm-server.mjs; for s in flow member-flow recovery account challenge noticed household newsletter review admin rate-limit; do node scripts/smoke-$s.mjs || exit 1; done",
+    "clear-limits": "node scripts/clear-rate-limits.mjs",
+    "warm": "node scripts/warm-server.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",

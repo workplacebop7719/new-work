@@ -38,9 +38,15 @@ const genuine = (slug: string) =>
  * A "sale" price that is actually ABOVE what this retailer normally charges —
  * the shape the Bento Lunch Set has in the real fixtures, and the clearest
  * case of a discount that is not one.
+ *
+ * The gap has to clear MEANINGFUL_RANGE_FRACTION for this to be readable at
+ * all. It used to be $50.00 rising to $52.00, a 4% move, which the scoring
+ * model now declines to judge — correctly, but it made this fixture test the
+ * refusal rather than the verdict. $48.00 rising to $54.00 is the same story
+ * told loudly enough to be evidence.
  */
 const shallow = (slug: string) =>
-  make(slug, [...Array.from({ length: 40 }, () => 5000), 5200]);
+  make(slug, [...Array.from({ length: 40 }, () => 4800), 5400]);
 
 describe('a retailer we barely know gets no verdict', () => {
   it('declines below the evidence threshold', () => {
@@ -96,24 +102,41 @@ describe('the verdict follows the figures', () => {
   });
 
   /**
-   * DOCUMENTS A REAL PROPERTY OF THE SCORING MODEL, not an assertion that it
-   * is right.
+   * A 1% DIP ON AN OTHERWISE FLAT PRICE IS NOT A DEAL, AND WE SAY SO.
    *
-   * A price flat at $50 for forty days that dips 1% to $49.50 scores 6.3 —
-   * mid-band — because three of the four components we can measure
-   * (historical price quality, promotion rarity, inventory breadth) all reward
-   * being at the recorded low. Discount Strength is the only one that notices
-   * the discount is trivial, and renormalisation dilutes it further when the
-   * other four components are unmeasurable.
+   * This test used to pin the opposite. A price flat at $50 for forty days
+   * that dipped to $49.50 scored 6.3 — CONSIDER — because three of the four
+   * components we could measure rewarded it for being at the recorded low.
+   * Discount Strength alone noticed the discount was trivial, and
+   * renormalisation diluted even that.
    *
-   * Pinned here so the behaviour is visible and cannot change unnoticed.
-   * Whether a 1% dip deserves 6.3 is a product decision, not a bug fix.
+   * It was pinned rather than fixed because whether a 1% dip deserves 6.3 is
+   * a product decision. That decision has now been taken: it does not. Being
+   * at the bottom of a range that spans one percent is not information about
+   * value, so `hasMeaningfulRange` withholds the two components that were
+   * reading it as one, coverage falls below the publication gate, and the
+   * product declines to publish an Index rather than publishing a flattering
+   * one.
+   *
+   * The refusal is narrow on purpose — the second half of this test proves a
+   * genuinely modest discount still scores — and the withheld reason has to
+   * name the real cause. Telling somebody we lack history when we hold
+   * forty-one observations of their price would be untrue.
    */
-  it('scores a trivial dip to a new low in the middle of the band', () => {
+  it('declines to score a trivial dip on an otherwise flat price', () => {
     const trivialDip = make('dip', [...Array.from({ length: 40 }, () => 5000), 4950]);
-    if (!trivialDip.index.scorable) throw new Error('expected scorable');
-    expect(trivialDip.index.score).toBeCloseTo(6.3, 1);
-    expect(trivialDip.recommendation.recommendation).toBe('CONSIDER');
+    expect(trivialDip.publishable).toBe(false);
+    expect(trivialDip.recommendation.recommendation).toBe('NO_CALL');
+    expect(trivialDip.withheldReason).toMatch(/barely moved/i);
+    expect(trivialDip.withheldReason).not.toMatch(/enough price history/i);
+  });
+
+  it('still scores a modest but real discount rather than refusing everything', () => {
+    // An 8% fall: not a headline, but a genuine one, and it clears the bar.
+    const modest = make('modest', [...Array.from({ length: 40 }, () => 5000), 4600]);
+    expect(modest.publishable).toBe(true);
+    if (!modest.index.scorable) throw new Error('expected scorable');
+    expect(modest.index.score).toBeGreaterThan(5);
   });
 
   it('never quotes a median it does not have', () => {

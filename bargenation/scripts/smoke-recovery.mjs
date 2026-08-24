@@ -32,7 +32,7 @@ const SMOKE_CALLER = '198.51.100.12';
 const CALLER_HEADERS = { 'x-forwarded-for': SMOKE_CALLER };
 
 
-const BASE = process.env.BASE || 'http://localhost:3000';
+const BASE = process.env.BASE || 'http://localhost:3210';
 const DEV_LOG = process.env.DEV_LOG || '/tmp/dev.log';
 
 let failures = 0;
@@ -60,6 +60,19 @@ const check = (label, condition) => {
  * control silently does nothing, so a 600ms wait produced a form that looked
  * like it had rejected a perfectly good address.
  */
+/**
+ * Waits until the proof of work is solved AND the form has been on screen
+ * long enough to have been typed by a person.
+ *
+ * The second half is not padding. The server measures dwell time by ITS clock
+ * — `MIN_AGE_MS` in security/challenge.ts — and refuses a form returned in
+ * under 1.2 seconds, because nobody types that fast. A script does. Once the
+ * dev server was warmed, these smokes started submitting inside a second and
+ * were correctly refused, which looked exactly like a product bug and was not.
+ *
+ * Waiting here rather than sprinkling `waitForTimeout` at each call site
+ * means a new form cannot be added to a smoke without it.
+ */
 async function challengeSolved(page) {
   await page.waitForFunction(
     () => {
@@ -68,6 +81,9 @@ async function challengeSolved(page) {
     },
     { timeout: 30_000 },
   ).catch(() => undefined);
+
+  // The server refuses a form returned faster than a person could type one.
+  await page.waitForTimeout(1400);
 }
 
 async function sawText(page, pattern, timeout = 15_000) {
@@ -153,8 +169,10 @@ try {
   await challengeSolved(page);
   await page.fill('#field-email', email);
   await page.click('button[type=submit]');
-  check('a real address is answered at all', await sawText(page, /if there’s an account/i));
+  const knownAnswered = await sawText(page, /if there’s an account/i);
   const knownNotice = await roleText(page, 'status');
+  check('a real address is answered at all', knownAnswered,
+    knownAnswered ? '' : `saw: ${(knownNotice || await roleText(page, 'alert') || '(nothing)').slice(0, 160)}`);
   check('a real address gets the identical confirmation', knownNotice === unknownNotice);
 
   // ---- a mangled link explains itself rather than collecting a password ----

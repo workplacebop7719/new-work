@@ -101,7 +101,11 @@ const SPECS: Spec[] = [
     volatility: 0.05, competitors: [7900, 8400, 7250], endsInDays: 11, limitedStock: null,
     verifiedDaysAgo: 1, sourceTier: SOURCE_TIER.RETAILER_API,
   },
-  // Permanently "on sale" — big claimed discount, no real movement → should read HOLD/SKIP.
+  // Permanently "on sale": a big claimed discount over a price that has
+  // barely moved (volatility 1.2%). Since MEANINGFUL_RANGE_FRACTION landed
+  // this WITHHOLDS rather than scoring — the fixture set therefore ships two
+  // different withheld reasons, "barely moved" here and low confidence on the
+  // duvet, so both refusal messages are exercised by the UI.
   {
     id: 'harlow-storage-bin', product: p('harlow-storage-bin', 'Stacking Storage Bin, Set of 4', 'Harlow', 'home'),
     retailer: RETAILERS.harlow as Retailer, seed: 303, days: 88, baseCents: 3200, priceCents: 3150,

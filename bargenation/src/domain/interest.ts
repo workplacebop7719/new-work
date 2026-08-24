@@ -24,7 +24,7 @@
  * decision to call it at all, and it cannot change an Index or a
  * recommendation — it only decides whether to mention one that already exists.
  */
-import type { Deal } from './types';
+import { CATEGORIES, type Deal } from './types';
 import { UNUSUALLY_STRONG_INDEX } from './deal-signal';
 
 /** Views of one product before repetition means anything. */
@@ -43,6 +43,27 @@ export const INTEREST_WINDOW_DAYS = 90;
  */
 export const MIN_INDEX_TO_MENTION = 7.5;
 
+/**
+ * Visits to one CATEGORY before repetition means anything.
+ *
+ * Higher than the product threshold, because it is a weaker signal about a
+ * wider thing. Coming back to the same pushchair three times is somebody
+ * deciding. Opening Shoes five times is somebody browsing, and the most it
+ * licenses us to say is "the best thing in there right now is unusually good".
+ *
+ * WHY CATEGORY INTEREST IS COARSE ON PURPOSE. The obvious version of this
+ * feature records what people SEARCHED — the raw terms. Free text is where
+ * the sensitive things are: a medical condition, a pregnancy nobody has
+ * announced, a child's name. There is no way to hold that safely, so the
+ * column for it does not exist.
+ *
+ * What is recorded instead is one of the eight fixed slugs in `CATEGORIES`.
+ * It is enough to say "you have been in Shoes a lot"; it cannot say anything
+ * a customer would be alarmed to read back on /app/noticed, which is the test
+ * this whole subsystem is written to pass.
+ */
+export const REPEAT_VIEWS_FOR_CATEGORY_INTEREST = 5;
+
 export interface InterestRecord {
   /** Product slug, or null when the interest is a whole category. */
   productSlug: string | null;
@@ -60,6 +81,18 @@ export interface NoticedSignal {
   message: string;
   /** Why we are mentioning it, in the customer's words. Shown, not logged. */
   because: string;
+  /**
+   * Which inference produced this.
+   *
+   * `PRODUCT` — you kept coming back to this exact thing.
+   * `CATEGORY` — you have been browsing this category and the best thing in
+   *   it right now is unusually good.
+   *
+   * The two already read differently to a customer — the wording and the
+   * `because` differ — and this is what lets a caller, and the tests, tell
+   * them apart without parsing prose.
+   */
+  from: 'PRODUCT' | 'CATEGORY';
 }
 
 export interface InterestContext {
@@ -107,6 +140,49 @@ export function repeatedInterest(
 }
 
 /**
+ * The same folding for categories, against its own higher threshold.
+ *
+ * Kept as a separate function rather than a parameter on `repeatedInterest`,
+ * because the two are not the same measurement wearing different clothes: they
+ * have different thresholds, they license different claims, and a shared
+ * implementation would make it easy to accidentally give a category the
+ * product bar.
+ */
+export function repeatedCategoryInterest(
+  interests: readonly InterestRecord[],
+): readonly InterestRecord[] {
+  const byCategory = new Map<string, InterestRecord>();
+
+  for (const record of interests) {
+    if (!record.categorySlug) continue;
+    const existing = byCategory.get(record.categorySlug);
+    if (!existing) {
+      byCategory.set(record.categorySlug, { ...record });
+      continue;
+    }
+    byCategory.set(record.categorySlug, {
+      ...existing,
+      occurrences: existing.occurrences + record.occurrences,
+      lastSeenOn: existing.lastSeenOn > record.lastSeenOn ? existing.lastSeenOn : record.lastSeenOn,
+    });
+  }
+
+  return [...byCategory.values()]
+    .filter((record) => record.occurrences >= REPEAT_VIEWS_FOR_CATEGORY_INTEREST)
+    .sort((a, b) =>
+      b.occurrences - a.occurrences || (a.categorySlug ?? '').localeCompare(b.categorySlug ?? ''),
+    );
+}
+
+/**
+ * A category's display name, from the fixed list. Falls back to the slug so a
+ * category that outlives this constant degrades to something readable rather
+ * than to "undefined" in front of a customer.
+ */
+const categoryName = (slug: string): string =>
+  CATEGORIES.find((c) => c.slug === slug)?.name ?? slug;
+
+/**
  * At most ONE noticed-signal, for the same reason selectSignal exists: a
  * customer with six interesting products is still one interruption.
  *
@@ -142,7 +218,10 @@ export function noticeSomething(ctx: InterestContext): NoticedSignal | null {
     candidates.push({ record, deal, score: deal.index.score });
   }
 
-  if (candidates.length === 0) return null;
+  // Nothing specific to say. Fall back to the weaker inference — but only
+  // here, so a category hunch can never displace something we actually
+  // watched somebody return to.
+  if (candidates.length === 0) return noticeInCategory(ctx, categoryName);
 
   const best = candidates.sort((a, b) =>
     b.score - a.score || a.deal.offer.product.slug.localeCompare(b.deal.offer.product.slug),
@@ -153,6 +232,7 @@ export function noticeSomething(ctx: InterestContext): NoticedSignal | null {
   const score = deal.index.scorable ? deal.index.score : 0;
 
   return {
+    from: 'PRODUCT',
     productSlug: deal.offer.product.slug,
     offerId: deal.offer.id,
     // Says what we noticed, in plain terms, because a customer who cannot tell
@@ -164,4 +244,68 @@ export function noticeSomething(ctx: InterestContext): NoticedSignal | null {
         ? `${name} — the one you keep coming back to — is scoring ${score.toFixed(1)}, stronger than we usually see.`
         : `${name} — the one you keep coming back to — is scoring ${score.toFixed(1)} today.`,
   };
+}
+
+/**
+ * The category fallback: nothing specific to say, but you have been in here a
+ * lot and the best thing currently in it is exceptional.
+ *
+ * THREE THINGS MAKE THIS SAFE TO SEND AT ALL, and all three are stricter than
+ * the product path:
+ *
+ *   The interest bar is higher — five visits, not three.
+ *
+ *   The DEAL bar is higher: `UNUSUALLY_STRONG_INDEX`, not
+ *   `MIN_INDEX_TO_MENTION`. A merely good deal in a category somebody browsed
+ *   is not worth an interruption; if it were, this would fire constantly and
+ *   become the thing people mute.
+ *
+ *   It only runs when the product path found nothing. A weaker inference must
+ *   never displace a stronger one, and there is only ever one interruption.
+ *
+ * It is also careful about what it claims to know. The wording says you have
+ * been looking in this category — which is exactly and only what was recorded
+ * — rather than implying we know why.
+ */
+function noticeInCategory(
+  ctx: InterestContext, name: (slug: string) => string,
+): NoticedSignal | null {
+  const watched = new Set(ctx.watchedSlugs);
+  const mentioned = new Set(ctx.alreadyMentionedSlugs);
+
+  for (const record of repeatedCategoryInterest(ctx.interests)) {
+    const slug = record.categorySlug;
+    if (!slug) continue;
+
+    const inCategory = ctx.deals
+      .filter((deal) => deal.offer.product.category === slug)
+      .filter((deal) => !watched.has(deal.offer.product.slug))
+      .filter((deal) => !mentioned.has(deal.offer.product.slug))
+      .filter((deal) => deal.publishable && deal.index.scorable)
+      .filter((deal) => deal.confidence.level !== 'LOW')
+      .filter((deal) => (deal.index.scorable ? deal.index.score : 0) >= UNUSUALLY_STRONG_INDEX)
+      .sort((a, b) => {
+        const scoreA = a.index.scorable ? a.index.score : 0;
+        const scoreB = b.index.scorable ? b.index.score : 0;
+        return scoreB - scoreA
+          || a.offer.product.slug.localeCompare(b.offer.product.slug);
+      });
+
+    const deal = inCategory[0];
+    if (!deal || !deal.index.scorable) continue;
+
+    return {
+      from: 'CATEGORY',
+      productSlug: deal.offer.product.slug,
+      offerId: deal.offer.id,
+      because:
+        `You have been looking in ${name(slug)} — ${record.occurrences} visits — `
+        + 'and had not put anything there on your Watchlist.',
+      message:
+        `${deal.offer.product.name} is scoring ${deal.index.score.toFixed(1)}, `
+        + `the strongest thing in ${name(slug)} right now.`,
+    };
+  }
+
+  return null;
 }

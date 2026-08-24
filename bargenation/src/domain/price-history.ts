@@ -28,6 +28,45 @@ export const MIN_OBSERVATIONS = 5;
 /** A discount this deep or deeper counts as full Discount Strength. */
 export const FULL_DISCOUNT_AT = 0.5;
 
+/**
+ * How far a recorded price must have MOVED before its shape means anything.
+ *
+ * `historicalPriceQuality` already refused to read a perfectly flat history —
+ * "a flat price says nothing". This extends that rule from EXACTLY flat to
+ * EFFECTIVELY flat, because the original version had a hole big enough to
+ * drive the product's credibility through:
+ *
+ *   A price sat at $50.00 for forty days and dipped to $49.50. That is a 1%
+ *   move, and it is nothing. But it was the lowest price ever recorded, so
+ *   Historical Price Quality scored 1.0; and it was cheaper than 98% of
+ *   observations, so Promotion Rarity scored 0.98. Two of the three
+ *   measurable components said "outstanding", Discount Strength alone noticed
+ *   the discount was trivial, and the Index came out at 6.3 — CONSIDER.
+ *
+ *   Being at the bottom of a range that is itself meaningless is meaningless.
+ *
+ * Five percent, matching MIN_DROP_FRACTION in the signal engine: the same
+ * definition of "this price actually moved" in both places, rather than two
+ * thresholds that drift apart.
+ *
+ * The consequence is deliberate. On a near-flat history both components go
+ * null, coverage falls below the publication gate, and the product declines
+ * to publish an Index at all — which is the honest answer. We would rather
+ * say "we cannot judge this yet" than call a 1% dip worth considering.
+ */
+export const MEANINGFUL_RANGE_FRACTION = 0.05;
+
+/**
+ * Whether the recorded prices have moved enough for their shape to inform
+ * anything. Measured against the TYPICAL price, so it means the same thing
+ * for a $5 pack of socks and a $500 pushchair.
+ */
+export function hasMeaningfulRange(summary: HistorySummary): boolean {
+  if (summary.typicalCents <= 0) return false;
+  const span = summary.highCents - summary.lowCents;
+  return span / summary.typicalCents >= MEANINGFUL_RANGE_FRACTION;
+}
+
 const median = (sorted: readonly number[]): number => {
   const n = sorted.length;
   const mid = Math.floor(n / 2);
@@ -85,7 +124,9 @@ export function historicalPriceQuality(
 ): number | null {
   const s = summarise(observations, currentCents);
   if (!s) return null;
-  if (s.highCents === s.lowCents) return null; // a flat price says nothing
+  // A flat price says nothing — and neither does a nearly flat one. Being at
+  // the bottom of a range that spans 1% is not information about value.
+  if (!hasMeaningfulRange(s)) return null;
   if (currentCents <= s.lowCents) return 1;
   if (currentCents >= s.highCents) return 0;
   return 1 - (currentCents - s.lowCents) / (s.highCents - s.lowCents);
@@ -100,7 +141,13 @@ export function promotionRarity(
   observations: readonly PriceObservation[],
   currentCents: number,
 ): number | null {
-  if (observations.length < MIN_OBSERVATIONS) return null;
+  const s = summarise(observations, currentCents);
+  if (!s) return null;
+  // "Cheaper than 98% of what we recorded" is noise when all of it sat inside
+  // a one percent band. Same rule as Historical Price Quality, and for the
+  // same reason: rarity within a meaningless range is meaningless.
+  if (!hasMeaningfulRange(s)) return null;
+
   const dearer = observations.filter((o) => o.priceCents > currentCents).length;
   return dearer / observations.length;
 }

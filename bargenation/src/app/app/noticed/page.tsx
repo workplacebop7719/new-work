@@ -5,7 +5,11 @@ import {
   behaviourAlertsEnabled, listInterests, memberFeaturesAvailable, readMembership,
 } from '@/data/member-repository';
 import { setBehaviourAlertsAction, clearInterestsAction } from '@/data/member-actions';
-import { REPEAT_VIEWS_FOR_INTEREST, MIN_INDEX_TO_MENTION } from '@/domain/interest';
+import { monthlyPrice } from '@/domain/membership';
+import {
+  REPEAT_VIEWS_FOR_INTEREST, REPEAT_VIEWS_FOR_CATEGORY_INTEREST, MIN_INDEX_TO_MENTION,
+} from '@/domain/interest';
+import { UNUSUALLY_STRONG_INDEX } from '@/domain/deal-signal';
 import { EmptyState } from '@/components/member/EmptyState';
 
 export const metadata: Metadata = { title: 'What we noticed' };
@@ -86,7 +90,12 @@ export default async function NoticedPage() {
         <p className="measure mt-4 text-[0.875rem] leading-relaxed text-ink-70">
           {membership === 'MEMBER'
             ? 'Your membership includes these alerts, so we will tell you when something here is worth buying.'
-            : 'Acting on this is part of membership, which does not exist yet — no price is set and no payments are configured. Until then the list below is yours to look at, and nothing is sent.'}
+            : `Acting on this is part of membership, which is ${monthlyPrice()} a month and cannot be bought yet — no payment provider is configured. Until then the list below is yours to look at, and nothing is sent.`}
+        </p>
+        <p className="measure mt-3 text-[0.8125rem] leading-relaxed text-ink-70">
+          <Link href="/membership" className="link-grow text-pink-ink">
+            What membership adds, and what it can never buy
+          </Link>
         </p>
         <p className="measure mt-4 text-[0.8125rem] leading-relaxed text-ink-50">
           Membership never changes a Value Index, a Buy or Hold call, or when a Watchlist alert
@@ -112,7 +121,7 @@ export default async function NoticedPage() {
             <ul className="divide-y divide-line border-b border-line">
               {interests.map((row) => (
                 <li
-                  key={`${row.productSlug}-${row.kind}`}
+                  key={`${row.productSlug ?? row.categorySlug}-${row.kind}`}
                   className="flex flex-wrap items-baseline justify-between gap-4 py-4"
                 >
                   <div className="min-w-0">
@@ -121,18 +130,40 @@ export default async function NoticedPage() {
                         <Link href={`/deals/${row.productSlug}`} className="link-grow">
                           {row.productName}
                         </Link>
+                      ) : row.categorySlug ? (
+                        <Link href={`/categories/${row.categorySlug}`} className="link-grow">
+                          {row.categoryName}
+                        </Link>
                       ) : (
                         'Something no longer in our catalogue'
                       )}
                     </p>
                     <p className="mt-1 text-[0.75rem] text-ink-50">
+                      {/*
+                        A category and a product are held to different bars, so
+                        they are not described as though they were the same
+                        thing. Saying "not enough yet" against the product
+                        threshold on a category row would be wrong by two.
+                      */}
+                      {row.categorySlug ? 'Category · ' : ''}
                       Last seen {row.lastSeenOn}
-                      {row.occurrences < REPEAT_VIEWS_FOR_INTEREST &&
+                      {row.occurrences <
+                        (row.categorySlug
+                          ? REPEAT_VIEWS_FOR_CATEGORY_INTEREST
+                          : REPEAT_VIEWS_FOR_INTEREST) &&
                         ' · not enough to count as interest yet'}
                     </p>
                   </div>
+                  {/*
+                    A product is VIEWED and a category is VISITED. One noun for
+                    both was briefly used and read wrong in each direction —
+                    "2 visits" to a product page, "5 views" of a whole category.
+                  */}
                   <p className="tabular text-[0.9375rem] text-ink">
-                    {row.occurrences} {row.occurrences === 1 ? 'view' : 'views'}
+                    {row.occurrences}{' '}
+                    {row.categorySlug
+                      ? (row.occurrences === 1 ? 'visit' : 'visits')
+                      : (row.occurrences === 1 ? 'view' : 'views')}
                   </p>
                 </li>
               ))}
@@ -141,6 +172,13 @@ export default async function NoticedPage() {
               We would mention something once you had opened it {REPEAT_VIEWS_FOR_INTEREST} times
               and its Value Index reached {MIN_INDEX_TO_MENTION.toFixed(1)} — the same bar as a Buy
               call, not a lower one.
+            </p>
+            <p className="mt-3 max-w-[52ch] text-[0.75rem] leading-snug text-ink-50">
+              A category is a weaker signal than a product, so it is held to a stricter bar:{' '}
+              {REPEAT_VIEWS_FOR_CATEGORY_INTEREST} visits, and only for something scoring{' '}
+              {UNUSUALLY_STRONG_INDEX.toFixed(1)} or better. We record which of eight categories
+              you opened — never what you typed into search, because free text is where the
+              things we should not be holding live.
             </p>
           </>
         ) : (

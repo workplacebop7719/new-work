@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { subscribeAction, type SubscribeState } from '@/newsletter/actions';
 import type { IssuedChallenge } from '@/security/challenge';
@@ -29,14 +29,21 @@ export function SubscribeForm({
     error: null, pending: null, devConfirmUrl: null,
   });
   const [address, setAddress] = useState('');
-  const challengeState = useChallenge(challenge);
+  const { state: challengeState, current, refresh } = useChallenge(challenge);
   const waitingOnChallenge = challenge !== null && challengeState.status === 'solving';
+
+  // See AuthForm: a spent signature cannot be submitted twice, so the form
+  // takes a fresh challenge every time the action returns. Somebody
+  // subscribing a second address from the same page is the ordinary case here.
+  useEffect(() => {
+    if (state.error !== null || state.pending !== null) refresh();
+  }, [state, refresh]);
 
   return (
     <div className="max-w-[32rem]">
       <form action={act} className="relative">
         <input type="hidden" name="source" value={source} />
-        <ChallengeFields challenge={challenge} state={challengeState} />
+        <ChallengeFields challenge={current} state={challengeState} />
         <label htmlFor="edit-email" className="eyebrow block text-ink-50">
           Your email
         </label>

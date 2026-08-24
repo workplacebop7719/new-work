@@ -8,14 +8,14 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  noticeSomething, repeatedInterest,
-  REPEAT_VIEWS_FOR_INTEREST, MIN_INDEX_TO_MENTION,
+  noticeSomething, repeatedInterest, repeatedCategoryInterest,
+  REPEAT_VIEWS_FOR_INTEREST, REPEAT_VIEWS_FOR_CATEGORY_INTEREST, MIN_INDEX_TO_MENTION,
   type InterestRecord, type InterestContext,
 } from './interest';
-import { evaluateSignals } from './deal-signal';
+import { evaluateSignals, UNUSUALLY_STRONG_INDEX } from './deal-signal';
 import { scoreOffer } from './score-offer';
 import { SOURCE_TIER } from './confidence';
-import type { Deal, Offer } from './types';
+import { CATEGORIES, type Deal, type Offer } from './types';
 
 const NOW = new Date('2026-08-23T12:00:00Z');
 
@@ -47,9 +47,13 @@ function makeDeal(slug: string, prices: number[], competitors: number[] = [5200,
 const strong = (slug: string) =>
   makeDeal(slug, [...Array.from({ length: 40 }, (_, i) => 9000 - i * 20), 3000]);
 
-/** A price above what this retailer normally charges. */
+/**
+ * A price ABOVE what this retailer normally charges — publishable, and a
+ * clear Skip. $48 to $54 rather than $50 to $52, because a 4% move no longer
+ * clears MEANINGFUL_RANGE_FRACTION and would test the refusal instead.
+ */
 const weak = (slug: string) =>
-  makeDeal(slug, [...Array.from({ length: 40 }, () => 5000), 5200]);
+  makeDeal(slug, [...Array.from({ length: 40 }, () => 4800), 5400]);
 
 const viewed = (slug: string, times: number, day = '2026-08-20'): InterestRecord => ({
   productSlug: slug, categorySlug: null, kind: 'VIEWED',
@@ -224,5 +228,122 @@ describe('membership adds inference and never subtracts service', () => {
     const signal = noticeSomething(ctx({ interests: [viewed('pram', 4)], deals: [deal] }));
     if (!deal.index.scorable) throw new Error('unreachable');
     expect(signal!.message).toContain(deal.index.score.toFixed(1));
+  });
+});
+
+/**
+ * CATEGORY INTEREST — the weaker inference (§26, §37, §52).
+ *
+ * The tests that matter here are the ones proving it stays weaker: that it
+ * never displaces the product path, that it needs more visits AND a better
+ * deal, and that what it holds is one of eight fixed slugs rather than
+ * anything somebody typed.
+ */
+describe('category interest is deliberately the weaker signal', () => {
+  const browsed = (slug: string, times: number, day = '2026-08-20'): InterestRecord => ({
+    productSlug: null, categorySlug: slug, kind: 'VIEWED',
+    occurrences: times, lastSeenOn: day,
+  });
+
+  it('needs more visits than a product does', () => {
+    expect(REPEAT_VIEWS_FOR_CATEGORY_INTEREST).toBeGreaterThan(REPEAT_VIEWS_FOR_INTEREST);
+    expect(repeatedCategoryInterest([browsed('kids', REPEAT_VIEWS_FOR_CATEGORY_INTEREST - 1)]))
+      .toHaveLength(0);
+    expect(repeatedCategoryInterest([browsed('kids', REPEAT_VIEWS_FOR_CATEGORY_INTEREST)]))
+      .toHaveLength(1);
+  });
+
+  it('sums a category across several days, like a product', () => {
+    const folded = repeatedCategoryInterest([
+      browsed('kids', 3, '2026-08-18'), browsed('kids', 3, '2026-08-21'),
+    ]);
+    expect(folded).toHaveLength(1);
+    expect(folded[0]!.occurrences).toBe(6);
+    expect(folded[0]!.lastSeenOn).toBe('2026-08-21');
+  });
+
+  it('never counts a product view towards a category, or the reverse', () => {
+    expect(repeatedCategoryInterest([viewed('a-thing', 40)])).toHaveLength(0);
+    expect(repeatedInterest([browsed('kids', 40)])).toHaveLength(0);
+  });
+
+  it('mentions the strongest thing in a category somebody keeps opening', () => {
+    const signal = noticeSomething(ctx({
+      interests: [browsed('kids', 6)],
+      deals: [strong('a-good-one')],
+    }));
+    expect(signal?.from).toBe('CATEGORY');
+    expect(signal?.productSlug).toBe('a-good-one');
+    expect(signal?.because).toContain('Kids');
+    expect(signal?.because).toContain('6');
+  });
+
+  /**
+   * The bar that stops this becoming the thing people mute. A deal that WOULD
+   * be mentioned on the product path — over MIN_INDEX_TO_MENTION — is not
+   * enough on the category path, which needs UNUSUALLY_STRONG_INDEX.
+   */
+  it('will not mention a merely good deal, only an unusual one', () => {
+    const mid = makeDeal('mid', [...Array.from({ length: 40 }, () => 5000), 4300]);
+    if (!mid.index.scorable) throw new Error('expected scorable');
+    expect(mid.index.score).toBeGreaterThanOrEqual(MIN_INDEX_TO_MENTION);
+    expect(mid.index.score).toBeLessThan(UNUSUALLY_STRONG_INDEX);
+
+    expect(noticeSomething(ctx({ interests: [browsed('kids', 9)], deals: [mid] }))).toBeNull();
+  });
+
+  it('never displaces something they actually kept coming back to', () => {
+    const signal = noticeSomething(ctx({
+      interests: [viewed('the-one-they-returned-to', 4), browsed('kids', 20)],
+      deals: [strong('the-one-they-returned-to'), strong('something-else-in-kids')],
+    }));
+    expect(signal?.from).toBe('PRODUCT');
+    expect(signal?.productSlug).toBe('the-one-they-returned-to');
+  });
+
+  it('does not mention something already watched or already mentioned', () => {
+    const base = { interests: [browsed('kids', 9)], deals: [strong('a-good-one')] };
+    expect(noticeSomething(ctx({ ...base, watchedSlugs: ['a-good-one'] }))).toBeNull();
+    expect(noticeSomething(ctx({ ...base, alreadyMentionedSlugs: ['a-good-one'] }))).toBeNull();
+  });
+
+  it('says nothing about a category with nothing exceptional in it', () => {
+    expect(noticeSomething(ctx({ interests: [browsed('kids', 20)], deals: [weak('meh')] })))
+      .toBeNull();
+  });
+
+  it('is still one interruption, not one per category', () => {
+    const signal = noticeSomething(ctx({
+      interests: [browsed('kids', 9), browsed('home', 9)],
+      deals: [strong('a'), strong('b')],
+    }));
+    expect(signal).not.toBeNull();
+  });
+
+  it('is deterministic when two categories are equally browsed', () => {
+    const input = ctx({
+      interests: [browsed('home', 9), browsed('kids', 9)],
+      deals: [strong('a'), strong('b')],
+    });
+    const runs = Array.from({ length: 10 }, () => JSON.stringify(noticeSomething(input)));
+    expect(new Set(runs).size).toBe(1);
+  });
+
+  /**
+   * The privacy property, asserted rather than trusted to a comment: a
+   * category is one of eight known slugs. A raw search term reaching this
+   * layer would render as itself in an alert, and the alert is the one place
+   * a customer would read their own words back.
+   */
+  it('names a category from the fixed list, never a slug it was handed', () => {
+    const signal = noticeSomething(ctx({
+      interests: [{
+        productSlug: null, categorySlug: 'kids', kind: 'VIEWED',
+        occurrences: 9, lastSeenOn: '2026-08-20',
+      }],
+      deals: [strong('a-good-one')],
+    }));
+    expect(signal?.because).toContain('Kids');
+    expect(CATEGORIES.some((c) => signal!.because.includes(c.name))).toBe(true);
   });
 });

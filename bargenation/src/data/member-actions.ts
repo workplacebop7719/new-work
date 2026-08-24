@@ -7,6 +7,7 @@ import { loginHref } from '@/auth/return-url';
 import * as member from './member-repository';
 import type { MemberActionState } from './member-action-state';
 import { DEFAULT_QUIET_HOURS, isUsableTimeZone } from '@/domain/quiet-hours';
+import { CATEGORIES } from '@/domain/types';
 
 /**
  * Member mutations (PRD §25, §27, §31).
@@ -145,6 +146,25 @@ export async function noteInterestAction(productSlug: string): Promise<void> {
   if (typeof productSlug !== 'string' || productSlug.length === 0) return;
 
   await member.recordInterest(session.user.id, { productSlug }, 'VIEWED');
+}
+
+/**
+ * The same, for one of the eight fixed categories.
+ *
+ * A separate action rather than a `kind` parameter on the one above, because
+ * the argument means something different and the validation is different: this
+ * one is checked against `CATEGORIES` before it reaches the database, so
+ * nothing but a known slug can ever be written. Free text — a raw search
+ * term — must never arrive here, and the narrow signature is what makes that
+ * true rather than remembered.
+ */
+export async function noteCategoryInterestAction(categorySlug: string): Promise<void> {
+  if (!member.memberFeaturesAvailable) return;
+  const session = await readSession();
+  if (!session) return;
+  if (!CATEGORIES.some((c) => c.slug === categorySlug)) return;
+
+  await member.recordInterest(session.user.id, { categorySlug }, 'VIEWED');
 }
 
 export async function setBehaviourAlertsAction(formData: FormData): Promise<void> {

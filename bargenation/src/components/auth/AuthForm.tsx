@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
 import Link from 'next/link';
 import type { FormState } from '@/auth/actions';
 import type { IssuedChallenge } from '@/security/challenge';
@@ -41,12 +41,28 @@ export function AuthForm({
   footer: React.ReactNode;
 }) {
   const [state, formAction, pending] = useActionState(action, { error: null, notice: null });
-  const challengeState = useChallenge(challenge);
+  const { state: challengeState, current, refresh } = useChallenge(challenge);
 
   // Only a real, still-solving challenge holds the button. An unsupported
   // browser is let through to the server, which has its own checks and can
   // say what happened — better than a button that never enables.
   const waitingOnChallenge = challenge !== null && challengeState.status === 'solving';
+
+  /**
+   * Replace the challenge every time the action returns.
+   *
+   * A solved signature can be spent exactly once, so after any submission the
+   * one still sitting in this form is dead. Without this, pressing the button
+   * a second time — correcting a mistyped address, asking about a second
+   * account — was refused with "Something went wrong checking this form".
+   *
+   * Keyed on the action's own result rather than on `pending`, because
+   * `pending` flips twice per submission and would fetch two challenges for
+   * every one that was used.
+   */
+  useEffect(() => {
+    if (state.error !== null || state.notice !== null) refresh();
+  }, [state, refresh]);
 
   return (
     <form action={formAction} className="relative mt-12 max-w-[26rem]">
@@ -54,7 +70,7 @@ export function AuthForm({
       {Object.entries(hidden ?? {}).map(([name, value]) => (
         <input key={name} type="hidden" name={name} value={value} />
       ))}
-      <ChallengeFields challenge={challenge} state={challengeState} />
+      <ChallengeFields challenge={current} state={challengeState} />
 
       {state.error && (
         // role=alert announces the failure without stealing focus

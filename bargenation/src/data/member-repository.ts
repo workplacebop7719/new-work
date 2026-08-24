@@ -579,19 +579,43 @@ export async function setBehaviourAlerts(profileId: string, enabled: boolean): P
   });
 }
 
+/**
+ * Exactly one subject, mirroring the check constraint in migration 0014.
+ *
+ * A union rather than two optional fields, so "both" and "neither" are not
+ * expressible here at all — the database would reject them, but a type that
+ * cannot say the wrong thing is better than one that finds out at runtime.
+ */
+export type InterestSubject = { productSlug: string } | { categorySlug: string };
+
 export async function recordInterest(
-  profileId: string, subject: { productSlug: string }, kind: InterestKind = 'VIEWED',
+  profileId: string, subject: InterestSubject, kind: InterestKind = 'VIEWED',
 ): Promise<void> {
   if (!memberFeaturesAvailable) return;
   if (!(await behaviourAlertsEnabled(profileId))) return;
 
   await asCustomer(profileId, async (client) => {
+    if ('productSlug' in subject) {
+      await client.query(
+        `insert into interest_events (profile_id, product_id, kind)
+         select $1, p.id, $3 from products p where p.slug = $2
+         on conflict (profile_id, product_id, category_id, kind, observed_on)
+           do update set occurrences = interest_events.occurrences + 1`,
+        [profileId, subject.productSlug, kind],
+      );
+      return;
+    }
+
+    // A category, which is one of the eight fixed slugs — never a raw search
+    // term. The `select ... from categories` is what enforces that: an
+    // invented slug matches nothing and inserts nothing, rather than creating
+    // a category out of whatever somebody typed.
     await client.query(
-      `insert into interest_events (profile_id, product_id, kind)
-       select $1, p.id, $3 from products p where p.slug = $2
+      `insert into interest_events (profile_id, category_id, kind)
+       select $1, c.id, $3 from categories c where c.slug = $2
        on conflict (profile_id, product_id, category_id, kind, observed_on)
          do update set occurrences = interest_events.occurrences + 1`,
-      [profileId, subject.productSlug, kind],
+      [profileId, subject.categorySlug, kind],
     );
   });
 }
@@ -599,30 +623,45 @@ export async function recordInterest(
 export interface InterestRow {
   productSlug: string | null;
   productName: string | null;
+  /** One of the eight fixed category slugs, when the subject is a category. */
+  categorySlug: string | null;
+  categoryName: string | null;
   kind: string;
   occurrences: number;
   lastSeenOn: string;
 }
 
-/** Summed per product, which is the shape the domain layer reasons about. */
+/**
+ * Summed per subject, which is the shape the domain layer reasons about.
+ *
+ * Both kinds of subject come back from one query, because /app/noticed shows
+ * a customer everything we hold about them in one place. A category interest
+ * that only appeared in the alerting path and never in the portal would be a
+ * record somebody could not see, which is the thing this subsystem exists not
+ * to be.
+ */
 export async function listInterests(profileId: string): Promise<InterestRow[]> {
   assertAvailable();
   return asCustomer(profileId, async (client) => {
     const { rows } = await client.query<{
-      slug: string | null; name: string | null; kind: string;
-      occurrences: string; last_seen: Date;
+      slug: string | null; name: string | null;
+      category_slug: string | null; category_name: string | null;
+      kind: string; occurrences: string; last_seen: Date;
     }>(
-      `select p.slug, p.name, i.kind,
+      `select p.slug, p.name, c.slug as category_slug, c.name as category_name, i.kind,
               sum(i.occurrences) as occurrences,
               max(i.observed_on) as last_seen
        from interest_events i
        left join products p on p.id = i.product_id
-       group by p.slug, p.name, i.kind
-       order by sum(i.occurrences) desc, p.slug asc`,
+       left join categories c on c.id = i.category_id
+       group by p.slug, p.name, c.slug, c.name, i.kind
+       order by sum(i.occurrences) desc, p.slug asc, c.slug asc`,
     );
     return rows.map((r) => ({
       productSlug: r.slug,
       productName: r.name,
+      categorySlug: r.category_slug,
+      categoryName: r.category_name,
       kind: r.kind,
       occurrences: Number(r.occurrences),
       lastSeenOn: r.last_seen.toISOString().slice(0, 10),
@@ -641,10 +680,15 @@ export async function clearInterests(profileId: string): Promise<void> {
 /**
  * Membership, which is a flag and not a payments integration.
  *
- * There is no way to buy this — no provider is configured and the price is
- * not decided. An operator sets it for a real member once both exist. The
- * account page says exactly that rather than showing an upgrade button that
- * goes nowhere (§01).
+ * The price IS now decided and lives in one place — `MONTHLY_PRICE_CENTS` in
+ * `@/domain/membership`, which also carries why it is that number rather than
+ * either of the two the founding documents disagreed on. Every surface that
+ * quotes it reads it from there.
+ *
+ * What still does not exist is a way to PAY it: no provider is configured, so
+ * `MEMBERSHIP_PURCHASABLE` is false and the pages say so plainly instead of
+ * showing an upgrade button that goes nowhere (§01). An operator sets this
+ * flag for a real member until a checkout exists.
  */
 export async function readMembership(profileId: string): Promise<'FREE' | 'MEMBER'> {
   assertAvailable();

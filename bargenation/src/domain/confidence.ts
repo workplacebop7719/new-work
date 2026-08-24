@@ -97,9 +97,25 @@ export type PublishDecision =
 export function canPublishIndex(
   coverage: number,
   excluded: readonly ComponentKey[],
+  /**
+   * Whether we have enough OBSERVATIONS, as opposed to enough movement.
+   *
+   * Both cases exclude historical price quality, and they need different
+   * sentences. Telling somebody "we haven't recorded enough history" when we
+   * have forty-one observations of a price that simply never moved is not
+   * true, and it is the kind of small untruth that teaches people to stop
+   * believing the rest.
+   */
+  hasHistory = false,
 ): PublishDecision {
   if (excluded.includes('historicalPriceQuality')) {
-    return { publish: false, reason: "We haven't recorded enough price history for this yet." };
+    return {
+      publish: false,
+      reason: hasHistory
+        // We watched. It just did not move enough to say anything about.
+        ? 'This price has barely moved since we started watching, so there is nothing to judge it against yet.'
+        : "We haven't recorded enough price history for this yet.",
+    };
   }
   if (coverage < MIN_COVERAGE_TO_PUBLISH) {
     return { publish: false, reason: "We can't measure enough about this offer to score it." };

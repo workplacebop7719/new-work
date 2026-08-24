@@ -76,7 +76,14 @@ interface WatchRow {
  * One offer per watched product: the cheapest currently in stock. A customer
  * watching a product is watching the product, not one retailer's listing.
  */
-const WATCH_SQL = `
+/**
+ * Exported ONLY so a test can ask the real query which watches it returns.
+ *
+ * The alternative was a test that re-implemented the `paused` predicate and
+ * then asserted its own SQL agreed with itself, which proves nothing about
+ * this string — the one that actually decides.
+ */
+export const WATCH_SQL = `
   select distinct on (wi.id)
     wi.id as item_id,
     w.profile_id,
@@ -231,7 +238,31 @@ export async function sweepDealSignals(
     ]);
     result.watchesExamined = watches.length;
     result.retailerWatchesExamined = retailerWatches.length;
-    if (watches.length === 0 && retailerWatches.length === 0) return result;
+
+    /*
+     * THERE IS NO EARLY RETURN HERE, AND THAT IS THE FIX FOR A REAL BUG.
+     *
+     * This used to be `if (watches.length === 0 && retailerWatches.length === 0)
+     * return result;` — a sensible-looking optimisation that silently turned
+     * off interest alerts. The interest sweep lives below and has nothing to
+     * do with watchlists: a member with behaviour alerts on and a history of
+     * returning to the same product got NOTHING, from a job that reported
+     * success, whenever nobody in the entire installation happened to hold a
+     * watchlist item.
+     *
+     * That is not a rare state. It is the state at launch, and it is the state
+     * of any quiet week — precisely when the paid-for half of membership is
+     * the only thing running.
+     *
+     * It surfaced as an intermittent test failure rather than a bug report,
+     * because on a database with leftover rows from other suites there was
+     * always a watch, and on a freshly reset one there was not.
+     *
+     * Every query below is `= any($1::uuid[])` and answers instantly on an
+     * empty array, so the cost of removing the shortcut is a handful of
+     * trivial round trips on an idle installation. The cost of keeping it was
+     * a feature that did not run.
+     */
 
     // Every offer at a watched store, so a retailer watch can look across the
     // whole shelf rather than at one listing.
@@ -377,16 +408,21 @@ export async function sweepDealSignals(
     if (members.length > 0) {
       const memberIds = members.map((m) => m.profile_id);
 
+      // Both subjects, in one pass. An inner join on products used to be here,
+      // which silently dropped every category interest before the domain layer
+      // could see it — the weaker inference existed in the schema and could
+      // never fire.
       const { rows: interestRows } = await client.query<{
-        profile_id: string; slug: string | null; kind: string;
+        profile_id: string; slug: string | null; category_slug: string | null; kind: string;
         occurrences: string; last_seen: Date;
       }>(
-        `select i.profile_id, p.slug, i.kind,
+        `select i.profile_id, p.slug, c.slug as category_slug, i.kind,
                 sum(i.occurrences) as occurrences, max(i.observed_on) as last_seen
          from interest_events i
-         join products p on p.id = i.product_id
+         left join products p on p.id = i.product_id
+         left join categories c on c.id = i.category_id
          where i.profile_id = any($1::uuid[])
-         group by i.profile_id, p.slug, i.kind`,
+         group by i.profile_id, p.slug, c.slug, i.kind`,
         [memberIds],
       );
 
@@ -425,11 +461,12 @@ export async function sweepDealSignals(
 
       const interestByProfile = new Map<string, InterestRecord[]>();
       for (const row of interestRows) {
-        if (!row.slug) continue;
+        // Exactly one is set, enforced by the check constraint in 0014.
+        if (!row.slug && !row.category_slug) continue;
         const list = interestByProfile.get(row.profile_id) ?? [];
         list.push({
           productSlug: row.slug,
-          categorySlug: null,
+          categorySlug: row.category_slug,
           kind: row.kind as InterestRecord['kind'],
           occurrences: Number(row.occurrences),
           lastSeenOn: row.last_seen.toISOString().slice(0, 10),

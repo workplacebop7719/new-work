@@ -31,7 +31,7 @@ const SMOKE_CALLER = '198.51.100.11';
 const CALLER_HEADERS = { 'x-forwarded-for': SMOKE_CALLER };
 
 
-const BASE = process.env.BASE || 'http://localhost:3000';
+const BASE = process.env.BASE || 'http://localhost:3210';
 const SLUG = process.env.SLUG || 'calder-trail-sneaker';
 
 let failures = 0;
@@ -57,6 +57,19 @@ const page = await (await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS,
  * clicking a disabled control silently does nothing, which reads as "sign-up
  * is broken".
  */
+/**
+ * Waits until the proof of work is solved AND the form has been on screen
+ * long enough to have been typed by a person.
+ *
+ * The second half is not padding. The server measures dwell time by ITS clock
+ * — `MIN_AGE_MS` in security/challenge.ts — and refuses a form returned in
+ * under 1.2 seconds, because nobody types that fast. A script does. Once the
+ * dev server was warmed, these smokes started submitting inside a second and
+ * were correctly refused, which looked exactly like a product bug and was not.
+ *
+ * Waiting here rather than sprinkling `waitForTimeout` at each call site
+ * means a new form cannot be added to a smoke without it.
+ */
 async function challengeSolved(page) {
   await page.waitForFunction(
     () => {
@@ -65,6 +78,9 @@ async function challengeSolved(page) {
     },
     { timeout: 30_000 },
   ).catch(() => undefined);
+
+  // The server refuses a form returned faster than a person could type one.
+  await page.waitForTimeout(1400);
 }
 
 async function warm(page, paths) {

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { readSession } from '@/auth/session';
 import { memberFeaturesAvailable, readMembership, readQuietHours } from '@/data/member-repository';
+import { monthlyPrice } from '@/domain/membership';
 import { QuietHoursForm } from '@/components/member/QuietHoursForm';
 import { auth } from '@/auth';
 import Link from 'next/link';
@@ -95,7 +96,12 @@ export default async function AccountPage() {
         <p className="measure mt-5 text-[0.9375rem] leading-relaxed text-ink-70">
           {membership === 'MEMBER'
             ? 'Your account is marked as a member, which adds alerts about things you keep coming back to.'
-            : 'You’re on the free tier. There is no paid tier to buy yet — no price is set and no payments are configured, so there is no upgrade button here rather than one that goes nowhere.'}
+            : `You’re on the free tier. Membership is ${monthlyPrice()} a month, and you cannot buy it yet — no payment provider is configured, so there is no upgrade button here rather than one that goes nowhere.`}
+        </p>
+        <p className="measure mt-3 text-[0.875rem] leading-relaxed text-ink-70">
+          <Link href="/membership" className="link-grow text-pink-ink">
+            What membership adds, and what it can never buy
+          </Link>
         </p>
         <p className="measure mt-4 text-[0.8125rem] leading-relaxed text-ink-50">
           Whatever changes, membership will never buy a better Value Index, a different Buy or

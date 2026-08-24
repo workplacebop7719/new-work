@@ -76,8 +76,13 @@ reject it.
 
 ## Honest gaps stated on the pages themselves
 
-- Export and account deletion are not built; a request today would be handled
-  by a person. The privacy page says so.
+- Export and account deletion ARE built — `/app/account/export` and
+  `/app/account/delete`. The privacy page said otherwise for two sprints after
+  they shipped, which is the same category of error as claiming something works
+  when it does not, and is corrected.
+- Membership quotes a price that cannot be paid. `/membership` says so in the
+  largest type on the page after the price itself, because a disabled button
+  with no explanation reads as a product that works and is merely busy.
 - There is no monitored inbox, so `/contact` has **no form** rather than one
   that silently discards messages.
 - Recorded prices are not deleted on account deletion, because they are not

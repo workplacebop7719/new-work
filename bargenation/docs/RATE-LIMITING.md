@@ -111,8 +111,48 @@ unconditionally. Putting it behind "if there are watches to sweep" would mean
 an installation with no watches never prunes — rows accumulating forever
 precisely where nobody is looking.
 
+## Seeing an attack without seeing a person
+
+`/admin/abuse`, migration 0021 (§69).
+
+This was the outstanding gap: the limits worked and nothing showed whether
+they were being hit, so the first sign of an attack would have been a customer
+saying they could not sign in.
+
+The obvious build is a select on `rate_limit_hits`. It is refused, for the same
+reason `/admin/audience` refuses a users table — an operator reading a
+per-token activity log is reading a behavioural record, and a token plus a
+timestamp plus one more surface is how a "not personal" identifier stops being
+one. **Staff have no select on that table at all.** `abuse_summary()` is a
+`security definer` function granted to `bargenation_admin` and to nothing else;
+`bargenation_app` cannot call it, because a survey reachable from a request
+handler is a survey reachable from a bug.
+
+Four figures per bucket and dimension, none of them a row:
+
+| | what it answers |
+| --- | --- |
+| `attempts` | is the volume unusual for this bucket |
+| `distinct_tokens` | one source hammering, or thousands each trying a little |
+| `busiest_token_attempts` | how concentrated — a magnitude with no subject |
+| `tokens_over_limit` | how many are past the allowance and being refused now |
+
+Concentration is the figure that decides what you do. A thousand attempts from
+one source is an incident and a block. The same thousand across nine hundred
+sources is a distributed attempt that no per-caller limit will stop, and the
+answer to it is password strength, not a lockout. The page states that reading
+in a sentence rather than leaving an operator to do the division at 2am.
+
+**The allowance is passed in, not copied.** `RATE_LIMITS` in
+`src/security/rate-limit.ts` is what is actually enforced. A second copy in SQL
+would drift, and the drifted copy would be the one drawing the dashboard — so
+`readAbuseSummary` hands the function the number it really applies. A `null`
+`perSubject` (sign-in, deliberately) reports zero over-limit rather than
+counting against an allowance that does not exist.
+
 ## Not built yet
 
-**Telling anybody it happened.** A refused caller sees a message; nothing
-alerts an operator that an account is under sustained attack. That needs the
-admin surface (§49) and somewhere to send it.
+**Telling anybody it happened.** `/admin/abuse` shows an attack to an operator
+who looks. Nothing pages one who is asleep — that needs a delivery channel,
+which nothing in this product has yet. See [LEGAL.md](./LEGAL.md) and the
+delivery gap in [DEAL-SIGNALS.md](./DEAL-SIGNALS.md).

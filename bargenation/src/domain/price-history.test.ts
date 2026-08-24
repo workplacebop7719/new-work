@@ -64,12 +64,45 @@ describe('historicalPriceQuality places today in the recorded range', () => {
   it('returns null for a price that has never moved', () => {
     expect(historicalPriceQuality(obs([500, 500, 500, 500, 500, 500]), 500)).toBeNull();
   });
+
+  /**
+   * THE HOLE THIS CLOSES. A price that sat at $50 for weeks and dipped to
+   * $49.50 is at its recorded low — and that used to score 1.0, because the
+   * rule only caught an EXACTLY flat history. Being at the bottom of a range
+   * that spans one percent is not information about value.
+   */
+  it('returns null for a price that has barely moved', () => {
+    const nearlyFlat = obs([5000, 5000, 5000, 5000, 5000, 4950]);
+    expect(historicalPriceQuality(nearlyFlat, 4950)).toBeNull();
+  });
+
+  /** But a range that is genuinely narrow and genuinely real still counts. */
+  it('still reads a range that clears the materiality bar', () => {
+    // 6% span: above MEANINGFUL_RANGE_FRACTION, so the shape means something.
+    const narrow = obs([1000, 1000, 1000, 1000, 1000, 940]);
+    expect(historicalPriceQuality(narrow, 940)).toBe(1);
+  });
 });
 
 describe('promotionRarity punishes a permanent sale', () => {
-  it('is near zero when this price is the retailer’s normal price', () => {
+  /**
+   * CHANGED DELIBERATELY. This used to expect 0 for a perfectly flat history.
+   *
+   * Null is both more consistent and more honest: `historicalPriceQuality`
+   * already returned null for exactly this input, and "what share of a flat
+   * history was dearer than today" is not a measurement of anything. Null
+   * excludes the component and lowers Confidence, which is stricter in effect
+   * than scoring zero — it can push the offer below the publication gate.
+   */
+  it('declines to measure rarity in a price that never moved', () => {
     const alwaysOnSale = obs([1000, 1000, 1000, 1000, 1000, 1000]);
-    expect(promotionRarity(alwaysOnSale, 1000)).toBe(0);
+    expect(promotionRarity(alwaysOnSale, 1000)).toBeNull();
+  });
+
+  /** Where the price HAS moved, sitting at the top of the range still scores low. */
+  it('is low when today is the dear end of a range that is real', () => {
+    const varied = obs([1000, 1000, 1000, 1000, 1500, 1500]);
+    expect(promotionRarity(varied, 1000)).toBeCloseTo(2 / 6, 5);
   });
   it('is 1.0 when today undercuts everything recorded', () => {
     expect(promotionRarity(obs([2000, 2100, 2200, 2300, 2400, 2500]), 1500)).toBe(1);

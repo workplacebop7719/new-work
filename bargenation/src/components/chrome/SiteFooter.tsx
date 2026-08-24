@@ -15,6 +15,7 @@ const COLUMNS = [
     title: 'Bargenation',
     links: [
       { label: 'How it works', href: '/how-it-works', built: true },
+      { label: 'Membership', href: '/membership', built: true },
       { label: 'Sign in', href: '/login', built: true },
       { label: 'About', href: '/about', built: true },
       { label: 'The Edit', href: '/edit', built: true },

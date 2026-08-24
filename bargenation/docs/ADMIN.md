@@ -92,7 +92,35 @@ reconstructed from the data; why somebody judged it real cannot.
 made decisions cannot be deleted. You must not be able to erase who authorised
 something by removing the account.
 
+## What the operator surface now covers
+
+| Route | What it does |
+| --- | --- |
+| `/admin` | The queue: awaiting review, quarantined, runs and failures in 24h, refused records, offers gone stale |
+| `/admin/review` | Records the matcher would not decide, resolved by a named person with a reason |
+| `/admin/quarantine` | Prices too extraordinary to trust once, released or discarded — and now expiring |
+| `/admin/sources` | Every feed, its last run, and what that run did |
+| `/admin/audience` | Counts, and nothing that could identify anybody (migration 0020) |
+| `/admin/abuse` | The shape of an attack, and nothing that could identify anybody (migration 0021) |
+| `/admin/revenue` | Commission, and proof the scoring process cannot reach it |
+
+`/admin/audience` and `/admin/abuse` are the two that had to be designed rather
+than built. §49 asks for views of users and of the newsletter, and the obvious
+implementation grants staff read access to profiles, watchlists, deal signals
+and subscribers — which migration 0010 revokes in writing, and 0012 withholds
+read-by-email specifically so the newsletter cannot become an
+address-enumeration oracle. Handing that back to draw a dashboard would undo
+five migrations of work for a number on a screen. Both pages ask a question
+through a `security definer` function and get aggregates. **There is no search,
+no list, and no way to ask about one person.** That is the feature.
+
+**Stale quarantine expires.** `expire_quarantine()` (migration 0019) discards
+held observations that nobody has judged, recording the expiry in
+`admin_actions` with a null `actor_id` — a decision the system made, attributed
+to the system rather than to a person who was not there.
+
 ## Not built yet
 
-- **Everything else in §49**: sources, agents, revenue, users, newsletter.
-- **Stale quarantine never expires.** Held observations wait indefinitely.
+- **Agents (§49).** There is no agent model, so there is nothing to show.
+- **Alerting an operator.** Every page here rewards somebody who looks. Nothing
+  reaches somebody who is not looking, because no delivery channel exists.

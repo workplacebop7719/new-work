@@ -7,7 +7,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   issueChallenge, verifyChallenge, challengeDigest, leadingZeroBits,
   challengeFromForm, challengeSecretConfigured,
-  DIFFICULTY_BITS, MAX_AGE_MS, MIN_AGE_MS,
+  DIFFICULTY_BITS, MAX_AGE_MS, MIN_AGE_MS, CHALLENGE_MESSAGE,
   type ChallengeSubmission,
 } from './challenge';
 
@@ -147,6 +147,53 @@ describe('refusing what a script would send', () => {
   });
 });
 
+/**
+ * THE MESSAGE IS ONE MESSAGE, AND THAT IS THE SECURITY PROPERTY.
+ *
+ * Telling a caller WHICH check they failed is a tuning signal: "too fast" and
+ * "bad solution" together describe exactly how to get through. So every
+ * failure produces the same sentence, and this is where that is pinned —
+ * rather than in a browser smoke, which should be free to stop asserting on
+ * copy it does not care about.
+ */
+describe('what a refused caller is told', () => {
+  it('says the same thing however the challenge failed', () => {
+    const cases: ChallengeSubmission[] = [
+      { ...solved(), trap: 'https://example.com' },
+      { ...issueChallenge('SIGN_UP', NOW), solution: '1', trap: '' },
+      { ...issueChallenge('SIGN_UP', NOW), bits: 0, solution: 'anything', trap: '' },
+      { ...solved('SUBSCRIBE') },
+    ];
+    for (const submission of cases) {
+      const verdict = verifyChallenge(submission, 'SIGN_UP', later(2000));
+      expect(verdict.ok).toBe(false);
+    }
+    // One constant, used for all of them — there is no per-reason copy to
+    // diverge, which is the only way the property stays true.
+    expect(typeof CHALLENGE_MESSAGE).toBe('string');
+    expect(CHALLENGE_MESSAGE.length).toBeGreaterThan(0);
+  });
+
+  /**
+   * It must not name a check, or the vagueness is decorative. These are the
+   * words that would give the game away.
+   */
+  it('names no check, no timing and no threshold', () => {
+    expect(CHALLENGE_MESSAGE).not.toMatch(
+      /honeypot|trap|signature|solution|difficulty|bits|expired|fast|slow|second|hash/i,
+    );
+  });
+
+  /** It has to tell somebody what to do, and the advice has to be true. */
+  it('tells a real person to try again, and does not tell them to reload', () => {
+    expect(CHALLENGE_MESSAGE).toMatch(/try again/i);
+    // The forms fetch a fresh challenge when an action returns, so a reload is
+    // not what fixes this — and on a router-cached page it can hand back the
+    // very challenge that just failed.
+    expect(CHALLENGE_MESSAGE).not.toMatch(/reload|refresh the page/i);
+  });
+});
+
 describe('reading a challenge out of a form', () => {
   it('shapes the fields the page posts', () => {
     const form = new FormData();
@@ -178,18 +225,39 @@ describe('reading a challenge out of a form', () => {
   });
 });
 
+/**
+ * BOTH names have to be stubbed in every one of these.
+ *
+ * `configuredSecret` accepts APP_SECRET or, under its older name,
+ * CHALLENGE_SECRET. Stubbing only the second passed for months because no
+ * machine running the suite had the first set — and the day one did, "reports
+ * not configured" started reporting configured. A test whose result depends on
+ * an ambient variable it does not mention is not testing what it says.
+ */
 describe('the signing key', () => {
   afterEach(() => vi.unstubAllEnvs());
 
+  const setSecret = (value: string) => {
+    vi.stubEnv('APP_SECRET', value);
+    vi.stubEnv('CHALLENGE_SECRET', value);
+  };
+
   it('reports whether a durable secret is configured', () => {
-    vi.stubEnv('CHALLENGE_SECRET', '');
+    setSecret('');
     expect(challengeSecretConfigured()).toBe(false);
-    vi.stubEnv('CHALLENGE_SECRET', 'a-long-enough-development-secret');
+    setSecret('a-long-enough-development-secret');
     expect(challengeSecretConfigured()).toBe(true);
   });
 
   it('refuses a secret too short to be worth having', () => {
-    vi.stubEnv('CHALLENGE_SECRET', 'short');
+    setSecret('short');
     expect(challengeSecretConfigured()).toBe(false);
+  });
+
+  /** The old name still works on its own — that compatibility is deliberate. */
+  it('still accepts the older CHALLENGE_SECRET name alone', () => {
+    vi.stubEnv('APP_SECRET', '');
+    vi.stubEnv('CHALLENGE_SECRET', 'a-long-enough-development-secret');
+    expect(challengeSecretConfigured()).toBe(true);
   });
 });

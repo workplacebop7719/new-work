@@ -164,13 +164,39 @@ d('deal signal sweep', () => {
     expect(after.rows[0]!.n).toBe(before.rows[0]!.n);
   });
 
+  /**
+   * ASKED OF THE REAL QUERY, ABOUT THIS WATCH.
+   *
+   * This used to compare `watchesExamined` across two sweeps and expect the
+   * active one to be exactly one higher. That counter covers every watch in
+   * the installation, and suites in other files create and delete their own
+   * between the two sweeps — so it failed for reasons that had nothing to do
+   * with pausing.
+   *
+   * Rewriting the predicate inside the test would have been worse: it would
+   * assert that the test's own SQL agrees with itself. So the test runs
+   * `WATCH_SQL` — the string the sweep actually uses — and asks whether this
+   * item is in what came back. Scoped to one id, so nobody else's fixtures
+   * can move it.
+   */
   it('excludes the paused watch from the swept set', async () => {
-    await admin.query('update watchlist_items set paused = true where id = $1', [itemId]);
-    const paused = await sweep(JOB_URL!, NOW);
-    await admin.query('update watchlist_items set paused = false where id = $1', [itemId]);
-    const active = await sweep(JOB_URL!, NOW);
+    const { WATCH_SQL } = await import('@/data/signal-runner');
+    const job = new pg.Client({ connectionString: JOB_URL });
+    await job.connect();
+    try {
+      const swept = async (): Promise<boolean> => {
+        const { rows } = await job.query<{ item_id: string }>(WATCH_SQL);
+        return rows.some((r) => r.item_id === itemId);
+      };
 
-    expect(active.watchesExamined).toBe(paused.watchesExamined + 1);
+      await admin.query('update watchlist_items set paused = true where id = $1', [itemId]);
+      expect(await swept()).toBe(false);
+
+      await admin.query('update watchlist_items set paused = false where id = $1', [itemId]);
+      expect(await swept()).toBe(true);
+    } finally {
+      await job.end();
+    }
   });
 });
 
@@ -463,6 +489,43 @@ d('interest alerts', () => {
   it('counts the members it looked at', async () => {
     const result = await sweep(JOB_URL!, NOW);
     expect(result.membersExamined).toBeGreaterThan(0);
+  });
+
+  /**
+   * THE REGRESSION THIS FILE WENT WITHOUT FOR TOO LONG.
+   *
+   * The sweep used to return early when nobody in the entire installation
+   * held a watchlist item. Interest alerts live after that point and have
+   * nothing to do with watchlists, so a member with alerts on and a history
+   * of returning to the same product got nothing — from a job that reported
+   * success. That is the state at launch and the state of any quiet week,
+   * which is exactly when the paid-for half of membership is all that runs.
+   *
+   * It only ever showed as an INTERMITTENT failure of the tests above: on a
+   * database carrying leftovers from other suites there was always some watch
+   * somewhere, and on a freshly reset one there was not.
+   *
+   * WHAT THIS TEST CAN AND CANNOT DO. It asserts the invariant — every sweep
+   * reaches the interest block — and it deliberately does NOT force the
+   * zero-watch case by deleting `watchlist_items`. That table is shared with
+   * suites running in parallel in other files, and a test that destroys
+   * another suite's fixtures to prove a point trades one intermittent failure
+   * for a worse one. The zero-watch case is covered by running the suite
+   * against a freshly reset database, which is what CI does.
+   */
+  it('reaches the interest block on every sweep, whatever the watch count', async () => {
+    await admin.query('delete from deal_signals where profile_id = $1', [MEMBER]);
+
+    const result = await sweep(JOB_URL!, NOW);
+
+    // The invariant: membersExamined does not depend on watchesExamined.
+    expect(result.membersExamined).toBeGreaterThan(0);
+
+    const { rows } = await admin.query<{ kind: string }>(
+      'select kind from deal_signals where profile_id = $1', [MEMBER],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.kind).toBe('NOTICED');
   });
 });
 

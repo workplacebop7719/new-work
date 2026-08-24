@@ -82,3 +82,41 @@ stop being valid across a restart or a second instance —
 A solved challenge used to be submittable more than once inside its ten-minute
 life. Signatures are now spent on use — see
 [RATE-LIMITING.md](./RATE-LIMITING.md#challenge-replay-now-closed).
+
+## The second submission, which used to be refused
+
+Closing replay created a bug directly downstream of it, and it took a browser
+smoke asking for two password resets in a row to find.
+
+The challenge is issued when the **server renders the form**. A solved
+signature can now be spent exactly once. So the second submission from the
+same page was always refused — the browser still held the first challenge, and
+the server was right to reject it.
+
+That is not an edge case. It is the most ordinary path there is: ask for a
+password reset, mistype the address, correct it, press the button again. The
+person was told *"Something went wrong checking this form. Reload the page and
+try again"* — unhelpful, and on a router-cached page actively wrong, since a
+reload could hand back the same spent challenge.
+
+**The fix.** `GET /api/challenge?purpose=…` issues a fresh one, and
+`useChallenge` exposes a `refresh()` that the forms call every time their
+action returns. The first challenge still comes from the page render, so the
+common case costs no extra round trip; the route is only reached after a
+submission.
+
+Keyed on the action's **result**, not on `pending` — `pending` flips twice per
+submission and would fetch two challenges for every one that was used.
+
+**Why an open endpoint is safe.** Issuing is free and worthless alone; the cost
+is in solving, which happens in the caller's browser. The signature commits to
+a purpose and an issuing time, so a stockpile cannot be spent on a different
+form, cannot outlive `MAX_AGE_MS`, and cannot be replayed. The route reads
+nothing about who is asking and records nothing. An unknown purpose is refused
+with 400 rather than defaulted — defaulting would mint a challenge bound to a
+form the caller never asked about, which is the one thing the purpose field
+exists to prevent.
+
+**If the refetch fails** the old challenge is kept rather than cleared. A form
+with no challenge still submits and the server can say what happened; a form
+stuck showing "checking…" forever can do nothing at all.

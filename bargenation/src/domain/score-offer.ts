@@ -35,7 +35,9 @@ export function scoreOffer(offer: Offer, now: Date, shopperRelevance: number | n
 
   const coverage = index.scorable ? index.coverage : 0;
   const excluded = index.excluded;
-  const gate = canPublishIndex(coverage, excluded);
+  // `summary` being non-null means we have enough observations; what may be
+  // missing is MOVEMENT. The gate needs both facts to say the true thing.
+  const gate = canPublishIndex(coverage, excluded, summary !== null);
   const publishable = index.scorable && gate.publish;
 
   const confidence = computeConfidence({

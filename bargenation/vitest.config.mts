@@ -8,6 +8,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     include: ['src/**/*.test.{ts,tsx}'],
+    // Without this the database suites skip themselves on a machine that
+    // has a database, and 189 negative tests report green by not running.
+    setupFiles: ['./test/load-env.ts'],
   },
   resolve: {
     alias: {

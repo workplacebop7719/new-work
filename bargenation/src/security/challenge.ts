@@ -99,9 +99,15 @@ export type ChallengeFailure =
  * check it failed is a tuning signal — "too fast" and "bad solution" together
  * describe exactly how to get through. A person who somehow trips this needs
  * to know to try again, and nothing more.
+ *
+ * It used to end "Reload the page and try again", which became untrue: the
+ * forms now fetch a fresh challenge whenever an action returns, so pressing
+ * the button again is enough and a reload is not. Advice that no longer works
+ * is worse than none — somebody who reloads a router-cached page could be
+ * handed back the very challenge that just failed.
  */
 export const CHALLENGE_MESSAGE =
-  'Something went wrong checking this form. Reload the page and try again.';
+  'We couldn’t check this form. Give it a moment and try again.';
 
 /**
  * Signed with the application key under a challenge-specific label, so a

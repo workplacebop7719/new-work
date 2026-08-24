@@ -2,6 +2,7 @@ import 'server-only';
 import pg from 'pg';
 import { toRole, type Role } from '@/auth/roles';
 import { titleSimilarity, aliasKey, NEW_PRODUCT_CONFIDENCE } from '@/ingest/product-match';
+import { RATE_LIMITS, type RateLimitBucket } from '@/security/rate-limit';
 
 /**
  * Operational data for the admin surface (PRD §49).
@@ -547,6 +548,81 @@ export async function readAudienceSummary(actorId: string): Promise<AudienceSumm
       'select metric, value from operations_summary()',
     );
     return Object.fromEntries(rows.map((r) => [r.metric, Number(r.value)]));
+  });
+}
+
+/* ============================================================
+   ABUSE VISIBILITY (§69)
+   ============================================================ */
+
+/**
+ * One bucket's traffic, as magnitudes.
+ *
+ * RATE-LIMITING.md recorded the gap this closes: the limits worked and nobody
+ * could tell whether they were being hit, which means you learn about an
+ * attack from a customer complaint.
+ *
+ * Note what is absent. No token, no address, no row, no way to ask about one
+ * caller — migration 0021 returns aggregates and staff have no select on
+ * `rate_limit_hits` at all. `busiestTokenAttempts` is a magnitude with no
+ * subject attached, which is exactly the point: it distinguishes a thousand
+ * attempts from one source (an incident) from a thousand spread over nine
+ * hundred (traffic), without saying who either is.
+ */
+export interface AbuseRow {
+  bucket: RateLimitBucket | string;
+  dimension: 'subject' | 'caller';
+  attempts: number;
+  distinctTokens: number;
+  /** The largest count against any single token. A shape, not an identity. */
+  busiestTokenAttempts: number;
+  /** How many tokens are past the allowance, and so are being refused now. */
+  tokensOverLimit: number;
+}
+
+/**
+ * The allowance is passed IN rather than duplicated in SQL.
+ *
+ * `RATE_LIMITS` is what the application actually enforces. A copy in the
+ * database would drift, and the drifted copy would be the one drawing the
+ * dashboard — so the count of over-limit tokens is made against the number
+ * that is really being applied.
+ *
+ * One call per bucket, because each bucket has its own allowance. Six small
+ * aggregate queries over a table pruned hourly is cheaper than the join that
+ * would avoid them, and far easier to read.
+ */
+export async function readAbuseSummary(
+  actorId: string, windowMinutes = 60,
+): Promise<AbuseRow[]> {
+  return asStaff(actorId, async (client) => {
+    const out: AbuseRow[] = [];
+    for (const [bucket, rule] of Object.entries(RATE_LIMITS)) {
+      const { rows } = await client.query<{
+        bucket: string; dimension: string; attempts: string;
+        distinct_tokens: string; busiest_token_attempts: string; tokens_over_limit: string;
+      }>(
+        'select * from abuse_summary($1, $2) where bucket = $3',
+        [windowMinutes, rule.perCaller, bucket],
+      );
+      for (const r of rows) {
+        // The subject dimension is counted against its own allowance, which
+        // for SIGN_IN is null — that bucket is caller-only, deliberately, so
+        // an attacker cannot lock somebody out of their own account. A null
+        // allowance means nothing is recorded against a subject either, so
+        // the row simply will not appear.
+        const allowance = r.dimension === 'subject' ? rule.perSubject : rule.perCaller;
+        out.push({
+          bucket: r.bucket,
+          dimension: r.dimension === 'subject' ? 'subject' : 'caller',
+          attempts: Number(r.attempts),
+          distinctTokens: Number(r.distinct_tokens),
+          busiestTokenAttempts: Number(r.busiest_token_attempts),
+          tokensOverLimit: allowance === null ? 0 : Number(r.tokens_over_limit),
+        });
+      }
+    }
+    return out.sort((a, b) => b.attempts - a.attempts);
   });
 }
 

@@ -31,10 +31,13 @@ npm run smoke:challenge  # the bot challenge on sign-up and reset
 npm run smoke:noticed    # behaviour alerts: consent, recording, erasure
 npm run smoke:household  # who you shop for, and what there is nowhere to put
 npm run smoke:rate-limit # brute force refused, and the owner never locked out
-npm run smoke:all        # all ten, in order
+npm run smoke:all        # all eleven, in order — warms the dev server and
+                         # clears the rate-limit counters first, since eleven
+                         # sign-ups from one connection is otherwise an attack
 npm run signals    # one Deal Signal sweep (connects as the jobs role)
 npm run ingest     # one ingestion pass from a local records file
 npm run legal      # guard: no compliance claims, no invented company details
+npm run guard:server # guard: a 'use server' file exports only async functions
 ```
 
 No database is required. Without `DATABASE_URL` the app serves the fictional
@@ -49,6 +52,11 @@ npm run db:migrate
 npm run db:seed
 npm run test:db     # the database guarantees, against a real database
 ```
+
+`npm test` reads `.env.local` itself, so once it is copied the 189 database
+tests run as part of the ordinary suite. **They skip themselves silently
+without it** — every RLS policy, every cross-tenant refusal, every column
+grant — and a skipped negative test is the same colour as a passing one.
 
 See [docs/DATABASE.md](docs/DATABASE.md) for what the schema guarantees and why,
 [docs/AUTH.md](docs/AUTH.md) for how authentication is layered, and
@@ -66,7 +74,9 @@ inference without ever subtracting service, and
 [docs/HOUSEHOLD.md](docs/HOUSEHOLD.md) for the fields that deliberately do not
 exist, and
 [docs/RATE-LIMITING.md](docs/RATE-LIMITING.md) for the account lockout this
-deliberately does not have.
+deliberately does not have, and
+[docs/MEMBERSHIP.md](docs/MEMBERSHIP.md) for the price, why it is that number,
+and why nothing on the site can take it.
 
 ## The rules that are actually enforced
 
@@ -169,9 +179,9 @@ visibly disabled with the reason, and no navigation links to them.
 |---|---|
 | Real sign-in (architecture and portal built, forms disabled) | Supabase Auth credentials |
 | Delivering recovery and confirmation links (the flow itself is built) | an email provider credential |
-| Selling membership (the tier itself works; an operator sets the flag) | a price and a payment provider |
+| Selling membership (the tier works, the price is set — see [docs/MEMBERSHIP.md](docs/MEMBERSHIP.md); an operator sets the flag) | a payment provider |
 | Matching deals to a household's sizes (sizes are recorded and shown) | variant-level size data no source supplies yet |
 | Sending The Edit (composition and signup are built) | an email provider credential |
 | Affiliate `/go/[offer]` redirects | an affiliate account |
-| Admin platform | depends on authentication |
+| Agents in the operator surface (§49) | there is no agent model to show |
 | Legal review of the drafted pages | a lawyer, not more writing |

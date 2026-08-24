@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { noteInterestAction } from '@/data/member-actions';
+import { noteInterestAction, noteCategoryInterestAction } from '@/data/member-actions';
 
 /**
  * Tells the server this page was looked at (PRD §26, §37).
@@ -20,6 +20,23 @@ export function NoteInterest({ productSlug }: { productSlug: string }) {
   useEffect(() => {
     void noteInterestAction(productSlug).catch(() => undefined);
   }, [productSlug]);
+
+  return null;
+}
+
+/**
+ * The same for a category page.
+ *
+ * A separate component rather than an optional prop, so neither page can pass
+ * the wrong kind of slug to the wrong action — the type is the check. Both
+ * server actions independently refuse an anonymous visitor and anybody who has
+ * not turned behaviour alerts on, so dropping either of these onto a page
+ * cannot be the thing that starts collecting.
+ */
+export function NoteCategoryInterest({ categorySlug }: { categorySlug: string }) {
+  useEffect(() => {
+    void noteCategoryInterestAction(categorySlug).catch(() => undefined);
+  }, [categorySlug]);
 
   return null;
 }

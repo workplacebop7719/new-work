@@ -67,15 +67,41 @@ with it, and why it fires only one kind of signal, is in
 The control is gated off entirely when no database is configured, rather than
 rendered doing nothing (§01).
 
-## Open question for the founder
+## Decided: a trivial dip is not a discount
 
-A price flat at $50 for forty days that dips 1% to $49.50 currently scores
-**6.3 / CONSIDER**, because three of the four measurable components reward
-being "at the recorded low" and `discountStrength` is diluted by
-renormalisation. It is pinned by a documenting test —
-`scores a trivial dip to a new low in the middle of the band` in
-`src/domain/retailer-profile.test.ts` — pinned as *behaviour*, not endorsed. Whether a 1% dip deserves 6.3 is a product decision.
+**The problem.** A price flat at $50 for forty days that dipped 1% to $49.50
+used to score **6.3 / CONSIDER**. Three of the four measurable components
+rewarded it for being "at the recorded low" — `historicalPriceQuality` returned
+1.0, `promotionRarity` 0.98 — and `discountStrength`, the only component that
+noticed the dip was trivial, was diluted further by renormalisation across the
+components we could not measure at all.
 
-It matters here more than anywhere: a retailer whose offers all behave that way
-would accumulate mid-band scores and read as `MIXED` rather than
-`SHALLOW_DISCOUNTS`.
+It mattered here more than anywhere. A retailer whose offers all behaved that
+way accumulated mid-band scores and read as `MIXED` rather than
+`SHALLOW_DISCOUNTS` — the profile would have credited exactly the pricing
+behaviour it exists to expose.
+
+**The decision.** Being at the bottom of a range that is itself meaningless is
+meaningless. `MEANINGFUL_RANGE_FRACTION` in `src/domain/price-history.ts` now
+requires a recorded price to have moved at least **5%** of its typical value
+before the *shape* of that history informs anything. Below that,
+`historicalPriceQuality` and `promotionRarity` both return `null`, coverage
+falls under the publication gate, and no Index is published.
+
+Five percent, not some other number, because it is the same threshold as
+`MIN_DROP_FRACTION` in the signal engine — one definition of "this price
+actually moved", used in both places, rather than two that drift apart.
+
+**What it does not do.** It is a floor on *movement*, not on *discount depth*.
+A genuinely modest 8% fall still publishes and still scores above the midpoint;
+`still scores a modest but real discount rather than refusing everything` in
+`src/domain/retailer-profile.test.ts` holds that line, so the refusal cannot
+quietly widen into refusing everything unremarkable.
+
+**What the customer sees.** The deal page shows the withheld reason, not a
+score: *"This price has barely moved since we started watching, so there is
+nothing to judge it against yet."* That wording is deliberate — the earlier
+message said we had not recorded enough price history, which would be untrue in
+front of forty-one recorded observations of that exact price. Both refusals
+route through `canPublishIndex`, which is told whether history exists so it can
+say which of the two is actually the case (§01, §45).

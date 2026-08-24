@@ -27,7 +27,7 @@ const SMOKE_CALLER = '198.51.100.18';
 const CALLER_HEADERS = { 'x-forwarded-for': SMOKE_CALLER };
 
 
-const BASE = process.env.BASE || 'http://localhost:3000';
+const BASE = process.env.BASE || 'http://localhost:3210';
 const PG = process.env.PGURL;
 if (!PG) { console.error('PGURL is not set'); process.exit(1); }
 
@@ -105,7 +105,28 @@ try {
   const page = await (await browser.newContext({ extraHTTPHeaders: CALLER_HEADERS,  viewport: { width: 1440, height: 1000 } })).newPage();
   await warm(page, ['/today', '/login', '/signup', '/admin', '/admin/review']);
   await page.goto(`${BASE}/signup`, { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(1500);
+
+  /*
+   * WAIT FOR THE SOLUTION, NOT FOR A NUMBER OF MILLISECONDS.
+   *
+   * This was a flat 1500ms. The proof of work takes about four seconds on a
+   * modest machine, and the submit button stays disabled until it finishes —
+   * so the click did nothing, the account was never created, nothing was
+   * promoted to operator, and the review queue was empty. Every assertion
+   * below then failed, describing a review page that was working perfectly.
+   *
+   * Then the dwell time on top, because the server refuses a form returned
+   * faster than a person could have typed it.
+   */
+  await page.waitForFunction(
+    () => {
+      const field = document.querySelector('input[name=challengeSolution]');
+      return field === null || field.value !== '';
+    },
+    { timeout: 30_000 },
+  ).catch(() => undefined);
+  await page.waitForTimeout(1400);
+
   await page.fill('#field-displayName', 'Reviewer');
   await page.fill('#field-email', `rev${Date.now()}@example.com`);
   await page.fill('#field-password', 'correct horse battery');

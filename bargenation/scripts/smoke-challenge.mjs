@@ -26,6 +26,20 @@ const CALLER_HEADERS = { 'x-forwarded-for': SMOKE_CALLER };
 
 const BASE = process.env.BASE || 'http://localhost:3210';
 
+/**
+ * The one message every challenge failure produces.
+ *
+ * Matched as a fragment of `CHALLENGE_MESSAGE` in security/challenge.ts
+ * rather than the whole sentence, so rewording the copy does not fail a test
+ * about the honeypot. It was the full sentence, and changing "Reload the page
+ * and try again" — advice that stopped being true once the forms refetched
+ * their own challenge — broke two checks that are not about wording at all.
+ *
+ * That the message is IDENTICAL for every failure is the security property,
+ * and it is pinned where it belongs, in challenge.test.ts.
+ */
+const CHALLENGE_REFUSAL = /couldn’t check this form/i;
+
 let failures = 0;
 const check = (label, ok, extra = '') => {
   console.log(`  ${ok ? 'ok  ' : 'FAIL'}  ${label}${extra ? `  (${extra})` : ''}`);
@@ -128,7 +142,7 @@ try {
     }
   });
   await bot.locator('form:has(#field-email) button[type=submit]').click();
-  check('filling the honeypot is refused', await sawText(bot, /Something went wrong checking/i));
+  check('filling the honeypot is refused', await sawText(bot, CHALLENGE_REFUSAL));
   check('and it stays on the sign-up page', bot.url().includes('/signup'));
 
   // ---- a forged solution is refused ----
@@ -157,7 +171,7 @@ try {
     setValue('challengeSolution', '1');
   });
   await forger.locator('form:has(#field-email) button[type=submit]').click();
-  const forgeRefused = await sawText(forger, /Something went wrong checking/i);
+  const forgeRefused = await sawText(forger, CHALLENGE_REFUSAL);
   check('a self-lowered difficulty is refused', forgeRefused,
     forgeRefused ? '' : `landed on ${forger.url()}`);
 

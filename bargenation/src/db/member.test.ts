@@ -6,8 +6,9 @@
  * would really be exercised if a bug shipped. Every assertion here is a
  * cross-customer read or write that must come back empty or refused.
  */
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import pg from 'pg';
+import { CATEGORIES } from '@/domain/types';
 
 const APP_URL = process.env.TEST_APP_DATABASE_URL;
 const ADMIN_URL = process.env.TEST_DATABASE_URL;
@@ -578,6 +579,82 @@ d('member repository isolation', () => {
 
     it('nobody is a member until somebody makes them one', async () => {
       expect(await repo.readMembership(ALICE)).toBe('FREE');
+    });
+
+    /**
+     * CATEGORY INTEREST — coarse on purpose.
+     *
+     * The version of this feature that records raw SEARCH TERMS is the one
+     * that holds a medical condition, an unannounced pregnancy or a child's
+     * name. There is no column for free text and there must never be one, so
+     * these prove that what lands in the table is one of the eight fixed
+     * slugs and nothing else can get in.
+     */
+    describe('a category, never a search term', () => {
+      /**
+       * Each of these starts from nothing. The block above relies on the
+       * order it is written in, which is survivable there and would not be
+       * here — "records nothing while off" is worthless if the row it sees
+       * was left behind by the test before it.
+       *
+       * Turning the switch off IS the erasure, so this is also the cheapest
+       * reset available.
+       */
+      beforeEach(async () => {
+        await repo.setBehaviourAlerts(ALICE, false);
+      });
+
+      it('records a category visit once alerts are on', async () => {
+        await repo.setBehaviourAlerts(ALICE, true);
+        await repo.recordInterest(ALICE, { categorySlug: 'kids' });
+        await repo.recordInterest(ALICE, { categorySlug: 'kids' });
+
+        const rows = await repo.listInterests(ALICE);
+        const category = rows.find((r) => r.categorySlug === 'kids');
+        expect(category).toBeDefined();
+        expect(category!.occurrences).toBe(2);
+        expect(category!.productSlug).toBeNull();
+      });
+
+      it('records nothing at all while alerts are off', async () => {
+        await repo.recordInterest(ALICE, { categorySlug: 'kids' });
+        expect(await repo.listInterests(ALICE)).toHaveLength(0);
+      });
+
+      /**
+       * The load-bearing one. An unknown slug matches no category and inserts
+       * nothing — it does not create a category out of whatever it was given.
+       */
+      it('silently drops anything that is not a known category', async () => {
+        await repo.setBehaviourAlerts(ALICE, true);
+        await repo.recordInterest(ALICE, { categorySlug: 'pregnancy test kit' });
+        await repo.recordInterest(ALICE, { categorySlug: 'not-a-category' });
+        expect(await repo.listInterests(ALICE)).toHaveLength(0);
+
+        // And no category was conjured out of what it was handed.
+        const { rows } = await admin.query<{ n: string }>(
+          'select count(*) as n from categories where slug <> all($1::text[])',
+          [CATEGORIES.map((c) => c.slug)],
+        );
+        expect(Number(rows[0]!.n)).toBe(0);
+      });
+
+      it('keeps a product and a category apart in the same list', async () => {
+        await repo.setBehaviourAlerts(ALICE, true);
+        await repo.recordInterest(ALICE, { productSlug: slugA });
+        await repo.recordInterest(ALICE, { categorySlug: 'home' });
+
+        const rows = await repo.listInterests(ALICE);
+        expect(rows.filter((r) => r.productSlug !== null)).toHaveLength(1);
+        expect(rows.filter((r) => r.categorySlug !== null)).toHaveLength(1);
+      });
+
+      it('goes when the switch goes, like everything else noticed', async () => {
+        await repo.setBehaviourAlerts(ALICE, true);
+        await repo.recordInterest(ALICE, { categorySlug: 'shoes' });
+        await repo.setBehaviourAlerts(ALICE, false);
+        expect(await repo.listInterests(ALICE)).toHaveLength(0);
+      });
     });
   });
 

@@ -92,16 +92,49 @@ anybody's interest history.
 
 ## Membership is a flag, not a payments integration
 
-There is no way to buy it: no provider is configured and no price is decided.
-An operator sets `profiles.membership` once both exist. The account page says
-exactly that rather than showing an upgrade button that goes nowhere (§01).
+The price is decided and lives in `src/domain/membership.ts`
+([MEMBERSHIP.md](./MEMBERSHIP.md)). There is still no way to BUY it — no
+provider is configured — so an operator sets `profiles.membership` by hand, and
+`/membership`, `/app/account` and `/app/noticed` all say that plainly rather
+than showing an upgrade button that goes nowhere (§01).
+
+## Category interest
+
+Built, and deliberately coarser than the product path.
+
+Repeated visits to one of the eight fixed categories in `CATEGORIES` are
+recorded by `NoteCategoryInterest` on `/categories/[slug]`, through a server
+action that validates the slug against that list before it reaches the
+database — and the insert is a `select ... from categories where slug = $1`, so
+an unknown slug matches nothing and writes nothing rather than creating a
+category out of whatever it was handed.
+
+**Search terms are still not recorded, and the reason has not changed.** Free
+text is where the sensitive things are: a medical condition, an unannounced
+pregnancy, a child's name. There is no column for it. A category affinity is
+enough to say "you have been in Shoes a lot" and cannot say anything a customer
+would be alarmed to read back on `/app/noticed` — which is the test this whole
+subsystem is written to pass.
+
+Three thresholds keep it the weaker signal, and all three are stricter than the
+product path:
+
+| | product | category |
+| --- | --- | --- |
+| visits before it counts | `REPEAT_VIEWS_FOR_INTEREST` (3) | `REPEAT_VIEWS_FOR_CATEGORY_INTEREST` (5) |
+| deal must reach | `MIN_INDEX_TO_MENTION` (7.5) | `UNUSUALLY_STRONG_INDEX` (9.0) |
+| when it runs | always | only when the product path found nothing |
+
+A category hunch can never displace something we actually watched somebody
+return to, and a merely good deal in a browsed category is not worth an
+interruption — if it were, this would fire constantly and become the thing
+people mute.
 
 ## Not built yet
 
 **Delivery.** Like every other signal, a `NOTICED` row is recorded and shown
 in the portal; nothing emails it. That needs a provider credential.
 
-**Category and search interest.** The schema carries `category_id` and a
-`SEARCHED` kind, and nothing writes them yet. Product views were the honest
-place to start, because a category affinity says far more about a household
-than a product view does and deserves its own thinking about consent.
+**The `SEARCHED` kind.** The column accepts it and nothing writes it, for the
+reason above. Recording that somebody searched *at all*, without the term,
+would be technically safe and is not obviously worth the row.

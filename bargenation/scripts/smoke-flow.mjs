@@ -31,6 +31,19 @@ async function sawText(page, pattern, timeout = 15_000) {
   } catch { return false; }
 }
 
+/**
+ * Waits until the proof of work is solved AND the form has been on screen
+ * long enough to have been typed by a person.
+ *
+ * The second half is not padding. The server measures dwell time by ITS clock
+ * — `MIN_AGE_MS` in security/challenge.ts — and refuses a form returned in
+ * under 1.2 seconds, because nobody types that fast. A script does. Once the
+ * dev server was warmed, these smokes started submitting inside a second and
+ * were correctly refused, which looked exactly like a product bug and was not.
+ *
+ * Waiting here rather than sprinkling `waitForTimeout` at each call site
+ * means a new form cannot be added to a smoke without it.
+ */
 async function challengeSolved(page) {
   await page.waitForFunction(
     () => {
@@ -39,6 +52,9 @@ async function challengeSolved(page) {
     },
     { timeout: 30_000 },
   ).catch(() => undefined);
+
+  // The server refuses a form returned faster than a person could type one.
+  await page.waitForTimeout(1400);
 }
 
 async function warm(page, paths) {
@@ -107,6 +123,37 @@ try {
     const ok = res.ok() && (test ? test.test(await res.text()) : true);
     check(label, ok, `${res.status()}`);
   }
+
+  /* ---- membership: a real price for something nobody can buy ----
+   *
+   * The failure this guards against is not a broken page, it is a dishonest
+   * one. §01 forbids a control that looks like it works: no checkout exists,
+   * so the page must contain no purchase button and must say why, and §52
+   * forbids the perk that would quietly appear on a page selling a
+   * subscription — a better score, a rank, an earlier alert.
+   */
+  await page.goto(`${BASE}/membership`, { waitUntil: 'domcontentloaded' });
+  const body = await page.locator('body').innerText();
+
+  check('membership quotes one price', /\$\d+\.\d{2}/.test(body),
+    (body.match(/\$\d+\.\d{2}/g) ?? []).join(' '));
+  check('and admits it cannot be bought yet', /can’t buy this yet/i.test(body));
+  check('and says what is missing, not just that something is',
+    /payment provider/i.test(body));
+
+  const purchaseControls = await page.locator(
+    'button, [role=button], a[href*="checkout"], a[href*="subscribe"]',
+  ).count();
+  check('offers no control that looks like a checkout', purchaseControls === 0,
+    `${purchaseControls} found`);
+
+  check('states what money can never buy (§52)',
+    /never buy/i.test(body) && /Value Index/i.test(body) && /same instant/i.test(body));
+  check('and does not promise a rank, a score or an earlier alert',
+    !/(better|higher) (value index|score)/i.test(body) && !/alerts? (first|sooner|earlier)/i.test(body));
+
+  const membershipLinks = await page.locator('a[href="/membership"]').count();
+  check('is reachable from the footer', membershipLinks > 0, `${membershipLinks} links`);
 
   // ---- THE ONE THAT MATTERS: does Save say anything? ----
   const email = `flow${Date.now()}@example.com`;

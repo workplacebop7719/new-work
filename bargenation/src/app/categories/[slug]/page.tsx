@@ -5,6 +5,7 @@ import { getDeals } from '@/data/repository';
 import { sortDeals, toSortKey } from '@/data/repository-types';
 import { DealCard } from '@/components/deal/DealCard';
 import { SortControl } from '@/components/deal/SortControl';
+import { NoteCategoryInterest } from '@/components/member/NoteInterest';
 
 export async function generateStaticParams() {
   return CATEGORIES.map((c) => ({ slug: c.slug }));
@@ -34,6 +35,13 @@ export default async function CategoryPage({
 
   return (
     <div className="mx-auto max-w-[1600px] px-5 pb-24 pt-12 sm:px-8">
+      {/*
+        Records a category visit for a signed-in customer who has turned
+        behaviour alerts on, and does nothing at all for anybody else — the
+        decision is on the server, not here. Renders nothing and blocks
+        nothing, so this page stays statically rendered.
+      */}
+      <NoteCategoryInterest categorySlug={cat.slug} />
       <header className="border-b border-ink pb-8">
         <p className="eyebrow text-ink-50">Category</p>
         <h1 className="display display-hero mt-3">{cat.name}</h1>

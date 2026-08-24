@@ -115,7 +115,7 @@ resolve cleanly at a price that is actually current.
   Stripping `es` would break `shoes`/`shoe`, which is far more common here.
 - **No real source adapter exists**, because no retailer relationship does. The
   CLI drives the pipeline from a local JSON file.
-- **Nothing reviews the review queue.** `NEEDS_REVIEW` records land in
-  `ingest_rejections`; the admin surface to resolve them is not built.
-- **Nothing discards stale quarantine.** Held observations wait indefinitely
-  rather than expiring.
+- **No real source adapter**, per the point above, is the one that actually
+  blocks live data. Everything below it has since been built: `/admin/review`
+  resolves the `NEEDS_REVIEW` queue with a named person and a reason, and
+  `expire_quarantine()` (migration 0019) discards holds nobody judged.

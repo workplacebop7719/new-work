@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { IssuedChallenge } from '@/security/challenge';
 
 /**
@@ -40,8 +40,42 @@ export type ChallengeState =
   | { status: 'ready'; solution: string }
   | { status: 'unsupported'; solution: '' };
 
-export function useChallenge(challenge: IssuedChallenge | null): ChallengeState {
+export interface Challenge {
+  state: ChallengeState;
+  /** The challenge to submit — the server's on first paint, a fresh one after. */
+  current: IssuedChallenge | null;
+  /**
+   * Fetch a new one. Call this after every submission.
+   *
+   * A solved signature can be spent exactly once, so the challenge sitting in
+   * the form after a submit is dead. Without this, pressing the button a
+   * second time — correcting a mistyped address, asking about a second
+   * account — was refused with "Something went wrong checking this form",
+   * which is the kind of failure that reads as a broken site.
+   */
+  refresh: () => void;
+}
+
+export function useChallenge(initial: IssuedChallenge | null): Challenge {
   const [state, setState] = useState<ChallengeState>({ status: 'solving', solution: '' });
+  const [challenge, setChallenge] = useState<IssuedChallenge | null>(initial);
+
+  /**
+   * Replaces the spent challenge with a new one and starts solving it.
+   *
+   * On failure the OLD challenge is kept rather than cleared. A form with no
+   * challenge at all still submits — the server has its own dwell-time and
+   * honeypot checks and can say what happened — whereas a form stuck showing
+   * "checking..." forever can do nothing at all.
+   */
+  const refresh = useCallback(() => {
+    if (!initial) return; // this form does not use a challenge
+    setState({ status: 'solving', solution: '' });
+    fetch(`/api/challenge?purpose=${encodeURIComponent(initial.purpose)}`, { cache: 'no-store' })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((next: IssuedChallenge | null) => { if (next?.nonce) setChallenge(next); })
+      .catch(() => undefined);
+  }, [initial]);
 
   // Primitive dependencies, not the object: a parent re-render hands down a
   // new object with the same contents, and depending on identity would
@@ -84,7 +118,7 @@ export function useChallenge(challenge: IssuedChallenge | null): ChallengeState 
     return () => { cancelled = true; };
   }, [nonce, bits]);
 
-  return state;
+  return { state, current: challenge, refresh };
 }
 
 /**

@@ -8,6 +8,10 @@ import { isPlausibleToken } from './token';
 import {
   challengeFromForm, verifyChallenge, CHALLENGE_MESSAGE, type ChallengePurpose,
 } from '@/security/challenge';
+import { rateLimitMessage, type RateLimitBucket } from '@/security/rate-limit';
+import {
+  checkRateLimit, recordRateLimitHit, spendChallenge,
+} from '@/security/rate-limit-store';
 import { writeSessionCookie, clearSessionCookie } from './session';
 import {
   ensureProfile, eraseAccount, memberFeaturesAvailable, isAccountNotErasable,
@@ -66,9 +70,36 @@ async function provision(user: Parameters<typeof ensureProfile>[0]): Promise<voi
  * tuning signal — "too fast" and "bad solution" together describe exactly how
  * to get through — so the caller learns only that it did not work.
  */
-function challengeRefused(formData: FormData, purpose: ChallengePurpose): FormState | null {
-  const verdict = verifyChallenge(challengeFromForm(formData), purpose);
-  return verdict.ok ? null : { error: CHALLENGE_MESSAGE, notice: null };
+async function challengeRefused(
+  formData: FormData, purpose: ChallengePurpose,
+): Promise<FormState | null> {
+  const submission = challengeFromForm(formData);
+  const verdict = verifyChallenge(submission, purpose);
+  if (!verdict.ok) return { error: CHALLENGE_MESSAGE, notice: null };
+
+  // Spending it is the second half of the check. Without this a solved
+  // challenge can be replayed for its whole ten-minute life, so one unit of
+  // work buys as many sign-ups as somebody cares to send.
+  if (submission.signature && !(await spendChallenge(submission.signature))) {
+    return { error: CHALLENGE_MESSAGE, notice: null };
+  }
+  return null;
+}
+
+/**
+ * Refuses an attempt that has already had its allowance.
+ *
+ * One message for both dimensions, naming no account — "too many attempts for
+ * THIS address" would confirm the address is worth attacking, which is the
+ * enumeration oracle the rest of this file is written to avoid.
+ */
+async function rateLimited(
+  bucket: RateLimitBucket, subject: string,
+): Promise<FormState | null> {
+  const decision = await checkRateLimit(bucket, subject);
+  return decision.allowed
+    ? null
+    : { error: rateLimitMessage(decision.retryAfterMs), notice: null };
 }
 
 function messageFor(err: unknown): string {
@@ -85,11 +116,18 @@ export async function signInAction(_prev: FormState, formData: FormData): Promis
     return { error: AUTH_MESSAGE.INVALID_CREDENTIALS };
   }
 
+  // Caller-scoped only: an attacker fills their own bucket and nobody else's,
+  // so a correct password is never refused however many wrong ones preceded
+  // it. See the lockout note in security/rate-limit.ts.
+  const limited = await rateLimited('SIGN_IN', email);
+  if (limited) return limited;
+
   try {
     const { token, session } = await auth().signIn({ email, password });
     await writeSessionCookie(token);
     await provision(session.user);
   } catch (err) {
+    await recordRateLimitHit('SIGN_IN', email);
     return { error: messageFor(err) };
   }
 
@@ -102,8 +140,12 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
   const displayName = String(formData.get('displayName') ?? '');
   const returnTo = safeReturnTo(formData.get('returnTo'));
 
-  const refused = challengeRefused(formData, 'SIGN_UP');
+  const refused = await challengeRefused(formData, 'SIGN_UP');
   if (refused) return refused;
+
+  const limited = await rateLimited('SIGN_UP', email);
+  if (limited) return limited;
+  await recordRateLimitHit('SIGN_UP', email);
 
   try {
     const { token, session } = await auth().signUp({ email, password, displayName });
@@ -138,12 +180,19 @@ export async function requestPasswordResetAction(
 ): Promise<FormState> {
   const address = String(formData.get('email') ?? '');
 
-  const refused = challengeRefused(formData, 'PASSWORD_RESET');
+  const refused = await challengeRefused(formData, 'PASSWORD_RESET');
   if (refused) return refused;
 
   if (!isPlausibleEmail(address)) {
     return { error: 'That doesn’t look like an email address.', notice: null };
   }
+
+  // Recorded whether or not the address has an account: a counter that only
+  // moved for real accounts would answer "does this address exist" through
+  // timing and through when the limit trips.
+  const limited = await rateLimited('PASSWORD_RESET', address);
+  if (limited) return limited;
+  await recordRateLimitHit('PASSWORD_RESET', address);
 
   try {
     await auth().requestPasswordReset(address);
@@ -179,9 +228,16 @@ export async function resetPasswordAction(
     return { error: 'Those two passwords don’t match.', notice: null };
   }
 
+  // Keyed on the token, so somebody fumbling their own link cannot exhaust
+  // anybody else's allowance — and guessing tokens still meets the caller
+  // limit, which is the dimension that matters for a guessing attack.
+  const limited = await rateLimited('PASSWORD_RESET_TOKEN', token);
+  if (limited) return limited;
+
   try {
     await auth().resetPassword(token, password);
   } catch (err) {
+    await recordRateLimitHit('PASSWORD_RESET_TOKEN', token);
     return { error: messageFor(err), notice: null };
   }
 

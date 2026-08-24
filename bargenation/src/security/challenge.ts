@@ -1,4 +1,5 @@
-import { createHmac, randomBytes, createHash, timingSafeEqual } from 'node:crypto';
+import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
+import { token, appSecretConfigured } from './secret';
 
 /**
  * BOT RESISTANCE WITHOUT A THIRD PARTY (PRD §01, §06).
@@ -44,6 +45,9 @@ import { createHmac, randomBytes, createHash, timingSafeEqual } from 'node:crypt
  * it troubles a server farm, which is why it is not higher.
  */
 export const DIFFICULTY_BITS = 16;
+
+/** Re-exported so callers need not know where the key lives. */
+export const challengeSecretConfigured = appSecretConfigured;
 
 /** A challenge is useless after this long, so a stockpile of them spoils. */
 export const MAX_AGE_MS = 10 * 60 * 1000;
@@ -100,30 +104,12 @@ export const CHALLENGE_MESSAGE =
   'Something went wrong checking this form. Reload the page and try again.';
 
 /**
- * The signing key.
- *
- * With CHALLENGE_SECRET set, challenges survive a restart and are valid across
- * every instance. Without it, a per-process key is generated: challenges still
- * work, they just stop being valid if the process restarts or if a second
- * instance answers — which is correct behaviour for development and wrong for
- * production, so `challengeSecretConfigured` reports which one is in use.
+ * Signed with the application key under a challenge-specific label, so a
+ * signature can never be mistaken for — or compared against — a token minted
+ * anywhere else in the product. See security/secret.ts.
  */
-let ephemeral: Buffer | undefined;
-
-function secret(): Buffer {
-  const configured = process.env.CHALLENGE_SECRET;
-  if (configured && configured.length >= 16) return Buffer.from(configured, 'utf8');
-  ephemeral ??= randomBytes(32);
-  return ephemeral;
-}
-
-export const challengeSecretConfigured = (): boolean =>
-  Boolean(process.env.CHALLENGE_SECRET && process.env.CHALLENGE_SECRET.length >= 16);
-
 const sign = (purpose: string, nonce: string, bits: number, issuedAt: number): string =>
-  createHmac('sha256', secret())
-    .update(`${purpose}.${nonce}.${bits}.${issuedAt}`)
-    .digest('hex');
+  token('challenge', `${purpose}.${nonce}.${bits}.${issuedAt}`);
 
 /** Constant time, so the signature cannot be recovered a byte at a time. */
 function signatureMatches(expected: string, given: string): boolean {

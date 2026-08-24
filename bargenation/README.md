@@ -30,6 +30,7 @@ npm run smoke:account    # change password, export, delete
 npm run smoke:challenge  # the bot challenge on sign-up and reset
 npm run smoke:noticed    # behaviour alerts: consent, recording, erasure
 npm run smoke:household  # who you shop for, and what there is nowhere to put
+npm run smoke:rate-limit # brute force refused, and the owner never locked out
 npm run signals    # one Deal Signal sweep (connects as the jobs role)
 npm run ingest     # one ingestion pass from a local records file
 npm run legal      # guard: no compliance claims, no invented company details
@@ -62,7 +63,9 @@ vendor and what stands in for one, and
 [docs/BEHAVIOUR-ALERTS.md](docs/BEHAVIOUR-ALERTS.md) for how membership adds
 inference without ever subtracting service, and
 [docs/HOUSEHOLD.md](docs/HOUSEHOLD.md) for the fields that deliberately do not
-exist.
+exist, and
+[docs/RATE-LIMITING.md](docs/RATE-LIMITING.md) for the account lockout this
+deliberately does not have.
 
 ## The rules that are actually enforced
 
@@ -164,10 +167,10 @@ visibly disabled with the reason, and no navigation links to them.
 |---|---|
 | Real sign-in (architecture and portal built, forms disabled) | Supabase Auth credentials |
 | Delivering recovery and confirmation links (the flow itself is built) | an email provider credential |
-| Rate limiting the recovery endpoints | somewhere to keep counters — a slice of its own |
 | Selling membership (the tier itself works; an operator sets the flag) | a price and a payment provider |
 | Matching deals to a household's sizes (sizes are recorded and shown) | variant-level size data no source supplies yet |
 | Sending The Edit (composition and signup are built) | an email provider credential |
 | Affiliate `/go/[offer]` redirects | an affiliate account |
 | Admin platform | depends on authentication |
 | Legal review of the drafted pages | a lawyer, not more writing |
+| Alerting an operator that an account is under attack (refusal works today) | the admin surface, and somewhere to send it |

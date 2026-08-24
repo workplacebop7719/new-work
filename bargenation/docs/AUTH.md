@@ -211,10 +211,12 @@ comes from RLS: there is no profile id parameter to get wrong, which matters
 most here, since an export that reached another household would hand one
 customer another's children's sizes in a file they keep.
 
-## Not built yet
+## Rate limiting
 
-**Rate limiting** on the recovery endpoints. There is nothing to hold counters
-in yet and Supabase applies its own limit once it is the provider, so the port
-maps a provider 429 to `RATE_LIMITED` and the copy exists. Ours would need a
-store; it should be a slice of its own rather than a `Map` that resets on
-deploy.
+Built — see [RATE-LIMITING.md](./RATE-LIMITING.md). Sign-in, sign-up, reset
+requests and reset-token attempts all carry allowances, and sign-in is
+deliberately **not** limited by account, because that is an lockout anybody
+who knows your address could trigger.
+
+The port still maps a provider 429 to `RATE_LIMITED`, so Supabase's own limits
+surface in our copy rather than as a raw provider string.

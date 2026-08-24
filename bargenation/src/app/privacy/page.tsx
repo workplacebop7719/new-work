@@ -71,6 +71,23 @@ export default function PrivacyPage() {
         absent from the click table for the same reason as the household ones.
       </p>
 
+      <h2>The one place your connection is counted</h2>
+      <p>
+        To stop somebody trying thousands of passwords, or burying a real person under password
+        reset emails, we have to be able to tell that a run of attempts came from the same place.
+      </p>
+      <p>
+        <strong>We still do not store your IP address to do it.</strong> It is put through a keyed
+        one-way function first, and only the result is written down — a fixed-length value that
+        cannot be turned back into an address without a secret that never leaves our servers.
+        Every one of those rows is deleted within a day, and they are attached to nothing else
+        about you: not your account, not your Watchlist, not what you looked at.
+      </p>
+      <p>
+        The same is true of the email address on a password-reset form. What is counted is a
+        derived value, not the address.
+      </p>
+
       <h2>What we do not do</h2>
       <ul>
         <li>We do not sell personal information, and we do not sell anything about a household or a child.</li>

@@ -70,16 +70,15 @@ self-lowered difficulty is refused.
 ## Configuration
 
 ```
-CHALLENGE_SECRET=   # at least 16 characters
+APP_SECRET=   # at least 16 characters; CHALLENGE_SECRET still read
 ```
 
 Without it, a per-process key is generated. Challenges still work, they just
 stop being valid across a restart or a second instance —
 `challengeSecretConfigured()` reports which is in use.
 
-## Not built yet
+## Replay, closed
 
-**Replay within the window.** A solved challenge can be submitted more than
-once inside its ten-minute life. Closing that needs somewhere to record spent
-signatures, which is the same missing piece as rate limiting, and belongs in
-that slice rather than bolted on here.
+A solved challenge used to be submittable more than once inside its ten-minute
+life. Signatures are now spent on use — see
+[RATE-LIMITING.md](./RATE-LIMITING.md#challenge-replay-now-closed).

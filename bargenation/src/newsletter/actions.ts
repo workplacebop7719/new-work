@@ -6,6 +6,10 @@ import { email } from '@/email/port';
 import {
   challengeFromForm, verifyChallenge, CHALLENGE_MESSAGE,
 } from '@/security/challenge';
+import { rateLimitMessage } from '@/security/rate-limit';
+import {
+  checkRateLimit, recordRateLimitHit, spendChallenge,
+} from '@/security/rate-limit-store';
 import { memberFeaturesAvailable } from '@/data/member-repository';
 
 /**
@@ -38,10 +42,26 @@ export async function subscribeAction(
   const address = String(form.get('email') ?? '');
   const source = String(form.get('source') ?? '/edit');
 
-  const verdict = verifyChallenge(challengeFromForm(form), 'SUBSCRIBE');
+  const submission = challengeFromForm(form);
+  const verdict = verifyChallenge(submission, 'SUBSCRIBE');
   if (!verdict.ok) {
     return { error: CHALLENGE_MESSAGE, pending: null, devConfirmUrl: null };
   }
+  // Spending it closes the replay window: without this, one solved challenge
+  // subscribes an address as many times as somebody cares to send.
+  if (submission.signature && !(await spendChallenge(submission.signature))) {
+    return { error: CHALLENGE_MESSAGE, pending: null, devConfirmUrl: null };
+  }
+
+  // Every attempt here can put a confirmation email in somebody else's inbox,
+  // so it is counted whether or not the address turns out to be new.
+  const decision = await checkRateLimit('SUBSCRIBE', address);
+  if (!decision.allowed) {
+    return {
+      error: rateLimitMessage(decision.retryAfterMs), pending: null, devConfirmUrl: null,
+    };
+  }
+  await recordRateLimitHit('SUBSCRIBE', address);
 
   if (!memberFeaturesAvailable) {
     return {

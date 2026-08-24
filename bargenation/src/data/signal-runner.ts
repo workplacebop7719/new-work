@@ -38,6 +38,8 @@ export interface SweepResult {
   membersExamined: number;
   /** Of those, watches whose subject is a whole retailer rather than an item. */
   retailerWatchesExamined: number;
+  /** Expired rate-limit counters and spent challenges removed. */
+  housekeepingRemoved: number;
   signalsCreated: number;
   byKind: Partial<Record<SignalKind, number>>;
 }
@@ -189,11 +191,26 @@ export async function sweepDealSignals(
     watchesExamined: 0,
     membersExamined: 0,
     retailerWatchesExamined: 0,
+    housekeepingRemoved: 0,
     signalsCreated: 0,
     byKind: {},
   };
 
   try {
+    /**
+     * Housekeeping first, and unconditionally.
+     *
+     * Rate-limit counters and spent challenge signatures are short-lived by
+     * design, and nothing else in the system is scheduled. Putting this behind
+     * "if there are watches to sweep" would mean an installation with no
+     * watches never prunes anything — the rows would accumulate forever
+     * precisely where nobody was looking.
+     */
+    const { rows: pruned } = await client.query<{ prune_rate_limits: number }>(
+      'select prune_rate_limits()',
+    );
+    result.housekeepingRemoved = pruned[0]?.prune_rate_limits ?? 0;
+
     const [{ rows: watches }, { rows: retailerWatches }] = await Promise.all([
       client.query<WatchRow>(WATCH_SQL),
       client.query<RetailerWatchRow>(RETAILER_WATCH_SQL),

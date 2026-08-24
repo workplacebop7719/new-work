@@ -211,9 +211,26 @@ d('ingestion pipeline', () => {
     });
   });
 
+  /**
+   * Scoped to THIS suite's own feed.
+   *
+   * It used to read `order by started_at desc limit 1` — the latest row in the
+   * whole table — and source_runs is written by the match-resolution suite
+   * too. Vitest runs files in parallel, so this intermittently asserted on
+   * somebody else's run, which was sometimes still RUNNING. It failed roughly
+   * once in ten and hid behind however many clean runs you happened to do
+   * first.
+   *
+   * Same lesson as owned-fixture.ts: own your data, or at least ask only about
+   * it.
+   */
   it('records what each run did', async () => {
     const { rows } = await admin.query<{ status: string; records_seen: number }>(
-      `select status, records_seen from source_runs order by started_at desc limit 1`,
+      `select r.status, r.records_seen
+       from source_runs r
+       join data_sources s on s.id = r.source_id
+       where s.name = 'feed-a'
+       order by r.started_at desc limit 1`,
     );
     expect(rows[0]!.status).toBe('COMPLETED');
     expect(rows[0]!.records_seen).toBeGreaterThan(0);

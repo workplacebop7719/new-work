@@ -74,7 +74,8 @@ the shops, and START HERE says how to clear it.
    print preview.
 3. **The licence text.** `TERMS_OF_USE.pdf` is a working draft with a review box
    on its first page. It has not been seen by a lawyer.
-4. **`[SELLER BRAND]`** appears throughout and must be replaced.
+4. ~~The seller name.~~ **Done** — Mlissia, set in `src/config.js` and carried
+   through the workbook, the PDFs, the listing copy and the file metadata.
 5. **The ™ on the product name** — only usable if the seller is entitled to it
    where they trade.
 6. **Every compatibility and benefit claim in the listing copy**, checked against

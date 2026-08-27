@@ -134,7 +134,7 @@ christmas budget, gift list, holiday planner, digital planner, editable planner
 DO NOT PUBLISH WITHOUT
 --------------------------------------------------------------------------
 
-• Replacing [SELLER BRAND] everywhere it appears.
+• Replacing Mlissia everywhere it appears.
 • A lawyer's or your own review of TERMS_OF_USE.
 • Testing the Google Sheets import on your own account and correcting the
   compatibility lines above to match what you saw.

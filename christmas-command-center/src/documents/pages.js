@@ -195,7 +195,7 @@ export function termsOfUse() {
 ${cover('Licence', 'Terms of use', 'What you may do with this workbook, in plain words.')}
 
 <div class="warn">
-  <strong>For the seller, before publishing:</strong> this text is a working draft prepared as part of the build. It has not been reviewed by a lawyer. Have it checked against the law where you trade and against Etsy's current seller policies, replace ${PRODUCT.seller} and the contact details with your own, and delete this box before the file goes into the buyer package.
+  <strong>For the seller, before publishing:</strong> this text is a working draft prepared as part of the build, and it has not been reviewed by a lawyer. Have it checked against the law where you trade and against Etsy's current seller policies, add the contact details you want buyers to use, and delete this box before the file goes into the buyer package.
 </div>
 
 <h2>What you are buying</h2>

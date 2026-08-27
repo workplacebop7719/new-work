@@ -327,7 +327,7 @@ export const PRODUCT = {
   trademarkName: 'The Christmas Season Master Command Center™',
   promise: 'Curate every exquisite detail in one private Christmas atelier.',
   edition: SETTINGS_DEFAULTS.EDITION,
-  seller: '[SELLER BRAND]',
+  seller: 'Mlissia',
   keywords: 'Christmas planner, gift tracker, holiday budget, hosting planner, Excel, Google Sheets',
 };
 

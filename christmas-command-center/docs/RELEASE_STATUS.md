@@ -33,7 +33,7 @@ perform, and legal and commercial text a person has to own.
 | 2 | Microsoft Excel, Windows and Mac | No Excel on the build machine. Formulas were recalculated by LibreOffice Calc, which proves the arithmetic but not Excel's rendering of charts, comments, protection or print preview | Seller |
 | 3 | Mobile apps | The listing should describe what a small screen is actually like | Seller |
 | 4 | `TERMS_OF_USE.pdf` | A working draft with a review box on its first page. Not seen by a lawyer | Seller and their lawyer |
-| 5 | `[SELLER BRAND]` | Appears throughout the workbook and documents as a deliberate placeholder | Seller |
+| 5 | ~~Seller name~~ | **Closed.** Set to Mlissia throughout the workbook, the documents and the file metadata | — |
 | 6 | The ™ on the product name | Only usable if the seller is entitled to it where they trade | Seller |
 | 7 | Listing claims | Every compatibility and benefit line to be checked against §13.3 and against what the seller has tested | Seller |
 | 8 | Ten listing mockups | The shot list is written; the photography is not done | Seller or photographer |
@@ -61,9 +61,8 @@ One thing the specification asks for that is deliberately *not* built:
 
 ## Recommendation
 
-Do not publish until items 1, 2, 4 and 5 are closed. Items 1 and 2 are an
-afternoon's work with the two applications open. Item 4 needs a lawyer. Item 5 is
-a search and replace.
+Do not publish until items 1, 2 and 4 are closed. Items 1 and 2 are an
+afternoon's work with the two applications open. Item 4 needs a lawyer.
 
 Once those are done, re-read this file and reissue the status. If the Excel and
 Sheets passes are clean, the status becomes PASS.

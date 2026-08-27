@@ -1,0 +1,96 @@
+The Christmas Season Master Command Center™
+MOCKUP SHOT LIST — TEN LISTING IMAGES
+Edition 1.0
+
+House style for all ten: warm ivory or deep evergreen backgrounds, one prop at
+most, real daylight or a soft single source. No snowflake scatter, no glitter,
+no gradient, no stock-photo family. Text overlay in a serif for the headline and
+a sans for the supporting line. Every screenshot is of the real workbook with
+the example data in it — never a mocked-up screen.
+
+--------------------------------------------------------------------------
+1. YOUR ENTIRE CHRISTMAS, BEAUTIFULLY ORGANISED
+--------------------------------------------------------------------------
+Screen:   DASHBOARD, full width, at 100% zoom.
+Frame:    Laptop on a dark wood surface, the printed at-a-glance page beside it,
+          a single candle out of focus behind.
+Must show: the countdown, the four money cards, the attention board.
+Overlay:  Headline top left, one supporting line: "One place for the gifts, the
+          budget, the table and the traditions."
+
+--------------------------------------------------------------------------
+2. MORE THAN A GIFT LIST
+--------------------------------------------------------------------------
+Screen:   A grid of eight tab names, set as type rather than a screenshot:
+          DASHBOARD · GIFT PLANNER · ONLINE ORDERS · MASTER BUDGET ·
+          MEAL + BAKING PLAN · HOSTING + GUESTS · DECOR INVENTORY · MEMORIES
+Overlay:  "35 sheets. Use the ones you want; hide the rest."
+
+--------------------------------------------------------------------------
+3. KNOW WHAT YOU SPENT — AND WHAT IS LEFT
+--------------------------------------------------------------------------
+Screen:   MASTER BUDGET, rows for the twelve categories, plus a crop of the
+          dashboard's budget chart.
+Must show: one category reading AT BUDGET and the Remaining column.
+Overlay:  "Every figure traces back to the row that made it."
+
+--------------------------------------------------------------------------
+4. NEVER LOSE A GIFT OR A DELIVERY AGAIN
+--------------------------------------------------------------------------
+Screen:   GIFT PLANNER left, ONLINE ORDERS right, side by side.
+Must show: the Attention column with LATE and NO TRACKING visible.
+Overlay:  "It tells you what is late, what has no tracking, and which return
+          window closes this week."
+
+--------------------------------------------------------------------------
+5. PLAN THE MAGIC, NOT JUST THE TASKS
+--------------------------------------------------------------------------
+Screen:   TRADITIONS + BUCKET LIST and MEMORIES.
+Frame:    Warmer than the others. Greenery in the corner, nothing branded.
+Overlay:  "Traditions, the films, the décor, and the part worth remembering."
+
+--------------------------------------------------------------------------
+6. HOST CHRISTMAS WITHOUT THE LAST-MINUTE SCRAMBLE
+--------------------------------------------------------------------------
+Screen:   MEAL + BAKING PLAN with HOSTING + GUESTS beneath it.
+Must show: a dietary tag and an allergy note, and the make-ahead column.
+Overlay:  "Menus, prep dates, the shopping list, and who cannot eat what."
+
+--------------------------------------------------------------------------
+7. FULLY EDITABLE
+--------------------------------------------------------------------------
+Screen:   A dropdown open on a tracker, beside the four-colour key.
+Must show: the open list, and a cream cell next to a green one.
+Overlay:  "Rename the categories, edit the lists, hide what you do not need."
+
+--------------------------------------------------------------------------
+8. EXCEL AND GOOGLE SHEETS
+--------------------------------------------------------------------------
+Screen:   The same dashboard in both, side by side, honestly captured.
+Overlay:  "Two editions, one workbook." Plus the tested-in line, worded exactly
+          as it appears in READ_ME_FIRST.
+Note:     No Microsoft or Google logos without permission. Name the software in
+          plain text.
+
+--------------------------------------------------------------------------
+9. WHAT YOU RECEIVE
+--------------------------------------------------------------------------
+Screen:   The file stack as an illustration: two workbook icons, three PDFs, two
+          text files, arranged as a neat pile.
+Overlay:  "Two workbooks, three guides, and the notes." Then: "Digital download.
+          Nothing is posted."
+
+--------------------------------------------------------------------------
+10. MADE FOR PEOPLE WHO LOVE CHRISTMAS
+--------------------------------------------------------------------------
+Screen:   None, or a small crop of SEASON VISION.
+Frame:    A laid table at dusk, candles lit, one open notebook. Nobody in shot.
+Overlay:  "Curate every exquisite detail in one private Christmas atelier."
+
+--------------------------------------------------------------------------
+PRODUCTION NOTES
+--------------------------------------------------------------------------
+• Capture at 2× and export at 2000 × 2000 for the square listing images.
+• Keep the first image legible as a thumbnail: three elements at most.
+• Use the example data as shipped, so the screenshots stay honest.
+• Blur nothing. If a figure looks wrong on screen, fix the workbook.

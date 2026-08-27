@@ -1,0 +1,380 @@
+[
+  {
+    "key": "blank",
+    "title": "Blank workbook",
+    "checks": [
+      {
+        "name": "countdown is a non-negative number",
+        "actual": true,
+        "expected": true,
+        "pass": true
+      },
+      {
+        "name": "budget set",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "spent so far",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "gifts chosen",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "gifts note reads Not started",
+        "actual": "Not started.",
+        "expected": "Not started.",
+        "pass": true
+      },
+      {
+        "name": "wrapping note",
+        "actual": "Nothing to wrap yet.",
+        "expected": "Nothing to wrap yet.",
+        "pass": true
+      },
+      {
+        "name": "orders note",
+        "actual": "No orders yet.",
+        "expected": "No orders yet.",
+        "pass": true
+      },
+      {
+        "name": "no orders reported late",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "no missing-date warnings",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "no overdue tasks",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "quality check is clean",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "no formula errors anywhere",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      }
+    ]
+  },
+  {
+    "key": "zero-budget-purchase",
+    "title": "Zero budget, one purchase",
+    "checks": [
+      {
+        "name": "Gifts category status",
+        "actual": "OVER BUDGET",
+        "expected": "OVER BUDGET",
+        "pass": true
+      },
+      {
+        "name": "Gifts remaining",
+        "actual": -120,
+        "expected": -120,
+        "pass": true
+      },
+      {
+        "name": "percent used stays 0 rather than dividing by zero",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "dashboard remaining",
+        "actual": -120,
+        "expected": -120,
+        "pass": true
+      },
+      {
+        "name": "no formula errors",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      }
+    ]
+  },
+  {
+    "key": "near-limit",
+    "title": "At and just below the warning threshold",
+    "checks": [
+      {
+        "name": "at the threshold",
+        "actual": "NEAR LIMIT",
+        "expected": "NEAR LIMIT",
+        "pass": true
+      },
+      {
+        "name": "one pound below it",
+        "actual": "ON TRACK",
+        "expected": "ON TRACK",
+        "pass": true
+      }
+    ]
+  },
+  {
+    "key": "refund-expected",
+    "title": "Refund expected but not received",
+    "checks": [
+      {
+        "name": "actual spend unchanged",
+        "actual": 200,
+        "expected": 200,
+        "pass": true
+      },
+      {
+        "name": "dashboard spend unchanged",
+        "actual": 200,
+        "expected": 200,
+        "pass": true
+      },
+      {
+        "name": "refund still owed",
+        "actual": 1,
+        "expected": 1,
+        "pass": true
+      }
+    ]
+  },
+  {
+    "key": "refund-received",
+    "title": "Refund received",
+    "checks": [
+      {
+        "name": "actual spend returns to zero",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "dashboard spend",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "nothing left owed",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      }
+    ]
+  },
+  {
+    "key": "digital-gift",
+    "title": "Digital gift purchased",
+    "checks": [
+      {
+        "name": "both count as chosen",
+        "actual": 1,
+        "expected": 1,
+        "pass": true
+      },
+      {
+        "name": "only the physical one needs wrapping",
+        "actual": "0 of 1 — digital and experience gifts are not counted",
+        "expected": "0 of 1 — digital and experience gifts are not counted",
+        "pass": true
+      },
+      {
+        "name": "one gift still to wrap",
+        "actual": 1,
+        "expected": 1,
+        "pass": true
+      }
+    ]
+  },
+  {
+    "key": "late-shipment",
+    "title": "Late shipment",
+    "checks": [
+      {
+        "name": "order row",
+        "actual": "LATE",
+        "expected": "LATE",
+        "pass": true
+      },
+      {
+        "name": "attention board",
+        "actual": 1,
+        "expected": 1,
+        "pass": true
+      },
+      {
+        "name": "not reported as a missing date",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      }
+    ]
+  },
+  {
+    "key": "blank-expected-date",
+    "title": "Order with no expected date",
+    "checks": [
+      {
+        "name": "order row",
+        "actual": "MISSING DATE",
+        "expected": "MISSING DATE",
+        "pass": true
+      },
+      {
+        "name": "not counted as late",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "counted as a missing date",
+        "actual": 1,
+        "expected": 1,
+        "pass": true
+      }
+    ]
+  },
+  {
+    "key": "duplicate-gift-id",
+    "title": "Duplicate gift ID",
+    "checks": [
+      {
+        "name": "both rows reported",
+        "actual": 2,
+        "expected": 2,
+        "pass": true
+      },
+      {
+        "name": "quality check total rises",
+        "actual": 4,
+        "expected": "≥ 2",
+        "pass": true
+      },
+      {
+        "name": "the dashboard shows it",
+        "actual": 4,
+        "expected": "≥ 2",
+        "pass": true
+      }
+    ]
+  },
+  {
+    "key": "unmapped-cost",
+    "title": "A cost with no budget category",
+    "checks": [
+      {
+        "name": "reported on quality check",
+        "actual": 1,
+        "expected": 1,
+        "pass": true
+      },
+      {
+        "name": "and the reconciliation says so",
+        "actual": "UNMAPPED COSTS",
+        "expected": "UNMAPPED COSTS",
+        "pass": true
+      },
+      {
+        "name": "the money is not in the budget",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      }
+    ]
+  },
+  {
+    "key": "inactive-recipient",
+    "title": "Inactive recipient",
+    "checks": [
+      {
+        "name": "the active person's gift counts",
+        "actual": "Yes",
+        "expected": "Yes",
+        "pass": true
+      },
+      {
+        "name": "the inactive person's gift does not",
+        "actual": "No",
+        "expected": "No",
+        "pass": true
+      },
+      {
+        "name": "one gift left to buy, not two",
+        "actual": 1,
+        "expected": 1,
+        "pass": true
+      }
+    ]
+  },
+  {
+    "key": "year-change",
+    "title": "Year change into a leap year",
+    "checks": [
+      {
+        "name": "the season rolls to the next Christmas",
+        "actual": 2028,
+        "expected": 2028,
+        "pass": true
+      },
+      {
+        "name": "Christmas 2028 falls on a Monday",
+        "actual": "Christmas falls on Monday 25 December",
+        "expected": "Christmas falls on Monday 25 December",
+        "pass": true
+      },
+      {
+        "name": "the countdown counts through the 2028 leap day",
+        "actual": 851,
+        "expected": 851,
+        "pass": true
+      }
+    ]
+  },
+  {
+    "key": "max-rows",
+    "title": "Every tracker at its documented capacity",
+    "checks": [
+      {
+        "name": "no formula errors",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "planned reconciles",
+        "actual": "RECONCILED",
+        "expected": "RECONCILED",
+        "pass": true
+      },
+      {
+        "name": "actual reconciles",
+        "actual": "RECONCILED",
+        "expected": "RECONCILED",
+        "pass": true
+      },
+      {
+        "name": "duplicate detection is doing something",
+        "actual": 200,
+        "expected": "≥ 1",
+        "pass": true
+      }
+    ]
+  }
+]

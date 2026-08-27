@@ -1,0 +1,62 @@
+The Christmas Season Master Command Center™
+OPENING THIS IN GOOGLE SHEETS
+
+--------------------------------------------------------------------------
+IMPORTING
+--------------------------------------------------------------------------
+
+1. Go to sheets.google.com and sign in.
+2. File, then Import, then Upload.
+3. Choose Christmas_Master_Command_Center_Google_Sheets.xlsx from this folder.
+4. Choose "Import data" and, when asked, "Create new spreadsheet".
+5. Give it this year's name.
+
+The import takes a minute or two. It is a large workbook.
+
+--------------------------------------------------------------------------
+FIRST FIVE MINUTES
+--------------------------------------------------------------------------
+
+• Open the SETTINGS tab and set the year, the date and your currency.
+• Look at the DASHBOARD. The countdown should be counting.
+• If the two charts look empty, reload the page once. Sheets calculates the
+  workbook on import and the charts draw after it finishes.
+
+--------------------------------------------------------------------------
+WHAT IS DIFFERENT IN THIS EDITION
+--------------------------------------------------------------------------
+
+Everything that matters works: the formulas, the dropdowns, the filters, the
+frozen panes, the colour coding, the number formats and the two charts. These
+are the differences, stated plainly rather than glossed over.
+
+Sheet protection is not applied.
+  Google Sheets does not import Excel's cell locking, and a protection that
+  half-applies is worse than none. So this edition ships unprotected, and the
+  colour key does the work instead: pale green cells calculate themselves —
+  typing in one replaces a formula. Cream cells are yours.
+  If you would rather have the lock, Google Sheets can add it: select a
+  calculated column, then Data, Protect sheets and ranges.
+
+Notes rather than comments.
+  The small explanations on column headers arrive as Google Sheets notes. Hover
+  to read them.
+
+Conditional formatting.
+  The status colours import. If a rule ever looks wrong after you have inserted
+  rows, Format, then Conditional formatting, shows you exactly what is set.
+
+Print set-up.
+  Print areas and repeating headers come across, but Google Sheets handles page
+  breaks its own way. Check the preview before you print.
+
+The Excel edition.
+  It is included too, and it is the fuller one — protection, comments and all
+  the print settings. If you have Excel, use that.
+
+--------------------------------------------------------------------------
+IF SOMETHING LOOKS WRONG
+--------------------------------------------------------------------------
+
+Open the QUALITY CHECK tab. Every row on it should read zero. If one does not,
+it names the sheet to open and what to look for.

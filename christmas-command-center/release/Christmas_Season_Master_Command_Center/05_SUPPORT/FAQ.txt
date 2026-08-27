@@ -1,0 +1,98 @@
+The Christmas Season Master Command Center™
+QUESTIONS PEOPLE ASK
+
+--------------------------------------------------------------------------
+OPENING IT
+--------------------------------------------------------------------------
+
+The file will not open.
+  Unzip the download first. Opening a workbook from inside a zip gives you a
+  read-only copy, and nothing you type is saved.
+
+Excel says the file is protected.
+  Only the calculated cells are locked, so they cannot be typed over by
+  accident. Review, then Unprotect Sheet. There is no password.
+
+It opened but everything says 0.
+  That is a blank workbook doing the right thing. Add people and budgets first.
+
+The dates look American / British.
+  Dates follow your own computer's settings. Change them in your operating
+  system, or select the column and choose a different date format.
+
+--------------------------------------------------------------------------
+USING IT
+--------------------------------------------------------------------------
+
+How do I add more rows?
+  Click a row in the middle of the table and insert above it, so the formulas
+  and dropdowns come with it. Then copy one calculated cell down into the new
+  row. Each tracker starts with room for 200 gifts,
+  150 orders and 200
+  calendar entries, which is more than most households need.
+
+Can I delete a sheet I will not use?
+  Hide it rather than delete it: right-click the tab, Hide. Nothing breaks —
+  every total reads an empty sheet as zero. TRAVEL PLAN, ADVENT + REFLECTION, MOVIES + MUSIC are
+  the ones most often hidden.
+
+Can I add my own dropdown values?
+  Yes. They live on LISTS. Click a row inside the block and insert above it.
+  Adding below the last value does nothing — that is the one catch.
+
+Why does the wrapping percentage ignore some gifts?
+  Digital and experience gifts are left out of the wrapping count. A gift
+  certificate does not need ribbon.
+
+I marked a refund as expected and my spending did not change.
+  That is deliberate. Money you are owed is not money you have back. Set
+  Refund received to Yes and the figure drops.
+
+The same gift is flagged as a duplicate but I meant it.
+  It is a nudge, not an error. Two of the same thing for the same person is
+  sometimes exactly right. Ignore it.
+
+A number looks wrong.
+  Open QUALITY CHECK. Every row on it should read zero. If one does not, it
+  names the sheet and what to look for.
+
+--------------------------------------------------------------------------
+GOOGLE SHEETS
+--------------------------------------------------------------------------
+
+Which file do I use?
+  The one in 03_GOOGLE_SHEETS. It is prepared for the import.
+
+Are the sheets protected in Google Sheets?
+  No. Google Sheets does not import Excel's protection, so that edition ships
+  unprotected on purpose. The colour key tells you which cells calculate
+  themselves: pale green ones do.
+
+My charts look empty.
+  Give them a moment on first open while Sheets recalculates, then reload.
+
+--------------------------------------------------------------------------
+THE LICENCE
+--------------------------------------------------------------------------
+
+Can I share it with a friend?
+  No. It is for your own household. TERMS_OF_USE has the detail.
+
+Can I sell a planner I made from it?
+  No — not the workbook, and not a modified version of it.
+
+Can I use it every year?
+  Yes, for as long as you like. START_HERE explains how to clear it down.
+
+--------------------------------------------------------------------------
+PRIVACY
+--------------------------------------------------------------------------
+
+Does it send anything anywhere?
+  No. There are no macros, no add-ins and no connections. It is an ordinary
+  spreadsheet on your own device.
+
+Is it safe to write down where I hid the presents?
+  It is as safe as the file is. It is not encrypted, and anyone who opens it can
+  read it. Keep hiding places and sizes here; keep card numbers, passwords and
+  identity documents somewhere else.

@@ -1,0 +1,13 @@
+{
+  "product": "The Christmas Season Master Command Center",
+  "edition": "1.0",
+  "builtAt": "2026-08-27T02:05:52.019Z",
+  "christmasYear": 2026,
+  "sheets": 35,
+  "trackers": 28,
+  "fields": 480,
+  "files": [
+    "/home/user/new-work/christmas-command-center/dist/Christmas_Master_Command_Center_Excel.xlsx",
+    "/home/user/new-work/christmas-command-center/dist/Christmas_Master_Command_Center_Google_Sheets.xlsx"
+  ]
+}

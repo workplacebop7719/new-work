@@ -1,0 +1,22 @@
+{
+  "name": "christmas-command-center",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Deterministic generator for The Christmas Season Master Command Center workbook (Excel + Google Sheets editions).",
+  "type": "module",
+  "engines": {
+    "node": ">=22.11.0"
+  },
+  "scripts": {
+    "build": "node src/build-command-center.js",
+    "test": "node src/build-command-center.js && node --test \"tests/**/*.test.mjs\"",
+    "package": "node src/package-release.js",
+    "release": "npm run build && npm test && npm run qa && npm run documents && npm run package",
+    "qa": "node src/qa/run-qa.mjs",
+    "documents": "node src/make-documents.mjs"
+  },
+  "dependencies": {
+    "exceljs": "4.4.0",
+    "jszip": "3.10.1"
+  }
+}

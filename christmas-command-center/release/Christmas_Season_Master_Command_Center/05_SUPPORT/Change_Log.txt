@@ -1,0 +1,36 @@
+The Christmas Season Master Command Center™
+CHANGE LOG
+
+--------------------------------------------------------------------------
+Edition 1.0 — 2026-08-27 — first release
+--------------------------------------------------------------------------
+
+What is in it
+  35 sheets: onboarding, 29 planning modules, and
+  three support sheets.
+  Two editions: one for Excel, one prepared for Google Sheets.
+  42 editable dropdown lists on the LISTS sheet.
+  Two dashboard charts: budget against spend by category, and completion.
+
+Affected sheets
+  All.
+
+Compatibility
+  Excel on Windows and Mac (Microsoft 365, 2021, 2019).
+  Google Sheets, via the separate edition and the included import notes.
+  No macros, no add-ins, no external links, no volatile functions.
+
+Known differences in the Google Sheets edition
+  Sheet protection is not applied — Google Sheets does not import Excel's,
+  and a half-applied lock is worse than none. The colour key does that work.
+  Cell notes import as notes rather than as Excel comments.
+  Charts refresh on first open.
+
+--------------------------------------------------------------------------
+How to record a change
+--------------------------------------------------------------------------
+
+Each entry: edition, date, what changed, which sheets it touched, and whether a
+buyer on the previous edition needs to do anything. If a formula changes, say
+what it was and what it is now, so somebody who has already filled in their
+workbook can decide whether to move.

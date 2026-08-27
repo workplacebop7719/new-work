@@ -1,0 +1,144 @@
+The Christmas Season Master Command Center™
+ETSY LISTING COPY — DRAFT FOR SELLER REVIEW
+Edition 1.0
+
+Everything below is a draft. Read §13.3 of the specification before publishing:
+do not promise savings, stress relief or instant results, and do not claim
+compatibility with software you have not tested yourself.
+
+--------------------------------------------------------------------------
+TITLE OPTIONS (Etsy allows 140 characters)
+--------------------------------------------------------------------------
+
+1. Christmas Planner Spreadsheet | Gift Tracker, Budget, Hosting & Décor |
+   Excel + Google Sheets | Editable Digital Download
+   (137 characters)
+
+2. Luxury Christmas Planner Excel Template | Gift Budget Tracker, Meal Plan,
+   Guest List | Google Sheets Compatible | Instant Download
+   (136 characters)
+
+3. Christmas Command Center Spreadsheet | Gifts, Orders, Budget, Hosting,
+   Traditions | Excel & Google Sheets | Editable Planner
+   (129 characters)
+
+--------------------------------------------------------------------------
+OPENING PARAGRAPH
+--------------------------------------------------------------------------
+
+Christmas usually lives in eleven places at once: a note on your phone, three
+browser tabs, a paper list in the kitchen drawer, and a nagging feeling that
+you have already bought your father a scarf. This is one place instead.
+
+The Christmas Season Master Command Center™ is a 35-sheet workbook for the whole season — the gifts, the
+budget, the deliveries, the table, the guests, the traditions, and the notes
+you will want next September. Every number on the dashboard is calculated from
+something you typed, and every one of them will tell you where it came from.
+
+--------------------------------------------------------------------------
+WHAT IT DOES
+--------------------------------------------------------------------------
+
+• One dashboard. Days to Christmas, what you set aside, what you have spent,
+  what is left, how far along the gifts are, and a list of what needs you
+  today — with a link to the sheet that fixes it.
+
+• Gifts, properly tracked. 200 rows from first idea to
+  wrapped and hidden. Planned cost and actual cost are separate, so an estimate
+  never masquerades as a receipt. It also warns you when the same gift appears
+  twice for the same person.
+
+• Deliveries that chase themselves. 150 order rows that
+  flag what is late, what has no tracking, and which return window closes this
+  week. An order with no expected date says so, instead of pretending to be on
+  time.
+
+• A budget that reconciles. Twelve categories you can rename. Every cost in the
+  workbook carries a category, and anything that does not match is reported
+  rather than quietly dropped.
+
+• Refunds that behave. Money you are owed stays on the attention board. It only
+  reduces what you have spent when you mark it received.
+
+• Hosting, in detail. Guests and their dietary needs, sleeping arrangements and
+  arrival times, the meal plan, the shopping list, the recipe index, the table
+  and the flowers, the vendors and their deposits.
+
+• The house and the season. Décor inventory with storage locations, a
+  room-by-room decorating plan, cleaning by zone, cards and postage, event
+  wardrobe, travel, giving, traditions, and a page for what you want to
+  remember.
+
+• Made to be reused. An annual archive, a page of notes for next year, and a
+  documented way to clear the workbook and start the next season.
+
+--------------------------------------------------------------------------
+WHAT YOU RECEIVE
+--------------------------------------------------------------------------
+
+• Christmas_Master_Command_Center_Excel.xlsx — the Excel edition
+• Christmas_Master_Command_Center_Google_Sheets.xlsx — prepared for Sheets
+• START_HERE.pdf — an illustrated guide to setting up and using it
+• READ_ME_FIRST.pdf — opening the files, and what works where
+• TERMS_OF_USE.pdf — your licence
+• FAQ.txt and Change_Log.txt
+• Google Sheets import instructions
+
+This is a digital download. Nothing is posted to you.
+
+--------------------------------------------------------------------------
+COMPATIBILITY  (verify each line yourself before publishing)
+--------------------------------------------------------------------------
+
+• Built and tested for Microsoft Excel on Windows and Mac.
+• A separate edition is prepared for Google Sheets, with the differences listed
+  in the included instructions.
+• Usable on a phone or tablet in the Excel or Google Sheets app, though setting
+  it up on a small screen is hard work — do that on a computer.
+• Not tested in Apple Numbers, LibreOffice or WPS Office.
+• No macros. No add-ins. No sign-in. Nothing is sent anywhere.
+
+--------------------------------------------------------------------------
+FREQUENTLY ASKED, ON THE LISTING
+--------------------------------------------------------------------------
+
+Do I need to be good at spreadsheets?
+No. You type in the cream cells and read the green ones. The guide is six steps
+long.
+
+Can I change it?
+Yes — rename the categories, add rows, hide the sheets you do not want, change
+the colours. The dropdown lists are yours to edit, and any sheet can be
+unprotected without a password.
+
+Will it work for my currency?
+Choose from the list in Settings, or add your own. It shows one currency at a
+time and does not convert between them.
+
+Can I use it again next year?
+Yes. There is an archive sheet and a documented way to clear it down.
+
+Is anything preloaded that I would have to delete?
+Three clearly marked example rows on each sheet, and example budget figures on
+the budget sheet. Everything marked EXAMPLE — DELETE ME can go.
+
+--------------------------------------------------------------------------
+TAGS  (13 allowed; check each against Etsy search yourself)
+--------------------------------------------------------------------------
+
+christmas planner, christmas spreadsheet, gift tracker, holiday budget,
+christmas organizer, excel planner, google sheets planner, hosting planner,
+christmas budget, gift list, holiday planner, digital planner, editable planner
+
+--------------------------------------------------------------------------
+DO NOT PUBLISH WITHOUT
+--------------------------------------------------------------------------
+
+• Replacing [SELLER BRAND] everywhere it appears.
+• A lawyer's or your own review of TERMS_OF_USE.
+• Testing the Google Sheets import on your own account and correcting the
+  compatibility lines above to match what you saw.
+• Checking that the trademark symbol on the product name is one you are
+  entitled to use where you trade.
+• Your own mockups. No retailer screenshots, no film or character artwork, no
+  other seller's images.

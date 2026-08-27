@@ -5,9 +5,18 @@ CHANGE LOG
 Edition 1.0 — 2026-08-27 — first release
 --------------------------------------------------------------------------
 
+Design
+  Blush pink, deep plum and antique gold, with wildflowers drawn in a single
+  fine line. Gold rules the title band of every sheet; the drawings appear on
+  the cover, beside every sheet title, and on the printed pages.
+  Every text-on-fill pairing is checked against WCAG AA at 4.5:1 by a test that
+  fails the build, and every coloured state is also spelled out as a word.
+
 What is in it
   35 sheets: onboarding, 29 planning modules, and
   three support sheets.
+  A nine-page printable pack in A4 and US Letter, for Canva or for a printer.
+  The three wildflower drawings, as SVG and transparent PNG, and a brand kit.
   Two editions: one for Excel, one prepared for Google Sheets.
   42 editable dropdown lists on the LISTS sheet.
   Two dashboard charts: budget against spend by category, and completion.

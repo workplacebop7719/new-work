@@ -33,8 +33,8 @@ are the differences, stated plainly rather than glossed over.
 Sheet protection is not applied.
   Google Sheets does not import Excel's cell locking, and a protection that
   half-applies is worse than none. So this edition ships unprotected, and the
-  colour key does the work instead: pale green cells calculate themselves —
-  typing in one replaces a formula. Cream cells are yours.
+  colour key does the work instead: grey cells calculate themselves — typing
+  in one replaces a formula. Blush-pink cells are yours.
   If you would rather have the lock, Google Sheets can add it: select a
   calculated column, then Data, Protect sheets and ranges.
 

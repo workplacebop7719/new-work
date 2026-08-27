@@ -11,18 +11,27 @@
  * ------------------------------------------------------------------ */
 
 export const TOKENS = {
-  PINE: 'FF173F35',
-  PINE_2: 'FF245B4B',
-  OXBLOOD: 'FF7D1F2D',
-  IVORY: 'FFFFF9EC',
-  CHAMPAGNE: 'FFB89452',
-  INK: 'FF252525',
-  MIST: 'FFE7EFE9',
-  SOFT_AMBER: 'FFF7E7C3',
-  SOFT_ROSE: 'FFF7E7E8',
+  /* Deep plum anchors every page: headers, titles, the type on the cover. */
+  PLUM: 'FF4E2B38',
+  PLUM_2: 'FF74505F',
+  /* Dusty rose carries the alerts and the figures that matter. */
+  ROSE: 'FF91455A',
+  /* The field the whole product sits on. */
+  BLUSH: 'FFFEF6F7',
+  BAND: 'FFFBEFF2',
+  /* Gold is the through-line: a rule under every heading, the numerals, the
+     nav strip, the chart's budget bars, the hairlines on the cover. */
+  GOLD: 'FFB08D57',
+  GOLD_LIGHT: 'FFE0C48C',
+  GOLD_PALE: 'FFF7EEDD',
+  INK: 'FF3B3034',
+  /* Calculated cells: mauve-grey, cool against the warm pink of an input. */
+  MIST: 'FFECE6EA',
+  SOFT_AMBER: 'FFF7E7C9',
+  SOFT_ROSE: 'FFF7DEE3',
   PAPER: 'FFFFFFFF',
-  RULE: 'FFD8CDB4',
-  MUTED: 'FF6B6257',
+  RULE: 'FFE6D6CE',
+  MUTED: 'FF746066',
 };
 
 export const FONTS = {

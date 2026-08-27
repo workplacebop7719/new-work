@@ -23,9 +23,9 @@ const STATE_WORDS = {
 };
 
 const STATE_STYLE = {
-  alert: { fill: TOKENS.SOFT_ROSE, font: TOKENS.OXBLOOD, bold: true },
+  alert: { fill: TOKENS.SOFT_ROSE, font: TOKENS.ROSE, bold: true },
   attention: { fill: TOKENS.SOFT_AMBER, font: TOKENS.INK, bold: false },
-  good: { fill: TOKENS.MIST, font: TOKENS.PINE_2, bold: false },
+  good: { fill: TOKENS.MIST, font: TOKENS.PLUM_2, bold: false },
   quiet: { fill: TOKENS.PAPER, font: TOKENS.MUTED, bold: false },
 };
 
@@ -64,8 +64,8 @@ export function renderTracker(ws, spec, ctx) {
   const headerRow = ws.getRow(headerRow_);
   headerRow.height = 32;
   spec.columns.forEach((column, i) => headerCell(headerRow.getCell(firstCol + i), column.header));
-  headerRow.getCell(1).fill = fill(TOKENS.PINE);
-  headerRow.getCell(columnCount).fill = fill(TOKENS.PINE);
+  headerRow.getCell(1).fill = fill(TOKENS.PLUM);
+  headerRow.getCell(columnCount).fill = fill(TOKENS.PLUM);
 
   const first = spec.firstDataRow;
   const last = first + spec.rows - 1;
@@ -121,7 +121,7 @@ export function renderTracker(ws, spec, ctx) {
     bodyText(ws, { row: last + 2, col: firstCol, text: spec.footnote, size: 9, colour: TOKENS.MUTED });
   }
   if (spec.privacyNote) {
-    const cell = bodyText(ws, { row: last + 3, col: firstCol, text: spec.privacyNote, size: 9, colour: TOKENS.OXBLOOD });
+    const cell = bodyText(ws, { row: last + 3, col: firstCol, text: spec.privacyNote, size: 9, colour: TOKENS.ROSE });
     cell.font = { ...cell.font, bold: true };
   }
 
@@ -150,7 +150,7 @@ export function renderTracker(ws, spec, ctx) {
     margins: { left: 0.4, right: 0.4, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 },
   };
   ws.headerFooter = { oddFooter: `&L${spec.name}&C&P of &N&R${ctx.product.trademarkName}` };
-  ws.properties.tabColor = { argb: spec.optional ? TOKENS.CHAMPAGNE : TOKENS.PINE_2 };
+  ws.properties.tabColor = { argb: spec.optional ? TOKENS.GOLD : TOKENS.PLUM_2 };
 
   return { firstCol, columnCount, first, last, headerRow: headerRow_ };
 }

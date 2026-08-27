@@ -7,7 +7,7 @@
  * hand-repaired.
  */
 import ExcelJS from 'exceljs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -19,7 +19,7 @@ import {
 import { buildRef, colLetter, quoteSheet } from './lib/a1.js';
 import { prepare } from './lib/prepare.js';
 import { renderTracker } from './lib/render-tracker.js';
-import { fill, thin, box, bodyText, sectionHeading, labelledInput } from './lib/style.js';
+import { fill, thin, bodyText, sectionHeading, labelledInput, placeArt } from './lib/style.js';
 import {
   renderCover, renderStartHere, renderSettings, renderDashboard, renderIndex, renderLists,
   LISTS_LAYOUT,
@@ -178,8 +178,17 @@ export async function buildWorkbook(editionKey, {
     sheets.set(name, ws);
   }
 
+  /*
+   * The wildflower drawings. Each blob is added to the workbook once and
+   * referenced by every sheet that uses it, so thirty-five sprigs cost one
+   * image. The DASHBOARD is left out here on purpose: a sheet may hold only one
+   * drawing part, and the dashboard's is built later by the chart injector,
+   * which places its sprig itself.
+   */
+  const art = await loadArt(wb);
+
   /* --- Page sheets ------------------------------------------------- */
-  renderCover(sheets.get(SHEETS.COVER), ctx);
+  renderCover(sheets.get(SHEETS.COVER), ctx, art);
   renderStartHere(sheets.get(SHEETS.START), ctx);
   const settingsCells = renderSettings(sheets.get(SHEETS.SETTINGS), ctx);
   const listRanges = renderLists(sheets.get(SHEETS.LISTS), ctx);
@@ -196,6 +205,13 @@ export async function buildWorkbook(editionKey, {
   /* --- Trackers ---------------------------------------------------- */
   for (const spec of specs) {
     renderTracker(sheets.get(spec.name), spec, ctx);
+  }
+
+  if (art.corner !== undefined) {
+    for (const [name, ws] of sheets) {
+      if (name === SHEETS.DASHBOARD || name === SHEETS.COVER) continue;
+      placeArt(ws, art.corner, { width: 88, height: 39, afterChars: name === SHEETS.LISTS ? 30 : 44 });
+    }
   }
   renderVisionFields(sheets.get(SHEETS.VISION), wb, ctx, byName);
 
@@ -217,8 +233,33 @@ export async function buildWorkbook(editionKey, {
   const path = outPath ?? join(DIST, edition.file);
   await mkdir(dirname(path), { recursive: true });
   await wb.xlsx.writeFile(path);
-  if (charts && process.env.CCC_NO_CHARTS !== '1') await injectCharts(path, { symbol, edition });
+  if (charts && process.env.CCC_NO_CHARTS !== '1') {
+    let sprig = null;
+    try {
+      sprig = await readFile(join(HERE, '..', 'assets', 'wildflower-corner.png'));
+    } catch { /* built without artwork */ }
+    await injectCharts(path, { symbol, edition, sprig });
+  }
   return { path, edition, year, specs };
+}
+
+/* ------------------------------------------------------------------ *
+ * Artwork
+ * ------------------------------------------------------------------ */
+
+/** Loads the committed PNGs. Missing art is not fatal — the workbook still builds. */
+async function loadArt(wb) {
+  const art = {};
+  for (const [key, file] of [['sprig', 'wildflower-sprig.png'], ['corner', 'wildflower-corner.png'],
+    ['spray', 'wildflower-spray.png']]) {
+    try {
+      const buffer = await readFile(join(HERE, '..', 'assets', file));
+      art[key] = wb.addImage({ buffer, extension: 'png' });
+    } catch {
+      // `npm run art` has not been run. Every sheet reads correctly without it.
+    }
+  }
+  return art;
 }
 
 /* ------------------------------------------------------------------ *

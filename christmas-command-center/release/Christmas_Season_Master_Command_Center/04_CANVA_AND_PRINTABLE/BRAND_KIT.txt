@@ -1,0 +1,60 @@
+The Christmas Season Master Command Center™
+BRAND KIT
+
+Set these up once in Canva under Brand, then Brand Kit, and every mockup you
+make will match the product exactly.
+
+--------------------------------------------------------------------------
+COLOURS
+--------------------------------------------------------------------------
+
+Deep plum     #4E2B38   Headings, table headers, the type on the cover
+Soft plum     #74505F   Secondary text, the completion bars
+Dusty rose    #91455A   Accents, the figures that matter, anything overdue
+Blush pink    #FEF6F7   The field everything sits on, and every cell you fill in
+Pink band     #FBEFF2   Alternating rows, quiet panels
+Antique gold  #B08D57   Every rule, every divider, the wildflowers
+Light gold    #E0C48C   Gold that has to sit on plum and still be read
+Pale gold     #F7EEDD   A wash behind a callout
+Ink           #3B3034   Body text
+Soft grey     #ECE6EA   Cells that calculate themselves
+Warm sand     #F7E7C9   Examples, and anything asking for attention
+Deep pink     #F7DEE3   Over budget, overdue, late
+Muted         #746066   Captions and small print
+
+Every one of these pairings has been checked for contrast: text on its
+background clears WCAG AA at 4.5:1. If you change a colour, check it again —
+the workbook is used by people reading small figures on a laptop in December.
+
+--------------------------------------------------------------------------
+TYPE
+--------------------------------------------------------------------------
+
+Headings     Georgia, bold. In Canva: Playfair Display, or Lora.
+Body         Aptos. In Canva: Inter, or Open Sans.
+Eyebrows     The body face, 8pt, letterspaced 0.2em, uppercase, in gold.
+
+Set headings large and let them breathe. The product reads as expensive
+because of the whitespace, not because of the ornament.
+
+--------------------------------------------------------------------------
+THE RULES THAT KEEP IT LOOKING LIKE ONE PRODUCT
+--------------------------------------------------------------------------
+
+1. Gold is a line, never a fill. Rules, dividers, the wildflowers, a 2pt edge
+   on a panel. Never a gold background.
+2. Two or three colours per page, not the whole palette.
+3. One drawing per page at most. The wildflowers are punctuation.
+4. Deep plum is the only dark. No black, no grey headings.
+5. Whitespace before decoration. If a page looks empty, it is probably right.
+6. Never put a colour on something without also putting a word on it.
+
+--------------------------------------------------------------------------
+THE DRAWINGS
+--------------------------------------------------------------------------
+
+wildflower-sprig     tall, for a cover or a margin
+wildflower-spray     wide, a rule with flowers growing out of it
+wildflower-corner    small, for beside a heading
+
+SVG for anything that will be resized. PNG (transparent) everywhere else.

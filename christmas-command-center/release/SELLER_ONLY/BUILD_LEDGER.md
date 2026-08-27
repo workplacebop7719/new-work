@@ -18,10 +18,11 @@ The contingency is untouched, and the lines that need human hands are named.
 | --- | ---: | --- | --- | --- |
 | Product architecture and UX | $2,000 | Five-layer architecture, 35 sheets, the cost-mapping contract, the metric contract, and the row/ID model | `docs/ARCHITECTURE_MAP.md`, `src/config.js`, `src/formulas.js` | Usability review with a reader from the intended audience |
 | Workbook engineering | $3,000 | Deterministic generator, 480 fields, 113 calculated columns, 91 dropdowns, 61 hidden helper columns, validation, protection, print set-up, capacity for 2,655 records | `src/build-command-center.js`, `src/sheets/`, `dist/build-manifest.json` | — |
-| Luxury visual direction | $1,500 | The §6.2 token system, editorial page layouts, dashboard composition, two charts written as DrawingML, cover, and three typeset PDFs | `src/lib/style.js`, `src/lib/charts.js`, `src/documents/` | Ten listing mockups, from `Mockup_Shot_List.txt` |
+| Luxury visual direction | $1,500 | A blush, plum and gold token system with every pairing contrast-checked; generated wildflower line art in three forms; editorial page layouts; dashboard composition; two charts as DrawingML; cover; three typeset PDFs; a nine-page printable pack in two paper sizes | `src/lib/style.js`, `src/lib/wildflowers.js`, `src/lib/charts.js`, `src/documents/` | Ten listing mockups, from `Mockup_Shot_List.txt` |
 | Google Sheets compatibility | $750 | A separate edition, the differences documented rather than glossed, and an import guide | `docs/COMPATIBILITY.md`, `Google_Sheets_Setup.txt` | **The import itself, on a real Google account** |
 | Customer documentation | $750 | READ_ME_FIRST (2pp), START_HERE (5pp), FAQ, change log, plus in-workbook guidance on 78 columns | `dist/documents/` | — |
 | QA and device testing | $1,000 | 40 structural tests, 13 scenarios with 50 checks recalculated and read back, an every-sheet visual pass | `npm test`, `dist/QA_REPORT.md`, `docs/COMPATIBILITY.md` | **Excel on Windows and Mac; the two mobile apps** |
+| Canva and print pack | — | Nine printable pages in A4 and US Letter, the drawings as SVG and transparent PNG, a brand kit, and instructions that say what Canva can and cannot do | `src/documents/canva-pack.js` | The Canva import, run once in a real account |
 | Etsy launch assets | $700 | Listing copy with three title options, a ten-image shot list, the packaged folder structure, checksums, and the change log | `Etsy_Listing_Copy.txt`, `Mockup_Shot_List.txt`, `dist/release/` | Photography, and the seller's own review of every claim |
 | Contingency and refinement | $300 | Not drawn on | — | Held for whatever the Excel and Sheets passes turn up |
 | **Total** | **$10,000** | | | |
@@ -56,6 +57,30 @@ loses the whole editorial character. Shipping Georgia means every buyer sees wha
 was designed. The upgrade is one line in START HERE for anyone who owns the
 other face.
 
+**Blush, plum and gold, over the specification's evergreen.** §2.1 says the
+product must not become pink. The seller asked for exactly that, so the palette
+was rebuilt — and the specification's actual worry, which is cheapness rather
+than the hue, was answered on its own terms. The pink is a near-white field, not
+a saturated fill. Gold is only ever a line: rules, dividers, a 2pt edge, the
+drawings. There is at most one drawing per page. And rather than judge the
+result by eye, `tests/palette.test.mjs` measures every text-on-fill pairing and
+every conditional-format state against WCAG AA and fails the build below 4.5:1.
+The lowest pairing in the shipped palette is 5.16:1.
+
+**The wildflowers are generated from geometry.** `src/lib/wildflowers.js` builds
+petals, bells, seed heads, leaves and stems from parameters rather than storing
+path data, so a sprig can be rescaled, recoloured or re-weighted without being
+redrawn. They render to transparent PNG at three times their placed size for the
+workbook, and stay vector in the PDFs. `npm run art` regenerates them; the output
+is committed so a workbook build still needs nothing but Node.
+
+**Canva gets a printable pack, not a conversion.** Canva has no formulas, so the
+workbook cannot run there and no conversion would change it. Claiming otherwise
+would be a compatibility claim that cannot be met. The nearest genuinely useful
+thing is a beautiful printed page, so the pack is nine write-on pages in both
+paper sizes, plus the drawings and a brand kit — and the instructions say the
+limit plainly instead of letting a buyer discover it.
+
 **Example budget figures on MASTER BUDGET.** Without them the shipped dashboard
 reports twelve categories over a budget of nothing — technically correct, and a
 terrible first impression. The twelve figures are amber, and every one carries
@@ -76,6 +101,8 @@ the shops, and START HERE says how to clear it.
    on its first page. It has not been seen by a lawyer.
 4. ~~The seller name.~~ **Done** — Mlissia, set in `src/config.js` and carried
    through the workbook, the PDFs, the listing copy and the file metadata.
+4b. **The Canva import**, run once in a real Canva account, with the
+   instructions corrected to match what is actually seen.
 5. **The ™ on the product name** — only usable if the seller is entitled to it
    where they trade.
 6. **Every compatibility and benefit claim in the listing copy**, checked against
@@ -85,8 +112,9 @@ the shops, and START HERE says how to clear it.
 ## Regenerating any of this
 
 ```
+npm run art         the wildflower drawings (needs Chromium; output committed)
 npm run build       the two workbooks
-npm test            40 structural tests
+npm test            45 structural and palette tests
 npm run qa          13 scenarios, recalculated and checked
 npm run documents   the three PDFs and the text assets
 npm run package     the buyer folder, checksums and the zip

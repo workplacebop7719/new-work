@@ -14,7 +14,8 @@ it (PRD §13.3: do not claim compatibility that was not tested).
 | Formula correctness | 13 scenarios built through the real generator, recalculated by LibreOffice Calc, and read back cell by cell (`npm run qa`) | 50 of 50 checks pass |
 | Budget reconciliation | Every module's planned and actual totals summed independently and compared with MASTER BUDGET | Exact to the cent, at empty, sample and maximum-row data |
 | Formula errors | Every calculated cell in the recalculated workbook scanned for `#REF!`, `#DIV/0!`, `#VALUE!`, `#NAME?`, `#N/A`, `#NUM!` | None, in any scenario |
-| Structure | 40 inspection tests over the built files: sheet inventory and order, freeze panes, filters, print set-up, locking, dropdown targets, defined names, number formats, notes, example marking, capacity, charts (`npm test`) | All pass |
+| Structure | 45 inspection tests over the built files: sheet inventory and order, freeze panes, filters, print set-up, locking, dropdown targets, defined names, number formats, notes, example marking, capacity, charts (`npm test`) | All pass |
+| Colour contrast | Every text-on-fill pairing the sheets produce, and every conditional-format state, measured against WCAG AA at 4.5:1 by a test that fails the build | All pass; lowest is 5.16:1 |
 | Unsupported functions | Every formula scanned for `INDIRECT`, `OFFSET`, `XLOOKUP`, `FILTER`, `SORTBY`, `UNIQUE`, `LAMBDA`, `LET`, `TEXTJOIN`, whole-column ranges and external links | None present; the test fails the build if any appear |
 | Visual state | Every sheet rendered to PDF and inspected at full size for clipping, overlap, unreadable contrast, misleading charts and blank-row artefacts | Corrected and re-rendered until clean |
 | Blank-row behaviour | Row 80 of every tracker checked for stray zeros, `FALSE` and January-1900 dates | Clean; only hidden helper columns hold a value, which is what QUALITY CHECK sums |
@@ -31,6 +32,24 @@ right. It does not prove how Excel renders a chart or handles protection.
 | Google Sheets import | No Google account on the build machine. The Sheets edition is prepared for the import and the known differences are documented, but the import itself has not been run | The seller, before publishing |
 | Excel and Google Sheets mobile apps | The listing should say what a small screen is like | The seller |
 | Apple Numbers, LibreOffice, WPS | Deliberately out of scope. The listing says they are not supported | — |
+| Canva | Out of scope for the workbook, and permanently so — see below | — |
+
+## Canva
+
+Canva has no spreadsheet engine. It holds no formulas, no dropdowns and no
+cross-sheet references, so the workbook cannot run there and no amount of
+conversion would change that. Saying otherwise in a listing would be a
+compatibility claim that cannot be met.
+
+What Canva does well is a printed page, so that is what the pack contains: nine
+write-on pages in A4 and US Letter, in the same palette and with the same
+drawings, which import into Canva as an editable design. Alongside them are the
+wildflowers as SVG and transparent PNG, and a brand kit naming the exact
+colours and the Canva substitutes for Georgia and Aptos.
+
+The buyer is told all of this in `Canva_Setup.txt` and in the FAQ, in those
+words. The one behaviour to expect is that Canva re-flows text on import and
+substitutes fonts it does not have.
 
 ## Differences between the two editions
 
@@ -63,6 +82,14 @@ capacity, same example data. It is not a reduced version.
   substituted for whatever the machine feels like, usually a sans, and the whole
   editorial character goes. Georgia is on every Windows and Mac. START HERE
   explains how to swap in Cormorant Garamond if you own it.
+- **The wildflowers are generated, not drawn by hand.** Stems, petals, bells,
+  seed heads and leaves are built from geometry in `src/lib/wildflowers.js`, so
+  a sprig can be rescaled or recoloured without being redrawn. They go into the
+  workbook as transparent PNG at three times their placed size, and into the
+  PDFs as vector.
+- **One drawing part per sheet.** A worksheet may hold exactly one. The
+  dashboard's holds both charts and its sprig together, which is why the chart
+  injector places that one rather than ExcelJS.
 - **Text state beside every colour.** A cell says `OVER BUDGET`, not just red.
 
 ## Performance

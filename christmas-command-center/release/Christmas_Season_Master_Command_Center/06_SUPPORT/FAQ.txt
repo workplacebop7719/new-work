@@ -66,10 +66,37 @@ Which file do I use?
 Are the sheets protected in Google Sheets?
   No. Google Sheets does not import Excel's protection, so that edition ships
   unprotected on purpose. The colour key tells you which cells calculate
-  themselves: pale green ones do.
+  themselves: grey ones do.
 
 My charts look empty.
   Give them a moment on first open while Sheets recalculates, then reload.
+
+--------------------------------------------------------------------------
+CANVA AND THE PRINTED PAGES
+--------------------------------------------------------------------------
+
+Can I open the workbook in Canva?
+  No, and nobody can. Canva is a design tool with no formulas in it — it cannot
+  add up a column, so a workbook that calculates cannot run there. Use Excel or
+  Google Sheets for the workbook.
+
+What can I do in Canva, then?
+  The nine printable pages, in folder 04. Create a design, Import file, choose
+  the PDF, and Canva opens it as an editable design. Change the year, the
+  headings, the row labels — anything. Then Share, Download, PDF Print.
+
+The fonts changed when I imported it.
+  Canva substitutes anything it does not have. BRAND_KIT.txt names what to pick
+  instead: Playfair Display or Lora for the headings, Inter or Open Sans for
+  the rest.
+
+Can I use the wildflower drawings in my own designs?
+  Yes, in your own designs, for your own use. Upload the SVG files rather than
+  the PNGs wherever Canva allows — they stay sharp at any size. They are not
+  for resale on their own.
+
+Which page should I print if I only print one?
+  The gift list. It is the one that ends up on the fridge.
 
 --------------------------------------------------------------------------
 THE LICENCE

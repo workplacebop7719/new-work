@@ -7,7 +7,7 @@
  * here rather than a formatting edit in eight places (PRD §11.1).
  */
 
-/** A cell the buyer fills in. Cream fill, unlocked. */
+/** A cell the buyer fills in. Blush-pink fill, unlocked. */
 export const input = (key, header, opts = {}) => ({ key, header, kind: 'input', type: 'text', width: 16, ...opts });
 
 /**

@@ -30,6 +30,9 @@ Christmas usually lives in eleven places at once: a note on your phone, three
 browser tabs, a paper list in the kitchen drawer, and a nagging feeling that
 you have already bought your father a scarf. This is one place instead.
 
+Set in the palest blush pink, deep plum and antique gold, with wildflowers
+drawn in a single fine line. Nothing shouts.
+
 The Christmas Season Master Command Center™ is a 35-sheet workbook for the whole season — the gifts, the
 budget, the deliveries, the table, the guests, the traditions, and the notes
 you will want next September. Every number on the dashboard is calculated from
@@ -78,11 +81,15 @@ WHAT YOU RECEIVE
 
 • Christmas_Master_Command_Center_Excel.xlsx — the Excel edition
 • Christmas_Master_Command_Center_Google_Sheets.xlsx — prepared for Sheets
+• A nine-page printable pack, in A4 and US Letter — cover, the season on one
+  page, gift list, budget, menu, guest list, December on one page, cards to
+  send, notes for next year
+• The three wildflower drawings, as SVG and as transparent PNG
+• A brand kit with the exact colours and fonts
 • START_HERE.pdf — an illustrated guide to setting up and using it
 • READ_ME_FIRST.pdf — opening the files, and what works where
 • TERMS_OF_USE.pdf — your licence
-• FAQ.txt and Change_Log.txt
-• Google Sheets import instructions
+• FAQ.txt, Change_Log.txt, and the Google Sheets and Canva instructions
 
 This is a digital download. Nothing is posted to you.
 
@@ -93,6 +100,9 @@ COMPATIBILITY  (verify each line yourself before publishing)
 • Built and tested for Microsoft Excel on Windows and Mac.
 • A separate edition is prepared for Google Sheets, with the differences listed
   in the included instructions.
+• The printable pack opens in Canva, where you can change the wording and print
+  it. Canva has no formulas, so the workbook itself does not run there — the
+  included instructions say so plainly.
 • Usable on a phone or tablet in the Excel or Google Sheets app, though setting
   it up on a small screen is hard work — do that on a computer.
 • Not tested in Apple Numbers, LibreOffice or WPS Office.
@@ -103,7 +113,7 @@ FREQUENTLY ASKED, ON THE LISTING
 --------------------------------------------------------------------------
 
 Do I need to be good at spreadsheets?
-No. You type in the cream cells and read the green ones. The guide is six steps
+No. You type in the pink cells and read the grey ones. The guide is six steps
 long.
 
 Can I change it?
@@ -122,13 +132,19 @@ Is anything preloaded that I would have to delete?
 Three clearly marked example rows on each sheet, and example budget figures on
 the budget sheet. Everything marked EXAMPLE — DELETE ME can go.
 
+Can I use it in Canva?
+The printable pages, yes — upload the PDF and change whatever you like. The
+workbook, no: Canva has no formulas, so nothing in it could calculate. Use
+Excel or Google Sheets for that.
+
 --------------------------------------------------------------------------
 TAGS  (13 allowed; check each against Etsy search yourself)
 --------------------------------------------------------------------------
 
 christmas planner, christmas spreadsheet, gift tracker, holiday budget,
 christmas organizer, excel planner, google sheets planner, hosting planner,
-christmas budget, gift list, holiday planner, digital planner, editable planner
+pink christmas planner, gift list, printable planner, digital planner,
+editable planner
 
 --------------------------------------------------------------------------
 DO NOT PUBLISH WITHOUT

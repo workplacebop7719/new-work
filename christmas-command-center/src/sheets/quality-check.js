@@ -95,7 +95,7 @@ export function renderQualityCheck(ws, ctx, specs) {
       exceptionCells.push(`C${row}`);
       const link = ws.getRow(row).getCell(4);
       link.value = { text: spec.name, hyperlink: `#'${spec.name}'!A1` };
-      link.font = { name: UI_FONT, size: 9, color: { argb: TOKENS.PINE_2 } };
+      link.font = { name: UI_FONT, size: 9, color: { argb: TOKENS.PLUM_2 } };
       bodyText(ws, { row, col: 7, text: qa.detail, size: 9, colour: TOKENS.MUTED, wrap: true });
       for (let c = 2; c <= 7; c += 1) ws.getRow(row).getCell(c).border = { bottom: thin() };
       void cell;
@@ -164,7 +164,7 @@ export function renderQualityCheck(ws, ctx, specs) {
     exceptionCells.push(`C${row}`);
     const link = ws.getRow(row).getCell(4);
     link.value = { text: item.sheet, hyperlink: `#'${item.sheet}'!A1` };
-    link.font = { name: UI_FONT, size: 9, color: { argb: TOKENS.PINE_2 } };
+    link.font = { name: UI_FONT, size: 9, color: { argb: TOKENS.PLUM_2 } };
     bodyText(ws, { row, col: 7, text: item.detail, size: 9, colour: TOKENS.MUTED, wrap: true });
     for (let c = 2; c <= 7; c += 1) ws.getRow(row).getCell(c).border = { bottom: thin() };
     row += 1;
@@ -191,10 +191,10 @@ export function renderQualityCheck(ws, ctx, specs) {
   /* --- Total ---------------------------------------------------------- */
   const totalRow = row;
   const reconMismatch = reconRows.map((r) => `IF(ABS(E${r})<0.005,0,1)`).join('+');
-  bodyText(ws, { row: totalRow, col: 2, text: 'Everything above, added up', size: 12, bold: true, colour: TOKENS.PINE });
+  bodyText(ws, { row: totalRow, col: 2, text: 'Everything above, added up', size: 12, bold: true, colour: TOKENS.PLUM });
   const totalCell = ws.getRow(totalRow).getCell(3);
   totalCell.value = { formula: `${reconMismatch}+${exceptionCells.join('+')}` };
-  totalCell.font = { name: DISPLAY_FONT, size: 20, bold: true, color: { argb: TOKENS.OXBLOOD } };
+  totalCell.font = { name: DISPLAY_FONT, size: 20, bold: true, color: { argb: TOKENS.ROSE } };
   totalCell.alignment = { horizontal: 'right', vertical: 'middle' };
   totalCell.protection = { locked: true };
   bodyText(ws, { row: totalRow, col: 7, text: 'This is the number the dashboard shows. Zero means every figure in the workbook traces back to a row you can open.', size: 10, wrap: true, colour: TOKENS.INK });
@@ -216,7 +216,7 @@ function setNumber(ws, row, col, formula, numFmt) {
   const cell = ws.getRow(row).getCell(col);
   cell.value = { formula };
   cell.numFmt = numFmt ?? '#,##0;-#,##0;0';
-  cell.font = { name: UI_FONT, size: 11, bold: true, color: { argb: TOKENS.PINE } };
+  cell.font = { name: UI_FONT, size: 11, bold: true, color: { argb: TOKENS.PLUM } };
   cell.alignment = { horizontal: 'right', vertical: 'middle' };
   cell.fill = fill(TOKENS.MIST);
   cell.protection = { locked: true };
@@ -226,7 +226,7 @@ function setNumber(ws, row, col, formula, numFmt) {
 function setStatus(ws, row, col, formula) {
   const cell = ws.getRow(row).getCell(col);
   cell.value = { formula };
-  cell.font = { name: UI_FONT, size: 10, bold: true, color: { argb: TOKENS.PINE_2 } };
+  cell.font = { name: UI_FONT, size: 10, bold: true, color: { argb: TOKENS.PLUM_2 } };
   cell.alignment = { horizontal: 'left', vertical: 'middle' };
   cell.protection = { locked: true };
   return cell;

@@ -36,75 +36,102 @@ const S = SHEETS;
 /* ================================================================== *
  * COVER
  * ================================================================== */
-export function renderCover(ws, ctx) {
-  // Sized to fill one portrait page at full size: about 97 characters across
-  // and 36 rows down, so nothing is scaled and the ink runs to the edges.
+export function renderCover(ws, ctx, art = {}) {
+  /*
+   * A light field rather than a dark block: the product is super-light pink,
+   * and the cover is where that has to be established. Depth comes from the
+   * plum type and the gold hairlines, not from a slab of colour.
+   *
+   * Sized to fill one portrait page at full size — about 97 characters across
+   * and 36 rows down — so nothing is scaled.
+   */
   const width = 11;
   ws.getColumn(1).width = 3;
   for (let c = 2; c <= width; c += 1) ws.getColumn(c).width = 9.4;
   for (let r = 1; r <= 36; r += 1) {
     const row = ws.getRow(r);
     row.height = 22;
-    for (let c = 1; c <= width; c += 1) row.getCell(c).fill = fill(TOKENS.PINE);
+    for (let c = 1; c <= width; c += 1) row.getCell(c).fill = fill(TOKENS.BLUSH);
   }
 
-  ws.getRow(6).height = 26;
-  bodyText(ws, { row: 6, col: 2, text: 'A PRIVATE CHRISTMAS ATELIER', size: 10, colour: TOKENS.CHAMPAGNE })
-    .alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+  const goldRule = (row, from = 2, to = 6) => {
+    for (let c = from; c <= to; c += 1) {
+      ws.getRow(row).getCell(c).border = { bottom: thin(TOKENS.GOLD) };
+    }
+  };
 
-  for (const [row, text, size] of [[9, 'The Christmas Season', 34], [12, 'Master Command Center', 34]]) {
+  goldRule(4, 2, width - 1);
+
+  ws.getRow(6).height = 24;
+  const eyebrow = span(ws, 6, 2, 6);
+  eyebrow.value = 'A  P R I V A T E   C H R I S T M A S   A T E L I E R';
+  eyebrow.font = { name: UI_FONT, size: 9, bold: true, color: { argb: TOKENS.GOLD } };
+  eyebrow.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+
+  for (const [row, text] of [[9, 'The Christmas Season'], [12, 'Master Command Center']]) {
     ws.getRow(row).height = 44;
-    const cell = span(ws, row, 2, width);
+    const cell = span(ws, row, 2, 8);
     cell.value = text;
-    cell.font = { name: DISPLAY_FONT, size, bold: true, color: { argb: TOKENS.IVORY } };
+    cell.font = { name: DISPLAY_FONT, size: 26, bold: true, color: { argb: TOKENS.PLUM } };
     cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
   }
 
-  ws.getRow(15).height = 8;
-  for (let c = 2; c <= 6; c += 1) ws.getRow(15).getCell(c).border = { bottom: thin(TOKENS.CHAMPAGNE) };
+  ws.getRow(15).height = 10;
+  goldRule(15, 2, 5);
 
-  ws.getRow(17).height = 24;
-  const promise = span(ws, 17, 2, width);
+  ws.getRow(17).height = 26;
+  const promise = span(ws, 17, 2, 9);
   promise.value = PRODUCT.promise;
-  promise.font = { name: DISPLAY_FONT, size: 15, italic: true, color: { argb: TOKENS.IVORY } };
+  promise.font = { name: DISPLAY_FONT, size: 12, italic: true, color: { argb: TOKENS.PLUM_2 } };
   promise.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
 
-  const welcome = span(ws, 20, 2, width);
+  const welcome = span(ws, 20, 2, 7);
   welcome.value = { formula: 'IF(Set_Household="","Welcome.","For the "&Set_Household&" household.")' };
-  welcome.font = { name: UI_FONT, size: 11, color: { argb: TOKENS.CHAMPAGNE } };
+  welcome.font = { name: UI_FONT, size: 11, color: { argb: TOKENS.MUTED } };
   welcome.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
 
-  const season = span(ws, 22, 2, width);
-  season.value = { formula: '"Christmas "&Set_Year&"  ·  "&MAX(0,Set_ChristmasDate-TODAY())&" days to go"' };
-  season.font = { name: UI_FONT, size: 11, color: { argb: TOKENS.IVORY } };
+  const season = span(ws, 22, 2, 7);
+  season.value = { formula: '"Christmas "&Set_Year&"   ·   "&MAX(0,Set_ChristmasDate-TODAY())&" days to go"' };
+  season.font = { name: UI_FONT, size: 11, bold: true, color: { argb: TOKENS.PLUM } };
   season.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
 
-  const start = span(ws, 25, 2, width);
+  const start = span(ws, 25, 2, 7);
   start.value = { text: 'Begin here  →  START HERE', hyperlink: `#'${S.START}'!A1` };
-  start.font = { name: UI_FONT, size: 12, bold: true, color: { argb: TOKENS.CHAMPAGNE } };
+  start.font = { name: UI_FONT, size: 12, bold: true, color: { argb: TOKENS.ROSE } };
   start.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
 
-  const dash = span(ws, 26, 2, width);
+  const dash = span(ws, 26, 2, 7);
   dash.value = { text: 'Straight to the dashboard  →  DASHBOARD', hyperlink: `#'${S.DASHBOARD}'!A1` };
-  dash.font = { name: UI_FONT, size: 11, color: { argb: TOKENS.CHAMPAGNE } };
+  dash.font = { name: UI_FONT, size: 11, color: { argb: TOKENS.PLUM_2 } };
   dash.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
 
+  goldRule(30, 2, width - 1);
+
   for (const [row, text] of [
-    [32, { formula: `"Edition "&Set_Edition&"  ·  ${ctx.edition.label}"` }],
-    [33, `${PRODUCT.seller} · For your own household. Not for resale, redistribution or sharing.`],
+    [32, { formula: `"Edition "&Set_Edition&"   ·   ${ctx.edition.label}"` }],
+    [33, `${PRODUCT.seller}  ·  For your own household. Not for resale, redistribution or sharing.`],
     [34, 'See TERMS OF USE, included with your download, for the full licence.'],
   ]) {
-    const cell = span(ws, row, 2, width);
+    const cell = span(ws, row, 2, 8);
     cell.value = text;
     cell.font = { name: UI_FONT, size: 9, color: { argb: TOKENS.MUTED } };
     cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+  }
+
+  // The tall sprig stands in the right-hand margin, clear of every line of type.
+  if (art.sprig !== undefined) {
+    ws.addImage(art.sprig, {
+      tl: { col: 8.15, row: 17.6 },
+      ext: { width: 150, height: 430 },
+      editAs: 'oneCell',
+    });
   }
 
   ws.views = [{ showGridLines: false, zoomScale: 100 }];
   ws.pageSetup = { orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 1,
     printArea: `A$1:${String.fromCharCode(64 + width)}$36`,
     margins: { left: 0.5, right: 0.5, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 } };
-  ws.properties.tabColor = { argb: TOKENS.OXBLOOD };
+  ws.properties.tabColor = { argb: TOKENS.ROSE };
   lockAll(ws, 36, width);
 }
 
@@ -121,10 +148,10 @@ const START_STEPS = [
 ];
 
 const COLOUR_KEY = [
-  [TOKENS.IVORY, 'Cream', 'Yours to fill in.'],
-  [TOKENS.MIST, 'Pale green', 'Calculates itself. Locked so it cannot be typed over by accident.'],
+  [TOKENS.BLUSH, 'Blush pink', 'Yours to fill in.'],
+  [TOKENS.MIST, 'Soft grey', 'Calculates itself. Locked so it cannot be typed over by accident.'],
   [TOKENS.SOFT_AMBER, 'Amber', 'Either an example row to delete, or something asking for attention.'],
-  [TOKENS.SOFT_ROSE, 'Rose', 'Over budget, overdue or late. Read the word in the cell — the colour is never the whole story.'],
+  [TOKENS.SOFT_ROSE, 'Deep pink', 'Over budget, overdue or late. Read the word in the cell — the colour is never the whole story.'],
 ];
 
 const HABITS = [
@@ -142,7 +169,7 @@ const RESET_STEPS = [
   'Save this year’s workbook under its own name — “Christmas 2026”, and leave it alone.',
   'Open your clean master copy, or copy the figures below into ANNUAL ARCHIVE before you clear anything.',
   'From MASTER BUDGET copy the Budget and Actual totals; from the dashboard, gifts given and guests hosted.',
-  'Delete the contents of the cream cells on each tracker. Do not delete rows, and do not touch the pale green columns.',
+  'Delete the contents of the pink cells on each tracker. Do not delete rows, and do not touch the grey columns.',
   'Update the year on SETTINGS. The countdown, the calendar and every label follow it.',
   'Read NEXT YEAR NOTES before you plan anything. That is what it was for.',
 ];
@@ -154,7 +181,7 @@ export function renderStartHere(ws, ctx) {
   sheetIntro(ws, { intro: 'Six steps, ten minutes, and the rest of the season has somewhere to live.', columnCount: width });
   legendRow(ws, { columnCount: width, note: ' ' });
   ws.views = [{ showGridLines: false, zoomScale: 100 }];
-  ws.properties.tabColor = { argb: TOKENS.CHAMPAGNE };
+  ws.properties.tabColor = { argb: TOKENS.GOLD };
 
   let row = 6;
   sectionHeading(ws, { row, col: 2, columnCount: width, text: 'Setting up' });
@@ -162,9 +189,9 @@ export function renderStartHere(ws, ctx) {
   for (const [n, heading, detail] of START_STEPS) {
     const numCell = ws.getRow(row).getCell(2);
     numCell.value = n;
-    numCell.font = { name: DISPLAY_FONT, size: 18, bold: true, color: { argb: TOKENS.CHAMPAGNE } };
+    numCell.font = { name: DISPLAY_FONT, size: 18, bold: true, color: { argb: TOKENS.GOLD } };
     numCell.alignment = { vertical: 'top', horizontal: 'left' };
-    paragraph(ws, { row, col: 3, lastCol: width, text: heading, size: 11, bold: true, colour: TOKENS.PINE, minHeight: 18 });
+    paragraph(ws, { row, col: 3, lastCol: width, text: heading, size: 11, bold: true, colour: TOKENS.PLUM, minHeight: 18 });
     paragraph(ws, { row: row + 1, col: 3, lastCol: width, text: detail, size: 10, colour: TOKENS.INK });
     row += 3;
   }
@@ -176,7 +203,7 @@ export function renderStartHere(ws, ctx) {
     const cell = ws.getRow(row).getCell(2);
     cell.fill = fill(swatch);
     cell.border = { top: thin(), left: thin(), bottom: thin(), right: thin() };
-    bodyText(ws, { row, col: 3, text: name, size: 10, bold: true, colour: TOKENS.PINE });
+    bodyText(ws, { row, col: 3, text: name, size: 10, bold: true, colour: TOKENS.PLUM });
     paragraph(ws, { row, col: PAGE.BODY_COL, lastCol: width, text: meaning, size: 10 });
     row += 1;
   }
@@ -188,7 +215,7 @@ export function renderStartHere(ws, ctx) {
   sectionHeading(ws, { row, col: 2, columnCount: width, text: 'Working in the workbook' });
   row += 2;
   for (const [term, detail] of HABITS) {
-    bodyText(ws, { row, col: 2, text: term, size: 10, bold: true, colour: TOKENS.PINE });
+    bodyText(ws, { row, col: 2, text: term, size: 10, bold: true, colour: TOKENS.PLUM });
     ws.mergeCells(row, 2, row, 3);
     paragraph(ws, { row, col: PAGE.BODY_COL, lastCol: width, text: detail, size: 10 });
     row += 1;
@@ -198,7 +225,7 @@ export function renderStartHere(ws, ctx) {
   sectionHeading(ws, { row, col: 2, columnCount: width, text: 'Putting the year away' });
   row += 2;
   RESET_STEPS.forEach((step, i) => {
-    bodyText(ws, { row, col: 2, text: `${i + 1}.`, size: 10, bold: true, colour: TOKENS.CHAMPAGNE });
+    bodyText(ws, { row, col: 2, text: `${i + 1}.`, size: 10, bold: true, colour: TOKENS.GOLD });
     paragraph(ws, { row, col: 3, lastCol: width, text: step, size: 10 });
     row += 1;
   });
@@ -233,7 +260,7 @@ export function renderSettings(ws, ctx) {
   const bandWidth = navStrip(ws, { links: ctx.navLinks, columnCount: width, currentSheet: S.SETTINGS }).lastColumn;
   sheetTitle(ws, { title: 'Settings', columnCount: bandWidth });
   sheetIntro(ws, { intro: 'Nine decisions the whole workbook reads from. Set them once, at the start of the season.', columnCount: bandWidth });
-  legendRow(ws, { columnCount: bandWidth, note: 'Cream cells are yours · the edition below is fixed · everything else in the workbook follows these values' });
+  legendRow(ws, { columnCount: bandWidth, note: 'Pink cells are yours · the edition below is fixed · everything else in the workbook follows these values' });
 
   const names = {};
   SETTINGS_FIELDS.forEach((field, i) => {
@@ -268,7 +295,7 @@ export function renderSettings(ws, ctx) {
   ];
   explain.forEach(([term, detail], i) => {
     const row = afterFields + 2 + i;
-    bodyText(ws, { row, col: SETTINGS_LAYOUT.LABEL_COL, text: term, size: 10, bold: true, colour: TOKENS.PINE })
+    bodyText(ws, { row, col: SETTINGS_LAYOUT.LABEL_COL, text: term, size: 10, bold: true, colour: TOKENS.PLUM })
       .alignment = { vertical: 'top', horizontal: 'right' };
     paragraph(ws, {
       row, col: SETTINGS_LAYOUT.VALUE_COL, lastCol: width, text: detail, size: 10,
@@ -278,7 +305,7 @@ export function renderSettings(ws, ctx) {
   ws.views = [{ showGridLines: false, zoomScale: 100, state: 'frozen', ySplit: LAYOUT.HEADER_ROW }];
   ws.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 1,
     margins: { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 } };
-  ws.properties.tabColor = { argb: TOKENS.CHAMPAGNE };
+  ws.properties.tabColor = { argb: TOKENS.GOLD };
   lockAll(ws, afterFields + 10, Math.max(width, bandWidth), names);
   return names;
 }
@@ -318,7 +345,7 @@ export function renderDashboard(ws, ctx) {
   navStrip(ws, { links: ctx.navLinks, columnCount: W, currentSheet: S.DASHBOARD });
   sheetTitle(ws, { title: 'Dashboard', columnCount: W });
   const introRow = ws.getRow(LAYOUT.INTRO_ROW);
-  for (let c = 1; c <= W; c += 1) introRow.getCell(c).fill = fill(TOKENS.IVORY);
+  for (let c = 1; c <= W; c += 1) introRow.getCell(c).fill = fill(TOKENS.BLUSH);
   introRow.height = 18;
   const introCell = introRow.getCell(2);
   introCell.value = { formula: 'IF(Set_Household="","Christmas "&Set_Year&" — where everything stands today.","Christmas "&Set_Year&" for the "&Set_Household&" household — where everything stands today.")' };
@@ -342,25 +369,25 @@ export function renderDashboard(ws, ctx) {
 
   const cards1 = [
     { label: 'DAYS TO CHRISTMAS', formula: 'MAX(0,Set_ChristmasDate-TODAY())', format: FORMATS.integer,
-      note: { formula: '"Christmas falls on "&TEXT(Set_ChristmasDate,"dddd d mmmm")' }, accent: TOKENS.OXBLOOD },
+      note: { formula: '"Christmas falls on "&TEXT(Set_ChristmasDate,"dddd d mmmm")' }, accent: TOKENS.ROSE },
     { label: 'BUDGET SET', formula: budgetTotal, format: money,
-      note: 'The total of every category on MASTER BUDGET.', accent: TOKENS.PINE },
+      note: 'The total of every category on MASTER BUDGET.', accent: TOKENS.PLUM },
     { label: 'SPENT SO FAR', formula: actualTotal, format: money,
-      note: { formula: `"Planned, including what you have not bought yet: "&TEXT(${plannedTotal},"${money.replace(/"/g, '""')}")` }, accent: TOKENS.PINE },
+      note: { formula: `"Planned, including what you have not bought yet: "&TEXT(${plannedTotal},"${money.replace(/"/g, '""')}")` }, accent: TOKENS.PLUM },
     { label: 'REMAINING', formula: `${budgetTotal}-${actualTotal}`, format: money,
       note: { formula: `IF(${budgetTotal}=0,"No budget set yet.",IF(${budgetTotal}-${actualTotal}<0,"OVER BUDGET — see MASTER BUDGET.","Against the budget you set."))` },
-      accent: TOKENS.OXBLOOD },
+      accent: TOKENS.ROSE },
   ];
   const cards2 = [
     { label: 'GIFTS CHOSEN', formula: `IF(${activeGifts}=0,0,${purchasedGifts}/${activeGifts})`, format: FORMATS.percent,
-      note: { formula: `IF(${activeGifts}=0,"Not started.",${purchasedGifts}&" of "&${activeGifts}&" bought")` }, accent: TOKENS.PINE_2 },
+      note: { formula: `IF(${activeGifts}=0,"Not started.",${purchasedGifts}&" of "&${activeGifts}&" bought")` }, accent: TOKENS.PLUM_2 },
     { label: 'WRAPPED', formula: `IF(${physicalPurchased}=0,0,${wrappedGifts}/${physicalPurchased})`, format: FORMATS.percent,
       note: { formula: `IF(${physicalPurchased}=0,"Nothing to wrap yet.",${wrappedGifts}&" of "&${physicalPurchased}&" — digital and experience gifts are not counted")` },
-      accent: TOKENS.PINE_2 },
+      accent: TOKENS.PLUM_2 },
     { label: 'DELIVERED', formula: `IF(${eligibleOrders}=0,0,${arrivedOrders}/${eligibleOrders})`, format: FORMATS.percent,
-      note: { formula: `IF(${eligibleOrders}=0,"No orders yet.",${eligibleOrders}-${arrivedOrders}&" still on their way")` }, accent: TOKENS.PINE_2 },
+      note: { formula: `IF(${eligibleOrders}=0,"No orders yet.",${eligibleOrders}-${arrivedOrders}&" still on their way")` }, accent: TOKENS.PLUM_2 },
     { label: 'ON THE LIST', formula: `IF(${openTasks}+${doneTasks}=0,0,${doneTasks}/(${openTasks}+${doneTasks}))`, format: FORMATS.percent,
-      note: { formula: `IF(${openTasks}+${doneTasks}=0,"Nothing in the calendar yet.",${openTasks}&" still open")` }, accent: TOKENS.PINE_2 },
+      note: { formula: `IF(${openTasks}+${doneTasks}=0,"Nothing in the calendar yet.",${openTasks}&" still open")` }, accent: TOKENS.PLUM_2 },
   ];
 
   const cols = [2, 6, 10, 14];
@@ -393,7 +420,7 @@ export function renderDashboard(ws, ctx) {
     const count = ws.getRow(row).getCell(2);
     count.value = { formula: item.count };
     count.numFmt = FORMATS.integer;
-    count.font = { name: DISPLAY_FONT, size: 14, bold: true, color: { argb: TOKENS.OXBLOOD } };
+    count.font = { name: DISPLAY_FONT, size: 14, bold: true, color: { argb: TOKENS.ROSE } };
     count.alignment = { vertical: 'middle', horizontal: 'right' };
     count.protection = { locked: true };
     const label = ws.getRow(row).getCell(3);
@@ -402,7 +429,7 @@ export function renderDashboard(ws, ctx) {
     label.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
     const link = ws.getRow(row).getCell(7);
     link.value = { text: item.sheet, hyperlink: `#'${item.sheet}'!A1` };
-    link.font = { name: UI_FONT, size: 9, color: { argb: TOKENS.PINE_2 } };
+    link.font = { name: UI_FONT, size: 9, color: { argb: TOKENS.PLUM_2 } };
     link.alignment = { vertical: 'middle', horizontal: 'left' };
     for (let c = 2; c <= 8; c += 1) ws.getRow(row).getCell(c).border = { bottom: thin() };
   });
@@ -427,7 +454,7 @@ export function renderDashboard(ws, ctx) {
     labelCell.alignment = { vertical: 'middle', horizontal: 'left' };
     const cell = span(ws, row, 12, 16);
     cell.value = { formula };
-    cell.font = { name: UI_FONT, size: 10, color: { argb: TOKENS.PINE } };
+    cell.font = { name: UI_FONT, size: 10, color: { argb: TOKENS.PLUM } };
     cell.alignment = { vertical: 'middle', horizontal: 'left' };
     cell.protection = { locked: true };
   });
@@ -513,7 +540,7 @@ export function renderDashboard(ws, ctx) {
     horizontalCentered: true,
   };
   ws.headerFooter = { oddFooter: `&LChristmas at a glance&C&P of &N&R${PRODUCT.trademarkName}` };
-  ws.properties.tabColor = { argb: TOKENS.OXBLOOD };
+  ws.properties.tabColor = { argb: TOKENS.ROSE };
   lockAll(ws, DASH.DATA_FIRST + DASH.DATA_ROWS + 2, W);
 }
 
@@ -578,7 +605,7 @@ export function renderIndex(ws, ctx, inventory) {
     number.font = { name: UI_FONT, size: 9, color: { argb: TOKENS.MUTED } };
     const link = ws.getRow(row).getCell(3);
     link.value = { text: entry.name, hyperlink: `#'${entry.name}'!A1` };
-    link.font = { name: UI_FONT, size: 10, bold: true, color: { argb: TOKENS.PINE_2 } };
+    link.font = { name: UI_FONT, size: 10, bold: true, color: { argb: TOKENS.PLUM_2 } };
     ws.mergeCells(row, 4, row, 5);
     const purpose = ws.getRow(row).getCell(4);
     purpose.value = entry.purpose;
@@ -587,14 +614,14 @@ export function renderIndex(ws, ctx, inventory) {
     ws.getRow(row).height = entry.purpose.length > 52 ? 26 : 17;
     const visibility = ws.getRow(row).getCell(6);
     visibility.value = OPTIONAL_SHEETS.includes(entry.name) ? 'Optional' : entry.support ? 'Support' : 'Visible';
-    visibility.font = { name: UI_FONT, size: 9, color: { argb: OPTIONAL_SHEETS.includes(entry.name) ? TOKENS.CHAMPAGNE : TOKENS.MUTED } };
+    visibility.font = { name: UI_FONT, size: 9, color: { argb: OPTIONAL_SHEETS.includes(entry.name) ? TOKENS.GOLD : TOKENS.MUTED } };
     for (let c = 2; c <= 6; c += 1) ws.getRow(row).getCell(c).border = { bottom: thin() };
   });
 
   ws.views = [{ showGridLines: false, zoomScale: 100, state: 'frozen', ySplit: LAYOUT.HEADER_ROW }];
   ws.pageSetup = { orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 1,
     margins: { left: 0.5, right: 0.5, top: 0.6, bottom: 0.6, header: 0.3, footer: 0.3 } };
-  ws.properties.tabColor = { argb: TOKENS.CHAMPAGNE };
+  ws.properties.tabColor = { argb: TOKENS.GOLD };
   lockAll(ws, LAYOUT.HEADER_ROW + inventory.length + 2, Math.max(width, bandWidth));
 }
 
@@ -621,7 +648,7 @@ export function renderLists(ws, ctx) {
     values.forEach((value, j) => {
       const cell = ws.getRow(LISTS_LAYOUT.FIRST_ROW + j).getCell(col);
       cell.value = value;
-      cell.fill = fill(TOKENS.IVORY);
+      cell.fill = fill(TOKENS.BLUSH);
       cell.font = { name: UI_FONT, size: 10, color: { argb: TOKENS.INK } };
       cell.border = { bottom: thin() };
       cell.protection = { locked: false };
@@ -640,7 +667,7 @@ export function renderLists(ws, ctx) {
   ['Sheet', 'Contributes', 'Suggested category'].forEach((text, i) => headerCell(ws.getRow(mapRow + 3).getCell(2 + i), text));
   COST_MAPPING.forEach((entry, i) => {
     const row = mapRow + 4 + i;
-    bodyText(ws, { row, col: 2, text: entry.sheet, size: 10, bold: true, colour: TOKENS.PINE });
+    bodyText(ws, { row, col: 2, text: entry.sheet, size: 10, bold: true, colour: TOKENS.PLUM });
     bodyText(ws, { row, col: 3, text: entry.label, size: 10 });
     bodyText(ws, { row, col: 4, text: entry.defaultCategory, size: 10, colour: TOKENS.MUTED });
     for (let c = 2; c <= 4; c += 1) ws.getRow(row).getCell(c).border = { bottom: thin() };

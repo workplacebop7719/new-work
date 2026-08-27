@@ -1,0 +1,66 @@
+The Christmas Season Master Command Center™
+USING THIS IN CANVA
+
+--------------------------------------------------------------------------
+FIRST, THE HONEST PART
+--------------------------------------------------------------------------
+
+Canva is a design tool, not a spreadsheet. It has no formulas, no dropdowns and
+no way to add a column of numbers. The command centre — the countdown, the
+budget that reconciles, the attention board — cannot run in Canva, and nobody
+can make it. That is a limit of Canva, not of this workbook.
+
+So the pack works like this:
+
+  The workbook          Excel or Google Sheets. Everything calculates.
+  The printable pack    Canva, or straight to your printer. Beautiful pages
+                        you write on by hand.
+
+Most people use both: the workbook to keep track, and two or three printed
+pages on the kitchen wall.
+
+--------------------------------------------------------------------------
+WHAT IS IN THE CANVA FOLDER
+--------------------------------------------------------------------------
+
+Christmas_Printable_Pack_A4.pdf       Nine pages, A4
+Christmas_Printable_Pack_Letter.pdf   The same nine, US Letter
+wildflower-sprig.svg / .png           The tall drawing
+wildflower-spray.svg / .png           The wide drawing, as a divider
+wildflower-corner.svg / .png          The small sprig
+BRAND_KIT.txt                         The exact colours and fonts
+
+The nine pages: cover · the season at a glance · gift list · budget · menu ·
+guest list · December on one page · cards to send · notes for next year.
+
+--------------------------------------------------------------------------
+OPENING THE PACK IN CANVA
+--------------------------------------------------------------------------
+
+1. In Canva, choose Create a design, then Import file, and pick the PDF.
+2. Canva opens it as an editable design, one page per sheet.
+3. Change anything you like: the year, the headings, the row labels.
+4. Share, then Download, then PDF Print, to print it.
+
+Two things to expect. Canva re-flows text when it imports a PDF, so check the
+spacing on any page you edit. And it substitutes its own fonts unless you have
+Georgia and Aptos available — the brand kit below says what to pick instead.
+
+--------------------------------------------------------------------------
+THE DRAWINGS
+--------------------------------------------------------------------------
+
+Upload the SVG files rather than the PNGs wherever Canva lets you: they stay
+sharp at any size, and you can recolour them in Canva. The PNGs have
+transparent backgrounds and are there for anywhere SVG will not go.
+
+They are yours to use in your own designs. They are not for resale on their own.
+
+--------------------------------------------------------------------------
+IF YOU ONLY WANT ONE PAGE
+--------------------------------------------------------------------------
+
+Print page 3 — the gift list — and put it on the fridge. That is the page
+people actually use.
+
+Christmas 2026.

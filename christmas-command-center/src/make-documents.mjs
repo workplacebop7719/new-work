@@ -13,6 +13,8 @@ import { fileURLToPath } from 'node:url';
 
 import { readMeFirst, startHere, termsOfUse } from './documents/pages.js';
 import { etsyListingCopy, mockupShotList, changeLog, faq, sheetsSetup } from './documents/text-assets.js';
+import { canvaPack, canvaSetup, brandKit } from './documents/canva-pack.js';
+import { upcomingChristmasYear } from './build-command-center.js';
 
 const run = promisify(execFile);
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -49,10 +51,14 @@ export async function makeDocuments() {
   await mkdir(OUT, { recursive: true });
   const browser = await chromium();
 
+  const year = upcomingChristmasYear();
   const documents = [
     ['READ_ME_FIRST', readMeFirst()],
     ['START_HERE', startHere()],
     ['TERMS_OF_USE', termsOfUse()],
+    // The printable pack, in both paper sizes people actually own.
+    ['Christmas_Printable_Pack_A4', canvaPack({ year, pageSize: 'A4' })],
+    ['Christmas_Printable_Pack_Letter', canvaPack({ year, pageSize: 'Letter' })],
   ];
 
   const written = [];
@@ -70,6 +76,8 @@ export async function makeDocuments() {
     ['Change_Log.txt', changeLog()],
     ['FAQ.txt', faq()],
     ['Google_Sheets_Setup.txt', sheetsSetup()],
+    ['Canva_Setup.txt', canvaSetup({ year })],
+    ['BRAND_KIT.txt', brandKit()],
   ];
   for (const [name, text] of texts) {
     const path = join(OUT, name);

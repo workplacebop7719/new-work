@@ -21,6 +21,7 @@ const DOCS = join(DIST, 'documents');
 // The finished package lives at the project root, not under dist/. dist/ is
 // regenerable build output; release/ is the thing that gets uploaded, and it is
 // kept with the source so the deliverables are never only on one machine.
+const ART = join(ROOT, 'assets');
 const RELEASE = join(ROOT, 'release');
 const BUYER = join(RELEASE, 'Christmas_Season_Master_Command_Center');
 const SELLER = join(RELEASE, 'SELLER_ONLY');
@@ -37,10 +38,22 @@ const LAYOUT = [
     [join(DIST, EDITIONS.sheets.file), EDITIONS.sheets.file],
     [join(DOCS, 'Google_Sheets_Setup.txt'), 'Google_Sheets_Setup.txt'],
   ]],
-  ['04_LICENSE', [
+  ['04_CANVA_AND_PRINTABLE', [
+    [join(DOCS, 'Christmas_Printable_Pack_A4.pdf'), 'Christmas_Printable_Pack_A4.pdf'],
+    [join(DOCS, 'Christmas_Printable_Pack_Letter.pdf'), 'Christmas_Printable_Pack_Letter.pdf'],
+    [join(DOCS, 'Canva_Setup.txt'), 'Canva_Setup.txt'],
+    [join(DOCS, 'BRAND_KIT.txt'), 'BRAND_KIT.txt'],
+    [join(ART, 'wildflower-sprig.svg'), 'wildflower-sprig.svg'],
+    [join(ART, 'wildflower-sprig.png'), 'wildflower-sprig.png'],
+    [join(ART, 'wildflower-spray.svg'), 'wildflower-spray.svg'],
+    [join(ART, 'wildflower-spray.png'), 'wildflower-spray.png'],
+    [join(ART, 'wildflower-corner.svg'), 'wildflower-corner.svg'],
+    [join(ART, 'wildflower-corner.png'), 'wildflower-corner.png'],
+  ]],
+  ['05_LICENSE', [
     [join(DOCS, 'TERMS_OF_USE.pdf'), 'TERMS_OF_USE.pdf'],
   ]],
-  ['05_SUPPORT', [
+  ['06_SUPPORT', [
     [join(DOCS, 'FAQ.txt'), 'FAQ.txt'],
     [join(DOCS, 'Change_Log.txt'), 'Change_Log.txt'],
   ]],

@@ -335,12 +335,23 @@ for (const key of EDITION_KEYS) {
 
     const types = await zip.file('[Content_Types].xml').async('string');
     for (const chart of charts) assert.ok(types.includes(`/${chart}`), `${chart} is not declared`);
-    assert.ok(types.includes('/xl/drawings/drawing1.xml'), 'the drawing is not declared');
 
-    const drawingRels = await zip.file('xl/drawings/_rels/drawing1.xml.rels').async('string');
-    for (const chart of charts) {
-      assert.ok(drawingRels.includes(chart.split('/').pop()), `${chart} is not related to the drawing`);
+    // The dashboard's drawing is whichever one holds the charts.
+    const drawings = Object.keys(zip.files).filter((n) => /^xl\/drawings\/drawing\d+\.xml$/.test(n));
+    let chartDrawing = null;
+    for (const name of drawings) {
+      const rels = zip.file(`xl/drawings/_rels/${name.split('/').pop()}.rels`);
+      if (!rels) continue;
+      const text = await rels.async('string');
+      if (charts.every((c) => text.includes(c.split('/').pop()))) chartDrawing = name;
     }
+    assert.ok(chartDrawing, 'no drawing relates to both charts');
+    assert.ok(types.includes(`/${chartDrawing}`), 'the drawing is not declared');
+
+    // The dashboard holds exactly one drawing part — charts and the sprig share it.
+    const drawingXml = await zip.file(chartDrawing).async('string');
+    assert.equal((drawingXml.match(/<xdr:graphicFrame/g) ?? []).length, 2, 'expected two chart frames');
+    assert.ok(drawingXml.includes('<xdr:pic>'), 'the dashboard lost its wildflowers');
 
     const budget = await zip.file(charts[0]).async('string');
     assert.ok(budget.includes(`${SHEETS.DASHBOARD}!$B$`), 'the budget chart does not read the dashboard');

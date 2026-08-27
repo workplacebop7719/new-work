@@ -44,6 +44,9 @@ Christmas usually lives in eleven places at once: a note on your phone, three
 browser tabs, a paper list in the kitchen drawer, and a nagging feeling that
 you have already bought your father a scarf. This is one place instead.
 
+Set in the palest blush pink, deep plum and antique gold, with wildflowers
+drawn in a single fine line. Nothing shouts.
+
 ${NAME} is a ${SHEETS_N}-sheet workbook for the whole season — the gifts, the
 budget, the deliveries, the table, the guests, the traditions, and the notes
 you will want next September. Every number on the dashboard is calculated from
@@ -92,11 +95,15 @@ WHAT YOU RECEIVE
 
 • Christmas_Master_Command_Center_Excel.xlsx — the Excel edition
 • Christmas_Master_Command_Center_Google_Sheets.xlsx — prepared for Sheets
+• A nine-page printable pack, in A4 and US Letter — cover, the season on one
+  page, gift list, budget, menu, guest list, December on one page, cards to
+  send, notes for next year
+• The three wildflower drawings, as SVG and as transparent PNG
+• A brand kit with the exact colours and fonts
 • START_HERE.pdf — an illustrated guide to setting up and using it
 • READ_ME_FIRST.pdf — opening the files, and what works where
 • TERMS_OF_USE.pdf — your licence
-• FAQ.txt and Change_Log.txt
-• Google Sheets import instructions
+• FAQ.txt, Change_Log.txt, and the Google Sheets and Canva instructions
 
 This is a digital download. Nothing is posted to you.
 
@@ -107,6 +114,9 @@ COMPATIBILITY  (verify each line yourself before publishing)
 • Built and tested for Microsoft Excel on Windows and Mac.
 • A separate edition is prepared for Google Sheets, with the differences listed
   in the included instructions.
+• The printable pack opens in Canva, where you can change the wording and print
+  it. Canva has no formulas, so the workbook itself does not run there — the
+  included instructions say so plainly.
 • Usable on a phone or tablet in the Excel or Google Sheets app, though setting
   it up on a small screen is hard work — do that on a computer.
 • Not tested in Apple Numbers, LibreOffice or WPS Office.
@@ -117,7 +127,7 @@ FREQUENTLY ASKED, ON THE LISTING
 --------------------------------------------------------------------------
 
 Do I need to be good at spreadsheets?
-No. You type in the cream cells and read the green ones. The guide is six steps
+No. You type in the pink cells and read the grey ones. The guide is six steps
 long.
 
 Can I change it?
@@ -136,13 +146,19 @@ Is anything preloaded that I would have to delete?
 Three clearly marked example rows on each sheet, and example budget figures on
 the budget sheet. Everything marked EXAMPLE — DELETE ME can go.
 
+Can I use it in Canva?
+The printable pages, yes — upload the PDF and change whatever you like. The
+workbook, no: Canva has no formulas, so nothing in it could calculate. Use
+Excel or Google Sheets for that.
+
 --------------------------------------------------------------------------
 TAGS  (13 allowed; check each against Etsy search yourself)
 --------------------------------------------------------------------------
 
 christmas planner, christmas spreadsheet, gift tracker, holiday budget,
 christmas organizer, excel planner, google sheets planner, hosting planner,
-christmas budget, gift list, holiday planner, digital planner, editable planner
+pink christmas planner, gift list, printable planner, digital planner,
+editable planner
 
 --------------------------------------------------------------------------
 DO NOT PUBLISH WITHOUT
@@ -164,7 +180,8 @@ export function mockupShotList() {
 MOCKUP SHOT LIST — TEN LISTING IMAGES
 Edition ${PRODUCT.edition}
 
-House style for all ten: warm ivory or deep evergreen backgrounds, one prop at
+House style for all ten: blush-pink or soft-white backgrounds with gold detail,
+one prop at
 most, real daylight or a soft single source. No snowflake scatter, no glitter,
 no gradient, no stock-photo family. Text overlay in a serif for the headline and
 a sans for the supporting line. Every screenshot is of the real workbook with
@@ -222,7 +239,7 @@ Overlay:  "Menus, prep dates, the shopping list, and who cannot eat what."
 7. FULLY EDITABLE
 --------------------------------------------------------------------------
 Screen:   A dropdown open on a tracker, beside the four-colour key.
-Must show: the open list, and a cream cell next to a green one.
+Must show: the open list, and a pink cell next to a grey one.
 Overlay:  "Rename the categories, edit the lists, hide what you do not need."
 
 --------------------------------------------------------------------------
@@ -241,6 +258,17 @@ Screen:   The file stack as an illustration: two workbook icons, three PDFs, two
           text files, arranged as a neat pile.
 Overlay:  "Two workbooks, three guides, and the notes." Then: "Digital download.
           Nothing is posted."
+
+--------------------------------------------------------------------------
+9B. PRINT THE PAGE YOU ACTUALLY USE
+--------------------------------------------------------------------------
+Screen:   The printed gift list page, photographed flat.
+Frame:    On a pale linen surface, a gold pen resting across one corner, one
+          sprig of real greenery out of focus. Daylight.
+Overlay:  "Nine printable pages, in the same hand." Then, smaller: "A4 and US
+          Letter. Edit them in Canva first if you like."
+Note:     Use this in place of image 5 if the traditions screenshot tests
+          poorly. Ten images is the limit, not the target.
 
 --------------------------------------------------------------------------
 10. MADE FOR PEOPLE WHO LOVE CHRISTMAS
@@ -268,9 +296,18 @@ CHANGE LOG
 Edition ${PRODUCT.edition} — ${today} — first release
 --------------------------------------------------------------------------
 
+Design
+  Blush pink, deep plum and antique gold, with wildflowers drawn in a single
+  fine line. Gold rules the title band of every sheet; the drawings appear on
+  the cover, beside every sheet title, and on the printed pages.
+  Every text-on-fill pairing is checked against WCAG AA at 4.5:1 by a test that
+  fails the build, and every coloured state is also spelled out as a word.
+
 What is in it
   ${SHEETS_N} sheets: onboarding, ${SHEET_ORDER.length - 6} planning modules, and
   three support sheets.
+  A nine-page printable pack in A4 and US Letter, for Canva or for a printer.
+  The three wildflower drawings, as SVG and transparent PNG, and a brand kit.
   Two editions: one for Excel, one prepared for Google Sheets.
   ${Object.keys(LISTS).length} editable dropdown lists on the LISTS sheet.
   Two dashboard charts: budget against spend by category, and completion.
@@ -369,10 +406,37 @@ Which file do I use?
 Are the sheets protected in Google Sheets?
   No. Google Sheets does not import Excel's protection, so that edition ships
   unprotected on purpose. The colour key tells you which cells calculate
-  themselves: pale green ones do.
+  themselves: grey ones do.
 
 My charts look empty.
   Give them a moment on first open while Sheets recalculates, then reload.
+
+--------------------------------------------------------------------------
+CANVA AND THE PRINTED PAGES
+--------------------------------------------------------------------------
+
+Can I open the workbook in Canva?
+  No, and nobody can. Canva is a design tool with no formulas in it — it cannot
+  add up a column, so a workbook that calculates cannot run there. Use Excel or
+  Google Sheets for the workbook.
+
+What can I do in Canva, then?
+  The nine printable pages, in folder 04. Create a design, Import file, choose
+  the PDF, and Canva opens it as an editable design. Change the year, the
+  headings, the row labels — anything. Then Share, Download, PDF Print.
+
+The fonts changed when I imported it.
+  Canva substitutes anything it does not have. BRAND_KIT.txt names what to pick
+  instead: Playfair Display or Lora for the headings, Inter or Open Sans for
+  the rest.
+
+Can I use the wildflower drawings in my own designs?
+  Yes, in your own designs, for your own use. Upload the SVG files rather than
+  the PNGs wherever Canva allows — they stay sharp at any size. They are not
+  for resale on their own.
+
+Which page should I print if I only print one?
+  The gift list. It is the one that ends up on the fridge.
 
 --------------------------------------------------------------------------
 THE LICENCE
@@ -438,8 +502,8 @@ are the differences, stated plainly rather than glossed over.
 Sheet protection is not applied.
   Google Sheets does not import Excel's cell locking, and a protection that
   half-applies is worse than none. So this edition ships unprotected, and the
-  colour key does the work instead: pale green cells calculate themselves —
-  typing in one replaces a formula. Cream cells are yours.
+  colour key does the work instead: grey cells calculate themselves — typing
+  in one replaces a formula. Blush-pink cells are yours.
   If you would rather have the lock, Google Sheets can add it: select a
   calculated column, then Data, Protect sheets and ranges.
 

@@ -2,7 +2,8 @@ The Christmas Season Master Command Center™
 MOCKUP SHOT LIST — TEN LISTING IMAGES
 Edition 1.0
 
-House style for all ten: warm ivory or deep evergreen backgrounds, one prop at
+House style for all ten: blush-pink or soft-white backgrounds with gold detail,
+one prop at
 most, real daylight or a soft single source. No snowflake scatter, no glitter,
 no gradient, no stock-photo family. Text overlay in a serif for the headline and
 a sans for the supporting line. Every screenshot is of the real workbook with
@@ -60,7 +61,7 @@ Overlay:  "Menus, prep dates, the shopping list, and who cannot eat what."
 7. FULLY EDITABLE
 --------------------------------------------------------------------------
 Screen:   A dropdown open on a tracker, beside the four-colour key.
-Must show: the open list, and a cream cell next to a green one.
+Must show: the open list, and a pink cell next to a grey one.
 Overlay:  "Rename the categories, edit the lists, hide what you do not need."
 
 --------------------------------------------------------------------------
@@ -79,6 +80,17 @@ Screen:   The file stack as an illustration: two workbook icons, three PDFs, two
           text files, arranged as a neat pile.
 Overlay:  "Two workbooks, three guides, and the notes." Then: "Digital download.
           Nothing is posted."
+
+--------------------------------------------------------------------------
+9B. PRINT THE PAGE YOU ACTUALLY USE
+--------------------------------------------------------------------------
+Screen:   The printed gift list page, photographed flat.
+Frame:    On a pale linen surface, a gold pen resting across one corner, one
+          sprig of real greenery out of focus. Daylight.
+Overlay:  "Nine printable pages, in the same hand." Then, smaller: "A4 and US
+          Letter. Edit them in Canva first if you like."
+Note:     Use this in place of image 5 if the traditions screenshot tests
+          poorly. Ten images is the limit, not the target.
 
 --------------------------------------------------------------------------
 10. MADE FOR PEOPLE WHO LOVE CHRISTMAS

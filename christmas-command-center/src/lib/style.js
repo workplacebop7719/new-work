@@ -43,7 +43,7 @@ export function navStrip(ws, { links, columnCount, currentSheet }) {
     cell.value = here ? link.label : { text: link.label, hyperlink: `#'${link.sheet}'!A1` };
     cell.font = {
       name: UI_FONT, size: 9, bold: here,
-      color: { argb: here ? TOKENS.PAPER : TOKENS.CHAMPAGNE },
+      color: { argb: here ? TOKENS.PAPER : TOKENS.GOLD_LIGHT },
       underline: false,
     };
     cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
@@ -53,8 +53,8 @@ export function navStrip(ws, { links, columnCount, currentSheet }) {
   const lastColumn = Math.max(columnCount, col - 1);
   for (let c = 1; c <= lastColumn; c += 1) {
     const cell = row.getCell(c);
-    cell.fill = fill(TOKENS.PINE);
-    cell.border = { bottom: thin(TOKENS.CHAMPAGNE) };
+    cell.fill = fill(TOKENS.PLUM);
+    cell.border = { bottom: thin(TOKENS.GOLD) };
   }
   return { lastColumn };
 }
@@ -63,10 +63,10 @@ export function navStrip(ws, { links, columnCount, currentSheet }) {
 export function sheetTitle(ws, { title, columnCount }) {
   const row = ws.getRow(LAYOUT.TITLE_ROW);
   row.height = 34;
-  for (let c = 1; c <= columnCount; c += 1) row.getCell(c).fill = fill(TOKENS.IVORY);
+  for (let c = 1; c <= columnCount; c += 1) row.getCell(c).fill = fill(TOKENS.BLUSH);
   const cell = row.getCell(2);
   cell.value = title;
-  cell.font = { name: DISPLAY_FONT, size: 22, bold: true, color: { argb: TOKENS.PINE } };
+  cell.font = { name: DISPLAY_FONT, size: 22, bold: true, color: { argb: TOKENS.PLUM } };
   cell.alignment = { vertical: 'middle', horizontal: 'left' };
   return row;
 }
@@ -75,7 +75,7 @@ export function sheetTitle(ws, { title, columnCount }) {
 export function sheetIntro(ws, { intro, columnCount }) {
   const row = ws.getRow(LAYOUT.INTRO_ROW);
   row.height = 18;
-  for (let c = 1; c <= columnCount; c += 1) row.getCell(c).fill = fill(TOKENS.IVORY);
+  for (let c = 1; c <= columnCount; c += 1) row.getCell(c).fill = fill(TOKENS.BLUSH);
   const cell = row.getCell(2);
   cell.value = intro;
   cell.font = { name: UI_FONT, size: 10, italic: true, color: { argb: TOKENS.MUTED } };
@@ -87,9 +87,14 @@ export function sheetIntro(ws, { intro, columnCount }) {
 export function legendRow(ws, { columnCount, note }) {
   const row = ws.getRow(LAYOUT.LEGEND_ROW);
   row.height = 17;
-  for (let c = 1; c <= columnCount; c += 1) row.getCell(c).fill = fill(TOKENS.IVORY);
+  // The gold rule that closes the title band. It runs across every sheet in the
+  // workbook, which is what makes thirty-five pages read as one product.
+  for (let c = 1; c <= columnCount; c += 1) {
+    row.getCell(c).fill = fill(TOKENS.BLUSH);
+    row.getCell(c).border = { bottom: thin(TOKENS.GOLD) };
+  }
   const cell = row.getCell(2);
-  cell.value = note ?? 'Cream cells are yours to fill in · pale green cells calculate themselves · amber rows are examples you can delete';
+  cell.value = note ?? 'Pink cells are yours to fill in · grey cells calculate themselves · amber rows are examples you can delete';
   cell.font = { name: UI_FONT, size: 9, color: { argb: TOKENS.MUTED } };
   cell.alignment = { vertical: 'middle', horizontal: 'left' };
   return row;
@@ -97,10 +102,10 @@ export function legendRow(ws, { columnCount, note }) {
 
 export function headerCell(cell, text) {
   cell.value = text;
-  cell.fill = fill(TOKENS.PINE);
+  cell.fill = fill(TOKENS.PLUM);
   cell.font = { name: UI_FONT, size: 10, bold: true, color: { argb: TOKENS.PAPER } };
   cell.alignment = { vertical: 'bottom', horizontal: 'left', wrapText: true };
-  cell.border = { bottom: { style: 'medium', color: { argb: TOKENS.CHAMPAGNE } } };
+  cell.border = { bottom: { style: 'medium', color: { argb: TOKENS.GOLD } } };
 }
 
 /** Number format for a column type, given the workbook's currency symbol. */
@@ -117,17 +122,17 @@ export function numberFormat(type, symbol) {
 }
 
 /**
- * Paint one data cell. Input cells are cream and unlocked; derived cells are
+ * Paint one data cell. Input cells are blush pink and unlocked; derived cells are
  * mist and locked; example rows are amber so they cannot be mistaken for data.
  */
 export function dataCell(cell, { column, symbol, isSample }) {
   const derived = column.kind === 'formula';
-  const base = derived ? TOKENS.MIST : (isSample ? TOKENS.SOFT_AMBER : TOKENS.IVORY);
+  const base = derived ? TOKENS.MIST : (isSample ? TOKENS.SOFT_AMBER : TOKENS.BLUSH);
   cell.fill = fill(base);
   cell.font = {
     name: UI_FONT,
     size: 10,
-    color: { argb: derived ? TOKENS.PINE : TOKENS.INK },
+    color: { argb: derived ? TOKENS.PLUM : TOKENS.INK },
     italic: Boolean(isSample && !derived),
   };
   cell.border = { bottom: hair(), right: hair() };
@@ -151,11 +156,11 @@ export function labelledInput(ws, {
   if (helpCol && helpLastCol && helpLastCol > helpCol) ws.mergeCells(row, helpCol, row, helpLastCol);
   const labelCell = ws.getRow(row).getCell(labelCol);
   labelCell.value = label;
-  labelCell.font = { name: UI_FONT, size: 10, bold: true, color: { argb: TOKENS.PINE } };
+  labelCell.font = { name: UI_FONT, size: 10, bold: true, color: { argb: TOKENS.PLUM } };
   labelCell.alignment = { vertical: 'middle', horizontal: 'right' };
 
   const valueCell = ws.getRow(row).getCell(valueCol);
-  valueCell.fill = fill(locked ? TOKENS.MIST : TOKENS.IVORY);
+  valueCell.fill = fill(locked ? TOKENS.MIST : TOKENS.BLUSH);
   valueCell.font = { name: UI_FONT, size: 11, color: { argb: TOKENS.INK } };
   valueCell.border = box();
   valueCell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
@@ -171,14 +176,14 @@ export function labelledInput(ws, {
 }
 
 /** A dashboard card: a large figure with a quiet label and a plain-word state. */
-export function card(ws, { row, col, width = 3, height = 4, label, valueFormula, valueFormat, note, accent = TOKENS.PINE }) {
+export function card(ws, { row, col, width = 3, height = 4, label, valueFormula, valueFormat, note, accent = TOKENS.PLUM }) {
   const last = { row: row + height - 1, col: col + width - 1 };
   for (let r = row; r <= last.row; r += 1) {
     for (let c = col; c <= last.col; c += 1) {
       const cell = ws.getRow(r).getCell(c);
       cell.fill = fill(TOKENS.PAPER);
       cell.border = {
-        top: r === row ? { style: 'medium', color: { argb: accent } } : undefined,
+        top: r === row ? { style: 'medium', color: { argb: TOKENS.GOLD } } : undefined,
         bottom: r === last.row ? thin() : undefined,
         left: c === col ? thin() : undefined,
         right: c === last.col ? thin() : undefined,
@@ -212,10 +217,10 @@ export function card(ws, { row, col, width = 3, height = 4, label, valueFormula,
 export function sectionHeading(ws, { row, col, columnCount, text }) {
   const cell = ws.getRow(row).getCell(col);
   cell.value = text;
-  cell.font = { name: DISPLAY_FONT, size: 14, bold: true, color: { argb: TOKENS.PINE } };
+  cell.font = { name: DISPLAY_FONT, size: 14, bold: true, color: { argb: TOKENS.PLUM } };
   cell.alignment = { vertical: 'bottom', horizontal: 'left' };
   for (let c = col; c <= columnCount; c += 1) {
-    ws.getRow(row).getCell(c).border = { bottom: thin(TOKENS.CHAMPAGNE) };
+    ws.getRow(row).getCell(c).border = { bottom: thin(TOKENS.GOLD) };
   }
 }
 
@@ -255,4 +260,28 @@ export function paragraph(ws, {
 export function span(ws, row, col, lastCol) {
   if (lastCol > col) ws.mergeCells(row, col, row, lastCol);
   return ws.getRow(row).getCell(col);
+}
+
+/**
+ * Places a wildflower drawing in a sheet's title band.
+ *
+ * Anchored past the title text — the column is found by walking widths rather
+ * than guessed — and always inside the band, so it can never sit over data.
+ * One image blob is shared by every sheet that uses it; only the anchor differs.
+ */
+export function placeArt(ws, imageId, { width, height, afterChars = 44, row = LAYOUT.TITLE_ROW, offsetY = 8 }) {
+  let col = 2;
+  let used = ws.getColumn(1).width ?? 8;
+  while (used < afterChars && col < 40) {
+    used += ws.getColumn(col).width ?? 8;
+    col += 1;
+  }
+  // `tl` is zero-based, so row 2 — the title row — is index 1. The drawing sits
+  // inside the title band and never in the navigation strip above it.
+  ws.addImage(imageId, {
+    tl: { col: col - 1, row: (row - 1) + offsetY / 100 },
+    ext: { width, height },
+    editAs: 'oneCell',
+  });
+  return col;
 }

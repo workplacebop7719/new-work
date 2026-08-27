@@ -12,7 +12,13 @@ it.
 
 35 sheets: a decision-first dashboard, 28 planning trackers, three support
 sheets, and the onboarding pages. 480 fields, 113 of them calculated, 91
-dropdowns, room for 2,655 records. Every figure on the dashboard traces back to a
+dropdowns, room for 2,655 records. Set in blush pink, deep plum and antique
+gold, with wildflowers drawn in a single line — every colour pairing measured
+against WCAG AA rather than judged by eye.
+
+Alongside it, a nine-page printable pack in A4 and US Letter for Canva or for a
+printer. Canva has no formulas, so the workbook itself cannot run there; the
+documentation says so plainly rather than implying otherwise. Every figure on the dashboard traces back to a
 row a buyer can open, and anything that cannot be traced is reported on QUALITY
 CHECK rather than quietly dropped.
 
@@ -30,14 +36,15 @@ That runs, in order:
 | Command | What it does |
 | --- | --- |
 | `npm run build` | Writes both editions and `build-manifest.json` into `dist/` |
-| `npm test` | 40 structural tests over the built files — inventory, protection, dropdowns, print set-up, charts |
+| `npm test` | 45 tests over the built files — inventory, protection, dropdowns, print set-up, charts, and the palette's contrast |
 | `npm run qa` | Builds 13 scenario workbooks, recalculates them with LibreOffice Calc, reads the values back, writes `dist/QA_REPORT.md` |
-| `npm run documents` | The three customer PDFs and the five text assets |
+| `npm run documents` | The three customer PDFs, the nine-page printable pack in two paper sizes, and the text assets |
 | `npm run package` | The buyer folder, the seller folder, checksums and the zip, into `release/` |
 
-`npm run qa` needs LibreOffice Calc (`soffice`); `npm run documents` needs a
-Chromium binary, found automatically or named with `CHROMIUM_PATH`. The other
-commands need nothing but Node.
+`npm run qa` needs LibreOffice Calc (`soffice`); `npm run documents` and
+`npm run art` need a Chromium binary, found automatically or named with
+`CHROMIUM_PATH`. The other commands need nothing but Node — the wildflower PNGs
+are committed, so a workbook build never reaches for a browser.
 
 `dist/` is regenerable build output and is not kept in the repository.
 `release/` is the finished package — the folder to zip and upload — and it is.
@@ -53,10 +60,13 @@ src/formulas.js             the §8 metric contract, as auditable builders
 src/lib/a1.js               every address in the workbook, derived from config
 src/lib/style.js            the §6.2 design system, expressed once
 src/lib/render-tracker.js   the one renderer that draws all 28 trackers
-src/lib/charts.js           the two dashboard charts, written as DrawingML
+src/lib/charts.js           the two dashboard charts and the dashboard's sprig,
+                            written straight into the package as DrawingML
+src/lib/wildflowers.js      the line drawings, generated from geometry
 src/lib/prepare.js          the QA helper columns every tracker gets for free
 src/sheets/                 the sheet specifications — declarative, not drawn
-src/documents/              the customer PDFs and text assets
+src/documents/              the customer PDFs, the printable pack, text assets
+assets/                     the wildflower drawings, as SVG and PNG
 src/qa/                     the scenario matrix, the runner, the value reader,
                             and the architecture-map generator
 tests/                      structural inspection of the built files

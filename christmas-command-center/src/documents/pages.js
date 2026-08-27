@@ -8,16 +8,24 @@
  */
 import { PRODUCT, SHEET_ORDER, OPTIONAL_SHEETS, TOKENS, CAPACITY, LISTS } from '../config.js';
 import { document_ } from './style.js';
+import { ART, svg } from '../lib/wildflowers.js';
 
 const hex = (t) => `#${t.slice(2)}`;
 const NAME = PRODUCT.trademarkName;
+
+const gold = `#${TOKENS.GOLD.slice(2)}`;
+
+const sprig = svg({ ...ART.sprigSmall({ width: 104, height: 46 }), stroke: gold, strokeWidth: 1.1 });
+const spray = svg({ ...ART.spray({ width: 300, height: 44 }), stroke: gold, strokeWidth: 1 });
 
 const cover = (eyebrow, title, lede) => `
 <div class="cover">
   <div class="eyebrow">${eyebrow}</div>
   <h1>${title}</h1>
   <p class="lede">${lede}</p>
-</div>`;
+  <div class="art">${sprig}</div>
+</div>
+<div class="rule-art">${spray}</div>`;
 
 const foot = (docName) => `
 <div class="foot">
@@ -38,8 +46,9 @@ ${cover('Before you open anything', 'Read me first', 'What you have just downloa
   <tr><td>01_START_HERE</td><td>This page, and the illustrated quick-start guide.</td></tr>
   <tr><td>02_EXCEL</td><td>The workbook for Microsoft Excel.</td></tr>
   <tr><td>03_GOOGLE_SHEETS</td><td>The workbook prepared for Google Sheets, and how to import it.</td></tr>
-  <tr><td>04_LICENSE</td><td>What you may and may not do with it.</td></tr>
-  <tr><td>05_SUPPORT</td><td>Questions people ask, and the record of changes.</td></tr>
+  <tr><td>04_CANVA_AND_PRINTABLE</td><td>Nine printable pages in A4 and US Letter, the wildflower drawings, and the brand kit — for Canva, or straight to your printer.</td></tr>
+  <tr><td>05_LICENSE</td><td>What you may and may not do with it.</td></tr>
+  <tr><td>06_SUPPORT</td><td>Questions people ask, and the record of changes.</td></tr>
 </table>
 
 <h2>Getting the files out</h2>
@@ -59,6 +68,10 @@ ${cover('Before you open anything', 'Read me first', 'What you have just downloa
   <h3>Go to START HERE inside the workbook</h3>
   <p>It is the second tab. Six steps, and you are planning.</p>
 </div></div>
+<div class="step"><div class="n">5</div><div>
+  <h3>Print a page or two, if you like paper</h3>
+  <p>04_CANVA_AND_PRINTABLE has nine write-on pages in the same design. The gift list on the fridge is the one people actually use.</p>
+</div></div>
 
 <h2>What it works in</h2>
 <table>
@@ -66,6 +79,7 @@ ${cover('Before you open anything', 'Read me first', 'What you have just downloa
   <tr><td>Microsoft Excel on Windows or Mac (Microsoft 365, 2021, 2019)</td><td>Everything: formulas, dropdowns, the two charts, protection, print set-up.</td></tr>
   <tr><td>Google Sheets</td><td>Formulas, dropdowns, filters and formatting. Some Excel-only details change on import — 03_GOOGLE_SHEETS lists them plainly.</td></tr>
   <tr><td>Excel or Sheets on a phone or tablet</td><td>Readable, and fine for ticking something off. Setting up on a small screen is hard work; do that on a computer.</td></tr>
+  <tr><td>Canva</td><td>Not for the workbook — Canva has no formulas and cannot calculate anything. It is for the printable pack in 04, which you can upload, personalise and print. Canva_Setup.txt explains it.</td></tr>
   <tr><td>Apple Numbers, LibreOffice, WPS</td><td>Not tested. They may open the file and may lose formatting or formulas. We cannot support them.</td></tr>
 </table>
 
@@ -91,7 +105,7 @@ export function startHere() {
   const body = `
 ${cover('A private Christmas atelier', 'Start here', 'Ten minutes of setting up, and the season has somewhere to live.')}
 
-<p>You do not need to know anything about spreadsheets. You will type in cream cells and read the pale green ones. That is the whole idea.</p>
+<p>You do not need to know anything about spreadsheets. You will type in the blush-pink cells and read the grey ones. That is the whole idea.</p>
 
 <h2>The ten minutes</h2>
 <div class="step"><div class="n">1</div><div>
@@ -124,10 +138,10 @@ ${cover('A private Christmas atelier', 'Start here', 'Ten minutes of setting up,
 <p>Every colour is backed by a word, so nothing depends on being able to tell two greens apart.</p>
 <table>
   <tr><th style="width:60pt">Colour</th><th style="width:90pt">Name</th><th>What it means</th></tr>
-  <tr><td><span class="swatch" style="background:${hex(TOKENS.IVORY)}"></span></td><td>Cream</td><td>Yours to fill in.</td></tr>
-  <tr><td><span class="swatch" style="background:${hex(TOKENS.MIST)}"></span></td><td>Pale green</td><td>Calculates itself. Locked, so it cannot be typed over by accident.</td></tr>
+  <tr><td><span class="swatch" style="background:${hex(TOKENS.BLUSH)}"></span></td><td>Blush pink</td><td>Yours to fill in.</td></tr>
+  <tr><td><span class="swatch" style="background:${hex(TOKENS.MIST)}"></span></td><td>Soft grey</td><td>Calculates itself. Locked, so it cannot be typed over by accident.</td></tr>
   <tr><td><span class="swatch" style="background:${hex(TOKENS.SOFT_AMBER)}"></span></td><td>Amber</td><td>Either an example row you can delete, or something asking for attention.</td></tr>
-  <tr><td><span class="swatch" style="background:${hex(TOKENS.SOFT_ROSE)}"></span></td><td>Rose</td><td>Over budget, overdue or late. The cell also says so in words.</td></tr>
+  <tr><td><span class="swatch" style="background:${hex(TOKENS.SOFT_ROSE)}"></span></td><td>Deep pink</td><td>Over budget, overdue or late. The cell also says so in words.</td></tr>
 </table>
 
 <h2>Finding your way around</h2>
@@ -166,10 +180,14 @@ ${cover('A private Christmas atelier', 'Start here', 'Ten minutes of setting up,
   <li>Save this year's workbook under its own name and leave it alone. It is the record.</li>
   <li>Open your clean master copy — or, if you only have the one, copy this year's figures into ANNUAL ARCHIVE before you clear anything.</li>
   <li>From MASTER BUDGET, copy the budget and actual totals. From the dashboard, gifts given and guests hosted. Paste them as values, not formulas.</li>
-  <li>Delete the contents of the cream cells on each tracker. Do not delete rows, and do not touch the pale green columns.</li>
+  <li>Delete the contents of the pink cells on each tracker. Do not delete rows, and do not touch the grey columns.</li>
   <li>Change the year on SETTINGS. The countdown, the calendar and every label follow it.</li>
   <li>Read NEXT YEAR NOTES before you plan anything. That is what it was for.</li>
 </ol>
+
+<h2>The printable pages</h2>
+<p>There are nine of them, in the folder marked 04, in A4 and in US Letter: a cover, the season on one page, the gift list, the budget, the menu, the guest list, December on one page, cards to send, and notes for next year. Print them, or upload the PDF to Canva and change the wording first.</p>
+<p>They are a companion to the workbook, not a substitute. Canva cannot add up a column — nothing in it calculates — so the numbers on a printed page are yours to write. The workbook is where the arithmetic lives.</p>
 
 <h2>Questions people ask</h2>
 <h3>Can I change the colours?</h3>

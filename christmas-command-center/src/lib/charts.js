@@ -37,7 +37,7 @@ function textProps({ size = 900, colour = TOKENS.INK, bold = 0 } = {}) {
 }
 
 function title(text) {
-  return `<c:title><c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="1000" b="1"><a:solidFill><a:srgbClr val="${rgb(TOKENS.PINE)}"/></a:solidFill><a:latin typeface="Aptos"/></a:defRPr></a:pPr><a:r><a:rPr lang="en-GB" sz="1000" b="1"/><a:t>${text}</a:t></a:r></a:p></c:rich></c:tx><c:overlay val="0"/></c:title><c:autoTitleDeleted val="0"/>`;
+  return `<c:title><c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="1000" b="1"><a:solidFill><a:srgbClr val="${rgb(TOKENS.PLUM)}"/></a:solidFill><a:latin typeface="Aptos"/></a:defRPr></a:pPr><a:r><a:rPr lang="en-GB" sz="1000" b="1"/><a:t>${text}</a:t></a:r></a:p></c:rich></c:tx><c:overlay val="0"/></c:title><c:autoTitleDeleted val="0"/>`;
 }
 
 function series({ index, nameRef, catRef, valRef, colour, pointCount, numberFormat = 'General' }) {
@@ -60,7 +60,7 @@ function axes({ catId, valId, valueFormat, valueMax }) {
     line, `<c:tickLblPos val="nextTo"/>${textProps({ size: 850, colour: TOKENS.INK })}`,
     `<c:crossAx val="${valId}"/><c:crosses val="autoZero"/><c:auto val="1"/><c:lblAlgn val="ctr"/><c:lblOffset val="100"/><c:noMultiLvlLbl val="0"/></c:catAx>`,
     `<c:valAx><c:axId val="${valId}"/><c:scaling><c:orientation val="minMax"/>${valueMax ? `<c:max val="${valueMax}"/>` : ''}<c:min val="0"/></c:scaling><c:delete val="0"/><c:axPos val="b"/>`,
-    `<c:majorGridlines><c:spPr><a:ln w="9525"><a:solidFill><a:srgbClr val="${rgb(TOKENS.MIST)}"/></a:solidFill></a:ln></c:spPr></c:majorGridlines>`,
+    `<c:majorGridlines><c:spPr><a:ln w="9525"><a:solidFill><a:srgbClr val="${rgb(TOKENS.RULE)}"/></a:solidFill></a:ln></c:spPr></c:majorGridlines>`,
     `<c:numFmt formatCode="${valueFormat}" sourceLinked="0"/>`,
     line, `<c:tickLblPos val="nextTo"/>${textProps({ size: 850, colour: TOKENS.MUTED })}`,
     `<c:crossAx val="${catId}"/><c:crosses val="autoZero"/><c:crossBetween val="between"/></c:valAx>`,
@@ -92,12 +92,12 @@ function budgetChart(moneyFormatCode) {
   const sers = [
     series({
       index: 0, nameRef: sheetRef('D', DASH.DATA_HEADER), catRef: sheetRef('B', first, last),
-      valRef: sheetRef('D', first, last), colour: TOKENS.CHAMPAGNE, pointCount: DASH.DATA_ROWS,
+      valRef: sheetRef('D', first, last), colour: TOKENS.GOLD_LIGHT, pointCount: DASH.DATA_ROWS,
       numberFormat: moneyFormatCode,
     }),
     series({
       index: 1, nameRef: sheetRef('E', DASH.DATA_HEADER), catRef: sheetRef('B', first, last),
-      valRef: sheetRef('E', first, last), colour: TOKENS.PINE, pointCount: DASH.DATA_ROWS,
+      valRef: sheetRef('E', first, last), colour: TOKENS.PLUM, pointCount: DASH.DATA_ROWS,
       numberFormat: moneyFormatCode,
     }),
   ].join('');
@@ -112,7 +112,7 @@ function progressChart() {
   const last = DASH.PROGRESS_FIRST + DASH.PROGRESS_ROWS - 1;
   const sers = series({
     index: 0, nameRef: sheetRef('L', DASH.DATA_HEADER), catRef: sheetRef('J', first, last),
-    valRef: sheetRef('L', first, last), colour: TOKENS.PINE_2, pointCount: DASH.PROGRESS_ROWS,
+    valRef: sheetRef('L', first, last), colour: TOKENS.PLUM_2, pointCount: DASH.PROGRESS_ROWS,
     numberFormat: '0%',
   });
   return chartSpace({
@@ -121,7 +121,23 @@ function progressChart() {
   });
 }
 
-function drawing(anchors) {
+/** 1px at 96dpi in English Metric Units, the unit DrawingML measures in. */
+const EMU = 9525;
+
+function picture({ from, width, height, id, name, rid }) {
+  return [
+    '<xdr:oneCellAnchor>',
+    `<xdr:from><xdr:col>${from.col}</xdr:col><xdr:colOff>${from.colOff ?? 0}</xdr:colOff><xdr:row>${from.row}</xdr:row><xdr:rowOff>${from.rowOff ?? 0}</xdr:rowOff></xdr:from>`,
+    `<xdr:ext cx="${Math.round(width * EMU)}" cy="${Math.round(height * EMU)}"/>`,
+    '<xdr:pic>',
+    `<xdr:nvPicPr><xdr:cNvPr id="${id}" name="${name}"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>`,
+    `<xdr:blipFill><a:blip xmlns:r="${NS.r}" r:embed="${rid}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>`,
+    `<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${Math.round(width * EMU)}" cy="${Math.round(height * EMU)}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr>`,
+    '</xdr:pic><xdr:clientData/></xdr:oneCellAnchor>',
+  ].join('');
+}
+
+function drawing(anchors, pictures = []) {
   const body = anchors.map(({ from, to, id, name, rid }) => [
     '<xdr:twoCellAnchor editAs="oneCell">',
     `<xdr:from><xdr:col>${from.col}</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${from.row}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>`,
@@ -131,7 +147,7 @@ function drawing(anchors) {
     '<xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm>',
     `<a:graphic><a:graphicData uri="${NS.c}"><c:chart xmlns:c="${NS.c}" xmlns:r="${NS.r}" r:id="${rid}"/></a:graphicData></a:graphic>`,
     '</xdr:graphicFrame><xdr:clientData/></xdr:twoCellAnchor>',
-  ].join('')).join('');
+  ].join('')).join('') + pictures.map(picture).join('');
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="${NS.xdr}" xmlns:a="${NS.a}">${body}</xdr:wsDr>`;
 }
 
@@ -152,13 +168,18 @@ function nextRelId(relsXml) {
   return `rId${(ids.length ? Math.max(...ids) : 0) + 1}`;
 }
 
-export async function injectCharts(path, { symbol }) {
+export async function injectCharts(path, { symbol, sprig }) {
   const zip = await JSZip.loadAsync(await readFile(path));
   const sheetPath = await locateSheet(zip, SHEETS.DASHBOARD);
   const sheetFile = sheetPath.split('/').pop();
 
-  const existing = Object.keys(zip.files).filter((n) => /^xl\/drawings\/drawing\d+\.xml$/.test(n));
-  const drawingIndex = existing.length + 1;
+  // Highest existing index plus one, not a count: ExcelJS numbers its drawings
+  // by sheet, and a gap would make a count collide with a part that exists.
+  const existing = Object.keys(zip.files)
+    .map((n) => /^xl\/drawings\/drawing(\d+)\.xml$/.exec(n))
+    .filter(Boolean)
+    .map((m) => Number(m[1]));
+  const drawingIndex = (existing.length ? Math.max(...existing) : 0) + 1;
   const drawingPath = `xl/drawings/drawing${drawingIndex}.xml`;
 
   const charts = Object.keys(zip.files).filter((n) => /^xl\/charts\/chart\d+\.xml$/.test(n)).length;
@@ -169,17 +190,32 @@ export async function injectCharts(path, { symbol }) {
   zip.file(`xl/charts/${chart1}`, budgetChart(moneyCode));
   zip.file(`xl/charts/${chart2}`, progressChart());
 
+  const pictures = [];
+  const drawingRels = [
+    `<Relationship Id="rId1" Type="${NS.r}/chart" Target="../charts/${chart1}"/>`,
+    `<Relationship Id="rId2" Type="${NS.r}/chart" Target="../charts/${chart2}"/>`,
+  ];
+  if (sprig) {
+    const media = 'xl/media/ccc-wildflower-dashboard.png';
+    zip.file(media, sprig);
+    drawingRels.push(`<Relationship Id="rId3" Type="${NS.r}/image" Target="../media/ccc-wildflower-dashboard.png"/>`);
+    pictures.push({
+      from: { col: 5, row: 1, colOff: 76200, rowOff: 28575 },
+      width: 104, height: 46,
+      id: 4, name: 'Wildflowers', rid: 'rId3',
+    });
+  }
+
   zip.file(drawingPath, drawing([
     { from: { col: 1, row: DASH.CHART_TOP - 1 }, to: { col: 8, row: DASH.CHART_BOTTOM - 1 },
       id: 2, name: 'Budget by category', rid: 'rId1' },
     { from: { col: 9, row: DASH.CHART_TOP - 1 }, to: { col: 16, row: DASH.CHART_BOTTOM - 1 },
       id: 3, name: 'Completion', rid: 'rId2' },
-  ]));
+  ], pictures));
   zip.file(`xl/drawings/_rels/drawing${drawingIndex}.xml.rels`,
     ['<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
       '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">',
-      `<Relationship Id="rId1" Type="${NS.r}/chart" Target="../charts/${chart1}"/>`,
-      `<Relationship Id="rId2" Type="${NS.r}/chart" Target="../charts/${chart2}"/>`,
+      ...drawingRels,
       '</Relationships>'].join(''));
 
   // The worksheet's relationship to its drawing.
@@ -201,6 +237,10 @@ export async function injectCharts(path, { symbol }) {
   zip.file(sheetPath, sheetXml);
 
   let types = await zip.file('[Content_Types].xml').async('string');
+  if (sprig && !types.includes('Extension="png"')) {
+    types = types.replace('<Types', '<Types').replace(/(<Types[^>]*>)/,
+      '$1<Default Extension="png" ContentType="image/png"/>');
+  }
   const overrides = [
     `<Override PartName="/xl/charts/${chart1}" ContentType="${CHART_TYPE}"/>`,
     `<Override PartName="/xl/charts/${chart2}" ContentType="${CHART_TYPE}"/>`,
